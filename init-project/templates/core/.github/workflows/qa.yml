@@ -1,0 +1,49 @@
+name: QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Language and toolchain setup. Substituted by /init-project from the
+      # chosen language profile. The placeholder block becomes the right
+      # `uses: ...` / `run: ...` steps (e.g. setup-uv + uv sync for Python,
+      # setup-node + pnpm install for TypeScript).
+      {{CI_SETUP_STEPS}}
+
+      - name: Run quality gate (lint, format, types, unit + functional)
+        run: {{QA_COMMAND}}
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Same language/toolchain setup as the qa job.
+      {{CI_SETUP_STEPS}}
+
+      # If this project uses a headless browser for e2e (e.g. Playwright),
+      # install the browser here. Left as a no-op-friendly step; uncomment and
+      # adapt for your toolchain once e2e tests exist.
+      # - name: Install browsers
+      #   run: {{E2E_BROWSER_INSTALL}}
+
+      - name: Run end-to-end suite
+        run: {{E2E_COMMAND}}

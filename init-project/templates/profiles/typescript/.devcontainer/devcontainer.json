@@ -1,0 +1,45 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  // docker-in-docker is intentionally NOT enabled by default: it widens the
+  // attack surface and grants the container Docker control. Add it back only
+  // if this project genuinely needs to build/run containers from inside.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+          }
+        }
+      }
+    }
+  },
+  // Fail visibly if setup breaks (no '|| true' swallowing errors). `npm ci`
+  // installs the exact lockfile and errors if package.json and the lock drift.
+  "postCreateCommand": "npm ci",
+  "remoteUser": "node",
+  "forwardPorts": [],
+  "mounts": [
+    // Default: mount ONLY your global skills, read-only. This keeps host
+    // credentials out of the container — the whole point of running the agent
+    // in an isolated environment. The project's own .claude/ (agents, hooks,
+    // settings) already travels with the workspace.
+    "source=${localEnv:HOME}/.claude/skills,target=/home/node/.claude/skills,type=bind,readonly"
+    // Opt-in ONLY if you knowingly accept the risk: mounting all of ~/.claude
+    // exposes settings.local.json (which may hold API keys) to anything running
+    // in the container, including a prompt-injected agent. Prefer the line above.
+    // "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,readonly"
+  ]
+}

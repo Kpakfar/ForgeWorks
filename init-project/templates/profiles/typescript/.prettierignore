@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+# Dev container config carries explanatory comments; skip the json parser on it.
+.devcontainer

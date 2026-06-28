@@ -1,0 +1,80 @@
+# How to use this template
+
+## Starting a new project
+
+Two equivalent options:
+
+### Option A: One-line install (recommended)
+
+```bash
+mkdir my-new-project && cd my-new-project && git init
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/install.sh)
+```
+
+Then open Claude Code and run `/init-project`.
+
+### Option B: manual (curl + degit, no `bash <(curl ...)`)
+
+```bash
+mkdir my-new-project && cd my-new-project && git init
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/AGENTS.md -o AGENTS.md
+mkdir -p .claude/skills
+npx degit Kpakfar/ForgeWorks/init-project#v1.0.0 .claude/skills/init-project --force
+```
+
+Then open Claude Code and run `/init-project`.
+
+## What happens during bootstrap
+
+1. The skill confirms intent with you.
+2. It runs `npx skills@latest add mattpocock/skills` (you pick which skills).
+3. It interviews you (scope, the heart of the project, stack, security profile, dev container, and more).
+4. It generates the project from the universal core + your chosen language profile.
+5. It symlinks `CLAUDE.md` → `AGENTS.md` and stamps the template version at `.claude/.template-version`.
+6. It removes itself from the project (the init skill is no longer needed).
+
+## Upgrading an existing project to a newer template
+
+Run the **same install command** inside an already-generated project. `install.sh` detects it (via `.claude/agents/` or a non-bootstrap `AGENTS.md`) and installs the `/upgrade-project` skill instead of bootstrapping:
+
+```bash
+# In your existing project, commit your work first, then:
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/install.sh)
+```
+
+Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
+
+- **Copies** new always-on files that are missing (e.g. `docs/SECURITY.md`, the deps-guard hook, the security-reviewer / tech-debt subagents).
+- **Grafts** new `AGENTS.md` rule blocks and subagent sections into your existing files **without overwriting** your hand-filled content.
+- **Applies** the language tooling delta (markers, deps, the e2e CI job for supported languages).
+- **Reports** what still needs a manual look.
+
+It is non-destructive and idempotent — safe to run more than once. **Do not** re-run `/init-project` on an existing project; that overwrites your filled-in docs.
+
+## Updating the template itself
+
+Edit files in this repo; the next project you bootstrap uses the updated version, and existing projects can pull the changes via `/upgrade-project` above.
+
+Backporting lessons from a real project: read that project's `docs/gotchas.md` (and reviewer notes) at the end, and for each *generic* lesson edit the corresponding file here and push. When a change alters the generated structure, bump `VERSION` and — if it adds tooling or placeholder-bearing files — extend `upgrade-project/SKILL.md` (see the repo `AGENTS.md` `<editing-the-upgrade-skill>`).
+
+## Adding a new language
+
+The shared `init-project/templates/core/` serves every language; each language is a **profile folder** plus a YAML block. A generated project is `core/` + one profile, so nothing language-specific leaks across languages. To add one:
+
+1. Create `init-project/templates/profiles/<lang>/` with: the manifest, toolchain config, a verify-only `qa` runner + a separate `fix` runner + a separate `e2e` runner, a **green-on-first-run scaffold** (a typed example + a passing test), `.gitignore`, a hardened dev container, and (only if idiomatic) a pre-commit config. Mirror the shape of `templates/profiles/python/` (or `typescript/` / `go/`).
+2. Add a YAML block to `init-project/SKILL.md` `<language-profiles>` with the same keys as Python (`language_version`, `package_manager`, `manifest_file`, `qa_command`, `fix_command`, `e2e_command`, `ci_setup_steps`, `notes`, ...).
+3. Add the language to Q3's menu (mark `[complete]` only once it passes).
+4. Bootstrap a throwaway project in that language and confirm `qa` is **green on the first run**.
+
+**Python, TypeScript, and Go** are complete, tested profiles; Rust and "Other" are not built yet.
+
+## Troubleshooting
+
+**`/init-project` slash command doesn't appear.**
+The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If `npx degit` put it elsewhere, move it.
+
+**Symlink fails on Windows.**
+Use Option A above on WSL, or skip the symlink and use a one-line `CLAUDE.md` pointing to `AGENTS.md` instead: `# See @AGENTS.md for project conventions.`
+
+**Mattpocock skills don't install.**
+Make sure Node.js is available. On the host machine, not just the container. The npx skill installer writes to a project-local directory and is then available to all coding agents.

@@ -1,0 +1,21 @@
+# Pre-commit configuration.
+# Install with `{{PRECOMMIT_INSTALL_COMMAND}}` after running /init-project.
+# Hooks are populated by /init-project from the chosen language profile.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # Language-specific hooks. /init-project substitutes this block based on
+  # the chosen language profile (ruff for Python, eslint+prettier for
+  # TypeScript, cargo fmt + clippy for Rust, etc.).
+  {{LANGUAGE_PRECOMMIT_HOOKS}}

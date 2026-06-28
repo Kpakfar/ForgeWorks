@@ -1,0 +1,8 @@
+.DS_Store
+*.zip
+node_modules/
+.venv/
+
+# Private dev notes -- not for upstream.
+/CLAUDE.local.md
+

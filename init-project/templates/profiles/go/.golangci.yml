@@ -1,0 +1,22 @@
+# golangci-lint configuration -- a small, high-signal default set.
+# Run with `golangci-lint run` (the qa gate does this when it is installed).
+
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - govet        # suspicious constructs (same checks as `go vet`)
+    - staticcheck  # broad correctness and simplification analysis
+    - errcheck     # unchecked error returns
+    - gofmt        # formatting (also enforced standalone in qa.sh)
+    - ineffassign  # assignments that are never used
+    - unused       # unused constants, variables, functions, and types
+
+issues:
+  exclude-rules:
+    # Test files often ignore errors deliberately.
+    - path: _test\.go
+      linters:
+        - errcheck

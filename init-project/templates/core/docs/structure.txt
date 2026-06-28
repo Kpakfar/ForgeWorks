@@ -1,0 +1,46 @@
+Quick reference. {{LANGUAGE}} project bootstrapped from ForgeWorks.
+Update this file whenever the layout changes.
+
+Living docs:
+docs/structure.txt                 # this file
+docs/requirements.md               # what we're building, for whom, why
+docs/language-standards.md         # language- and tooling-specific conventions
+docs/documentation.md              # links to library docs the agent should consult
+docs/backlog.md                    # scoped, queued tasks
+docs/proposals-ideas.md            # out-of-scope ideas, reviewed periodically
+docs/gotchas.md                    # known pitfalls, anti-patterns, lessons (living)
+docs/SECURITY.md                   # threat model, defenses, red-team checklist (living)
+docs/current-task/task.md          # active task brief, shared between agents
+docs/current-task/task-template.md # template; copy over task.md when starting a new task
+
+Source code (use your language's idiomatic layout; see AGENTS.md <architecture-discipline>
+and docs/language-standards.md). A placeholder module + passing test ship so the gate is
+green on first run -- replace them with your first slice. Two-layer split (backend / frontend
+or app) when the project has a UI; a single layer otherwise.
+
+Tests (unit + functional run in the fast gate; e2e is separate -- see docs/language-standards.md):
+   placeholder smoke test ships green; e2e tests live apart (tests/e2e/ or build-tag gated)
+
+Configuration:
+{{MANIFEST_FILE}}                  # dependencies + tool config + bundled scripts
+.env.example                       # template for environment variables (never commit .env)
+.gitignore
+.pre-commit-config.yaml            # local pre-commit hooks (optional)
+README.md
+
+Agent infrastructure:
+.claude/agents/                    # subagents: test-spec-writer, implementer, code-reviewer, security-reviewer, tech-debt
+.claude/hooks/quality-gate.sh      # deterministic static+test gate (code-reviewer Stop event)
+.claude/hooks/deps-guard.sh        # supply-chain guard (PreToolUse): blocks unvetted dependency installs
+.claude/settings.json              # wires the deps-guard PreToolUse hook
+.mcp.json                          # MCP server config (Context7 for live library docs)
+AGENTS.md                          # the constitution (read first, every conversation)
+CLAUDE.md                          # symlink to AGENTS.md (for Claude Code compatibility)
+
+CI:
+.github/workflows/qa.yml           # fast quality gate + separate end-to-end job, on every push and PR
+.github/pull_request_template.md   # short PR checklist
+
+Dev environment:
+.devcontainer/                     # dev container config (if {{USES_DEVCONTAINER}} = yes)
+scripts/                           # qa.sh (verify-only gate) + fix.sh (local auto-repair) + e2e.sh (slow gate)

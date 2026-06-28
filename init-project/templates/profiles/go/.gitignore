@@ -1,0 +1,26 @@
+# Go
+# Compiled binaries and shared objects
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test binary built with `go test -c`
+*.test
+
+# Profiling / tool output
+*.out
+
+# Coverage
+coverage.txt
+coverage.html
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
