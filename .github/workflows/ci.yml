@@ -26,7 +26,7 @@ jobs:
   sources:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Shell syntax (bash -n)
         run: |
           fail=0
@@ -51,21 +51,21 @@ jobs:
     # interview, conditional matrix, or hostile-value escaping (agent-executed).
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Render core+profile, assert no leftover placeholders
         run: python3 .github/scripts/render_smoke.py
 
   deps-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: deps-guard blocks/allows the expected commands
         run: bash .github/scripts/deps_guard_test.sh
 
   python-profile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v5
       - run: uv python install 3.12
       - name: Generate Python project from the profile and run QA
@@ -80,7 +80,7 @@ jobs:
   typescript-profile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -97,7 +97,7 @@ jobs:
   go-profile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
