@@ -20,9 +20,9 @@ A fully structured project with:
 - `AGENTS.md` and `CLAUDE.md` (symlinked): the constitution, stack-agnostic core
 - `.claude/agents/`: five focused subagents (test-spec-writer, implementer, code-reviewer, security-reviewer, tech-debt)
 - `.claude/hooks/quality-gate.sh`: deterministic static+test gate triggered by code-reviewer
-- `.claude/hooks/deps-guard.sh` + `.claude/settings.json`: supply-chain guard (PreToolUse hook) -- security enforced deterministically, not by prompt
+- `.claude/hooks/deps-guard.sh` + `.claude/settings.json`: best-effort supply-chain guard (PreToolUse hook)
 - `.mcp.json`: Context7 MCP server for live library docs
-- `.github/workflows/qa.yml`: CI running the quality gate (fast) and a separate end-to-end job on every push and pull request
+- `.github/workflows/qa.yml`: CI running the quality gate (fast) and a separate end-to-end job on pull requests and pushes to main
 - `.github/pull_request_template.md`: short PR checklist
 - `.pre-commit-config.yaml`: local pre-commit hooks (language-specific portion populated from your profile)
 - `docs/`: living documentation (structure, requirements, language-standards, gotchas, backlog, SECURITY, current-task)
@@ -76,6 +76,8 @@ Save answers to a temporary file `docs/_init-answers.md` as you go (this will be
 - In one sentence, what does it do and for whom?
 
 Probe: who is the *primary* user? If they list multiple, narrow to one for the MVP.
+
+From the name, derive a **`{{PROJECT_SLUG}}`** for use in manifests / module paths: lowercase, ASCII, words joined by hyphens, no spaces or punctuation (e.g. "My Project!" -> `my-project`). The display `{{PROJECT_NAME}}` is for prose only; the slug is what goes into a package name, `package.json` name, or Go module path -- raw display names break TOML/JSON/`go.mod`. If the derived slug is empty or invalid, ask the user for one.
 
 #### Q2. The core problem and the heart of the project
 - What problem is this solving that existing tools don't solve well? Why now?
@@ -212,10 +214,17 @@ For each file in `templates/core/` AND in `templates/profiles/{{LANGUAGE}}/`:
 
 1. Read the template file.
 2. Substitute placeholders (see "Placeholder substitution" + the chosen language profile below).
-3. Write it to the project root at the corresponding path.
+3. Write it to the project root at the corresponding path, applying these **explicit source -> target renames** (a few profile files carry a suffix so the template repo does not treat them as live config):
+   - Python: `pyproject.toml.example` -> `pyproject.toml`.
+   - Any other `*.example` manifest a profile ships -> drop the `.example` suffix.
+   Do not rely on inference: a literal copy that leaves `pyproject.toml.example` makes `{{INSTALL_COMMAND}}` and Phase 5 fail.
 4. **Skip any `.devcontainer/` if `{{USES_DEVCONTAINER}}` is `no`.**
 
 Do NOT read or copy `templates/profiles/<other-language>/`. The manifest, scripts, scaffold, dev container, `.gitignore`, and (Python-only) pre-commit config all come from the chosen profile, so the project carries only its own language's tooling and libraries. The core files reference the toolchain through placeholders (`{{QA_COMMAND}}`, `{{CI_SETUP_STEPS}}`, ...) filled from the profile's YAML.
+
+**Identifiers and escaping (do not skip -- raw display values break structured files):**
+- Use `{{PROJECT_SLUG}}` (not `{{PROJECT_NAME}}`) for every identifier field: the package name in `pyproject.toml`/`package.json` and the module path in `go.mod`. A display name like `My Project` is not a valid TOML package name or Go module path.
+- When you substitute a display value (`{{PROJECT_NAME}}`, `{{PROJECT_GOAL}}`, ...) into a structured file (JSON, TOML, YAML, `go.mod`), escape it for that format: in JSON escape `"`, `\`, and control characters; in TOML escape `"` or use a literal string. A goal like `A "quoted" goal` must not produce invalid JSON in `package.json`. Display values flow unescaped only into Markdown prose.
 
 **Conditional content (from interview answers):**
 
@@ -334,7 +343,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.0.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
@@ -398,6 +407,7 @@ Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
 |---|---|
 | `{{PROJECT_NAME}}` | Q1 |
 | `{{PROJECT_GOAL}}` | Q1 |
+| `{{PROJECT_SLUG}}` | Q1 -- derived: lowercase, hyphenated, valid package/module identifier |
 | `{{PRIMARY_USER}}` | Q1 |
 | `{{CORE_PROBLEM}}` | Q2 |
 | `{{CORE_JOURNEY}}` | Q2 (the heart: the core user-visible flow, as steps) |
@@ -625,7 +635,7 @@ notes:
 Files live in `templates/profiles/go/`. The gate is `scripts/qa.sh` (verify-only: gofmt-check, vet, golangci-lint, test); fix mutates; e2e is build-tag gated (`//go:build e2e`). Ships no pre-commit config.
 
 ```yaml
-language_version: "1.22+"
+language_version: "1.25+"
 file_extension: "go"
 package_manager: "go mod"
 manifest_file: "go.mod"
@@ -649,10 +659,14 @@ ci_setup_steps: |
   - name: Set up Go
     uses: actions/setup-go@v5
     with:
-      go-version: "1.22"
+      go-version: "1.25"
       cache: true
-  - name: Download deps
+  - name: Download modules
     run: go mod download
+  - name: Install golangci-lint
+    run: |
+      curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.12.2
+      echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
 library_docs_urls: |
   ### Core stack

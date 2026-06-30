@@ -26,9 +26,11 @@
       }
     }
   },
-  // Fail visibly if setup breaks (no '|| true' swallowing errors). `npm ci`
-  // installs the exact lockfile and errors if package.json and the lock drift.
-  "postCreateCommand": "npm ci",
+  // Fail visibly if setup breaks (no '|| true' swallowing errors). The template
+  // ships no lockfile, so use `npm install` (which resolves from package.json);
+  // `npm ci` would error without a package-lock.json. Commit the generated lock
+  // and switch this to `npm ci` once the project has one for reproducible builds.
+  "postCreateCommand": "npm install",
   "remoteUser": "node",
   "forwardPorts": [],
   "mounts": [

@@ -15,7 +15,7 @@ These rules are language- and stack-agnostic. Apply them on every file you write
 
 - **One concept per file.** Each module owns a single concept (one I/O adapter, one transform, one route handler, one config loader, one tool, and so on). Target ~100 lines per file. Hard cap 200. Split before exceeding, not after.
 
-- **Typed structured outputs at boundaries.** Use the language's structured-output validation (Pydantic, Zod, TypedDict + runtime check, etc.) at module and API boundaries where a mismatch would silently corrupt state, and to capture domain models. Do NOT wrap UI state or every dict that crosses an internal function boundary.
+- **Typed structured outputs at boundaries.** Use your language's idiomatic schema validation at module and API boundaries where a mismatch would silently corrupt state, and to capture domain models (see `docs/language-standards.md` for the chosen tool). Do NOT wrap UI state or every value that crosses an internal function boundary.
 
 - **Session/UI state stays plain.** Initialize state with the framework's idiomatic pattern. Keep state initialization in one block at the top of the UI module. Do not introduce a state-wrapper class unless real behaviour lives on it.
 
@@ -38,7 +38,7 @@ These rules are universal: they hold for any stack and any subject. The threat m
 - **Least privilege, limit blast radius.** Scope every tool, query, and file path to the current owner. A successful attacker -- or a compromised agent -- must not be able to reach another owner's data even technically. Validate and sandbox any path or id that arrives from input (no `../` escapes).
 - **Bound inputs and outputs.** Length-limit anything that flows into a prompt, a log, or storage.
 - **Secrets stay out of the repo.** Keep them in env or a secret store, never in source, prompts, or committed config; the ignore file must exclude them.
-- **Supply chain is not trusted by default.** Install from lockfiles only; no blind updates; confirm every new dependency is the real, established package, not a hallucinated lookalike. This is enforced by the deps-guard hook (see `<quality-gate>`), not by good intentions.
+- **Supply chain is not trusted by default.** Install from lockfiles only; no blind updates; confirm every new dependency is the real, established package, not a hallucinated lookalike. The `deps-guard` hook is a best-effort reminder (see `<quality-gate>`); the real controls are committed lockfiles, reviewed updates, and CI vulnerability scanning.
 - **Fail closed.** On any security-check error or ambiguity, refuse rather than proceed.
 - **Security lives in hooks and tests, not in prose.** Prompt-level "be careful" is theater. The real controls are the deps-guard hook, the access-control middleware, and the red-team tests in the suite. If this project uses LLMs or agents, the prompt-injection and lethal-trifecta rules are in `<ai-discipline>` and `docs/SECURITY.md`.
 </security-discipline>
@@ -119,7 +119,7 @@ This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 prov
 The gate is deterministic and enforced by hooks, not by remembering to run it. Three layers:
 
 1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer` subagent runs `{{QA_COMMAND}}` during review; a `Stop` hook (auto-converted to `SubagentStop`) re-runs it and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build. Because the gate never mutates code, it cannot silently "fix" and pass.
-2. **Supply-chain guard hook.** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) intercepts **dependency-install Bash commands** and blocks installs of new/named packages until they are vetted (re-run with `DEPS_VETTED=1`). It does NOT intercept direct edits to the manifest or lockfile made through file-editing tools -- catch those in review. Security is enforced here deterministically, not by a prompt asking the agent to be careful.
+2. **Supply-chain guard hook (best-effort).** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) blocks the common dependency-install / remote-execute Bash commands until they are vetted (re-run with `DEPS_VETTED=1` at the start). It is a heuristic speed bump, not a boundary: it does not catch installs via scripts, direct manifest edits, or novel package managers. The real controls are committed lockfiles, reviewed dependency updates, and CI vulnerability scanning (`npm audit`, Dependabot).
 3. **CI.** CI runs the same non-mutating `{{QA_COMMAND}}` plus the slower end-to-end (headless-browser) suite (see `.github/workflows/qa.yml`). Note: the shipped workflow runs on pull requests and on pushes to `main`; **merge-blocking requires enabling branch protection** on the repo (the template cannot set that for you).
 </quality-gate>
 
@@ -129,7 +129,7 @@ This project is designed to improve itself over time. When you finish a task:
 1. If you learned a non-obvious pitfall, anti-pattern, or convention: update `docs/gotchas.md`.
 2. If you changed the project layout (added a folder, moved a module): update `docs/structure.txt`.
 3. If you encountered an out-of-scope improvement worth doing later: append to `docs/proposals-ideas.md`.
-4. If a generic lesson emerged that would apply to OTHER projects too: flag it for the user to consider backporting to `~/ForgeWorks/`.
+4. If a generic lesson emerged that would apply to OTHER projects too: flag it for the user to consider backporting to the ForgeWorks template this project was generated from.
 
 Do not skip these. The system gets better only if these living docs stay current.
 </self-improvement>

@@ -8,7 +8,7 @@ Two equivalent options:
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.0/bootstrap/install.sh)
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -17,9 +17,9 @@ Then open Claude Code and run `/init-project`.
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.0/bootstrap/AGENTS.md -o AGENTS.md
 mkdir -p .claude/skills
-npx degit Kpakfar/ForgeWorks/init-project#v1.0.0 .claude/skills/init-project --force
+npx degit Kpakfar/ForgeWorks/init-project#v1.1.0 .claude/skills/init-project --force
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -31,7 +31,7 @@ Then open Claude Code and run `/init-project`.
 3. It interviews you (scope, the heart of the project, stack, security profile, dev container, and more).
 4. It generates the project from the universal core + your chosen language profile.
 5. It symlinks `CLAUDE.md` → `AGENTS.md` and stamps the template version at `.claude/.template-version`.
-6. It removes itself from the project (the init skill is no longer needed).
+6. It offers to remove the init skill from the project — optional cleanup, since the skill isn't needed once generation is done; keeping it does no harm.
 
 ## Upgrading an existing project to a newer template
 
@@ -39,7 +39,7 @@ Run the **same install command** inside an already-generated project. `install.s
 
 ```bash
 # In your existing project, commit your work first, then:
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.0/bootstrap/install.sh)
 ```
 
 Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
@@ -53,7 +53,7 @@ It is non-destructive and idempotent — safe to run more than once. **Do not** 
 
 ## Updating the template itself
 
-Edit files in this repo; the next project you bootstrap uses the updated version, and existing projects can pull the changes via `/upgrade-project` above.
+Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v1.1.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
 
 Backporting lessons from a real project: read that project's `docs/gotchas.md` (and reviewer notes) at the end, and for each *generic* lesson edit the corresponding file here and push. When a change alters the generated structure, bump `VERSION` and — if it adds tooling or placeholder-bearing files — extend `upgrade-project/SKILL.md` (see the repo `AGENTS.md` `<editing-the-upgrade-skill>`).
 
@@ -66,7 +66,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 3. Add the language to Q3's menu (mark `[complete]` only once it passes).
 4. Bootstrap a throwaway project in that language and confirm `qa` is **green on the first run**.
 
-**Python, TypeScript, and Go** are complete, tested profiles; Rust and "Other" are not built yet.
+**Python, TypeScript, and Go** are complete profiles — Python and TypeScript are verified green; Go is config-verified, pending a CI run. Rust and "Other" are not built yet.
 
 ## Troubleshooting
 

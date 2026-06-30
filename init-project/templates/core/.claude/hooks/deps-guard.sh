@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 # .claude/hooks/deps-guard.sh
 #
-# PreToolUse hook on Bash (wired in .claude/settings.json). Supply-chain guard:
-# it intercepts dependency-install/add commands across common ecosystems and
-# blocks them (exit 2) until the package has been vetted. This is deterministic
-# on purpose -- per the security rule, supply-chain safety belongs in a hook,
-# not in a prompt asking the agent to be careful.
+# PreToolUse hook on Bash (wired in .claude/settings.json). A **best-effort**
+# supply-chain guard: it parses the Bash command and blocks (exit 2) the common
+# dependency-install / remote-execute commands until the package has been vetted.
 #
-# Scope and limits (be honest about them):
-#   - It inspects Bash commands only. It does NOT intercept direct edits to a
-#     manifest/lockfile made through file-editing tools -- guard those in review.
-#   - Lockfile installs (npm ci, uv sync, pip install -r/-e, etc.) are allowed:
-#     they add nothing new. Commands that pull a NEW named package are blocked,
-#     including ones where flags come before the package name
-#     (npm install --save x, pnpm add -D x, uv add --dev x, pip install -U x).
+# This is a speed bump, NOT a security boundary. It is a heuristic on a command
+# string -- it does not catch every form (a script that installs, an editor tool
+# writing a manifest, a novel package manager, plain `npx <pkg>`). The REAL
+# controls are: committed lockfiles + reviewed dependency updates, and CI
+# vulnerability scanning (npm audit, Dependabot). Treat this as a reminder.
 #
-# To proceed after vetting (real, established package; right author; not a
-# hallucinated lookalike; lands in the lockfile), re-run with DEPS_VETTED=1 in
-# front, e.g.  DEPS_VETTED=1 uv add httpx
+# Lockfile / from-lock installs (npm ci, uv sync, pip install -r/-e, etc.) are NOT
+# blocked: they add nothing new. To proceed past a block after vetting (real,
+# established package; right author; not a hallucinated lookalike; lands in the
+# lockfile), put DEPS_VETTED=1 at the START of the command, e.g.:
+#   DEPS_VETTED=1 uv add httpx
 #
 # Exit code 2 blocks the tool call and feeds stderr back to the agent.
 
@@ -25,32 +23,43 @@ set -euo pipefail
 
 input=$(cat)
 
-# Already vetted by the caller -> allow.
-if printf '%s' "$input" | grep -q 'DEPS_VETTED'; then
+# Extract the actual command field (not the whole JSON, so DEPS_VETTED or a
+# package name elsewhere in the payload cannot flip the decision).
+if command -v jq >/dev/null 2>&1; then
+  cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)
+else
+  cmd=$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)
+fi
+
+# Not a Bash command (no command field) -> nothing to guard.
+[ -z "${cmd}" ] && exit 0
+
+# Vetted ONLY when DEPS_VETTED= is a real env-assignment prefix at the start of
+# the command (optionally after other VAR=val prefixes). Rejects tricks like
+# `echo DEPS_VETTED && npm install evil`.
+if printf '%s' "$cmd" | grep -Eq '^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*DEPS_VETTED='; then
   exit 0
 fi
 
-# Explicit lockfile / install-from-source forms -> allow (they add nothing new).
-# (npm ci; pnpm/yarn/bun install with no package; uv sync; uv pip sync;
-#  pip install -r/-e/.; poetry/cargo/go/bundle install-from-lock.)
-if printf '%s' "$input" | grep -Eq \
-  '(npm[[:space:]]+ci|(pnpm|yarn|bun)[[:space:]]+install([[:space:]]+-{1,2}[^[:space:]]+)*([[:space:]]|"|$)|uv[[:space:]]+sync|uv[[:space:]]+pip[[:space:]]+sync|pip3?[[:space:]]+install([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(-r|--requirement|-e|--editable|\.)|poetry[[:space:]]+install|cargo[[:space:]]+(build|fetch|update)|go[[:space:]]+mod[[:space:]]+download|bundle[[:space:]]+install)'; then
+# pip install -r/-e/. is a from-lock / editable install -> allow.
+if printf '%s' "$cmd" | grep -Eq 'pip3?[[:space:]]+install([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(-r|--requirement|-e|--editable|\.([[:space:]]|$))'; then
   exit 0
 fi
 
-# A command that pulls a NEW or NAMED package. The package name may be preceded
-# by any number of flag tokens (-D, --save, --save-dev, -U, --upgrade, ...),
-# then a bare (non-flag) token must follow.
-flags='([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]"]'
-if printf '%s' "$input" | grep -Eq \
-  "(npm|pnpm|yarn|bun)[[:space:]]+(install|add|i)${flags}|pip3?[[:space:]]+install${flags}|uv[[:space:]]+(add|pip[[:space:]]+install)${flags}|poetry[[:space:]]+add${flags}|cargo[[:space:]]+add${flags}|go[[:space:]]+get${flags}|gem[[:space:]]+install${flags}"; then
+# Block: installing a NEW/named package, or fetching/executing arbitrary remote
+# code. Flags may appear before the package name. (Lockfile installs such as
+# `npm ci`, `uv sync`, `pip install -r` do not match.)
+pkg='([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]"'"'"']'
+if printf '%s' "$cmd" | grep -Eq \
+  "(npm|pnpm|yarn|bun)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(install|add|i)${pkg}|pip3?[[:space:]]+install${pkg}|pipx[[:space:]]+(install|run|inject)${pkg}|uv[[:space:]]+(add|pip[[:space:]]+install)${pkg}|poetry[[:space:]]+add${pkg}|cargo[[:space:]]+(add|install|update)|go[[:space:]]+(get|install)${pkg}|gem[[:space:]]+install${pkg}"; then
   {
-    echo "Supply-chain guard: this command installs a new dependency."
+    echo "Supply-chain guard (best-effort): this command installs a new dependency or runs remote code."
     echo "Before it runs, confirm the package:"
     echo "  - is the real, established package (right author, age, downloads) -- not a hallucinated or typosquatted lookalike;"
     echo "  - is pinned and will land in the committed lockfile (no blind 'latest');"
     echo "  - is not brand new (prefer packages more than ~a week old)."
-    echo "If verified, re-run with DEPS_VETTED=1 in front, e.g.:  DEPS_VETTED=1 <command>"
+    echo "If verified, re-run with DEPS_VETTED=1 at the START, e.g.:  DEPS_VETTED=1 <command>"
+    echo "(A reminder, not a security boundary -- lockfile review + CI scanning are the real controls.)"
   } >&2
   exit 2
 fi

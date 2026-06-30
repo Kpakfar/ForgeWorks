@@ -1,3 +1,3 @@
-module example.com/{{PROJECT_NAME}}
+module example.com/{{PROJECT_SLUG}}
 
-go 1.22
+go 1.25

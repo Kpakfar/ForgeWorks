@@ -95,7 +95,7 @@ A complete profile is a YAML block PLUS a folder, both meeting the same readines
 </conventions>
 
 <release-process>
-The published bootstrap one-liner is pinned to an **immutable release tag** so a project set up today gets the same template tomorrow, even as `main` moves. `main` is for development; releases are tags.
+The published bootstrap one-liner is pinned to a **versioned release tag** so a project set up today gets the same template files tomorrow, even as `main` moves (runtime inputs like npm/degit/Context7 aren't fully reproducible yet — see `docs/ROADMAP.md`). `main` is for development; releases are tags.
 
 When you ship a change that affects the generated structure, cut a release:
 

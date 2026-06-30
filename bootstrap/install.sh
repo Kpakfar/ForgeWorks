@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # install.sh - Bootstrap a new project from this template.
 #
-# Usage (pinned to an immutable release tag -- recommended):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.0.0/bootstrap/install.sh)
+# Usage (pinned to a versioned release tag -- recommended):
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.0/bootstrap/install.sh)
 #
-# Everything this script fetches is pinned to the same ref (default: the release
-# tag below), so the bootstrap is reproducible and cannot change under you when
-# `main` moves. Override the ref for development with REF=... or BRANCH=...
-# (e.g. BRANCH=main to test the latest unreleased state).
+# The template files this script fetches are pinned to one ref (default: the
+# release tag below), so they do not change under you when `main` moves. (Runtime
+# inputs -- npx/degit, skills@latest, the MCP package -- are not fully reproducible
+# yet; see docs/ROADMAP.md.) Override the ref for development with REF=... or
+# BRANCH=... (e.g. BRANCH=main to test the latest unreleased state).
 #
 # This script:
 #   1. Validates the environment (curl, git, npx).
@@ -23,8 +24,8 @@
 set -euo pipefail
 
 REPO="${REPO:-Kpakfar/ForgeWorks}"
-# Pinned, immutable release ref. Overridable for development (BRANCH=main, etc.).
-REF="${REF:-${BRANCH:-v1.0.0}}"
+# Pinned, versioned release ref. Overridable for development (BRANCH=main, etc.).
+REF="${REF:-${BRANCH:-v1.1.0}}"
 RAW="https://raw.githubusercontent.com/${REPO}/${REF}"
 
 echo "==> Bootstrapping AI project from ${REPO} (ref: ${REF})"
@@ -59,7 +60,10 @@ if [[ "${INITIALIZED}" -eq 1 ]]; then
   echo "    (Nothing here is overwritten; /upgrade-project reconciles non-destructively.)"
   mkdir -p .claude/skills
   npx --yes degit "${REPO}/upgrade-project#${REF}" .claude/skills/upgrade-project --force
-  printf '%s\n' "${REF}" > .claude/.template-version
+  # Do NOT stamp the version here: the existing `.claude/.template-version` is the
+  # project's "from" version. /upgrade-project reads it, then writes the new
+  # version only AFTER a successful upgrade. Stamping on kit install would destroy
+  # the from->to provenance and contradict "nothing here is overwritten".
   cat <<'EOF'
 
 ==> Upgrade kit installed.
@@ -106,16 +110,12 @@ Next steps:
   1. Open Claude Code in this directory:
        claude
 
-  2. Install the supporting skills (REQUIRED):
-       npx skills@latest add mattpocock/skills
-     Pick at minimum: tdd, grill-me, to-prd, caveman, write-a-skill, handoff
-     Use mattpocock/skills for the core loop (not the broader superpowers pack).
-     'tdd' is the Red -> Green -> Refactor methodology; 'grill-me' powers the
-     planning interview. The generated subagents pair with them.
-
-  3. In Claude Code, run:
+  2. In Claude Code, run:
        /init-project
      (or just say: "bootstrap this project")
+
+/init-project installs the supporting skills (tdd, grill-me, ... from
+mattpocock/skills) itself, then interviews you and generates the project.
 
 The init skill will interview you about scope and stack, then generate the full
 structure including a .mcp.json with Context7, a GitHub Actions CI workflow,

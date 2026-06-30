@@ -4,7 +4,7 @@
 # The FAST gate (inner loop) -- VERIFY ONLY, never mutates files. Runs in order:
 #   1. gofmt -l           (formatting is correct, but do not rewrite)
 #   2. go vet ./...       (suspicious-construct check)
-#   3. golangci-lint run  (lint; skipped with a warning if not installed)
+#   3. golangci-lint run  (lint; REQUIRED -- fails the gate if not installed)
 #   4. go test ./...      (unit + functional; e2e excluded -- needs the `e2e` tag)
 #
 # Each step must pass for the script to succeed. Because qa makes NO changes, it
@@ -29,11 +29,13 @@ go vet ./...
 
 echo
 echo "==> [3/4] golangci-lint run"
-if command -v golangci-lint >/dev/null 2>&1; then
-  golangci-lint run
-else
-  echo "golangci-lint not installed -- skipping (install: https://golangci-lint.run/)."
+if ! command -v golangci-lint >/dev/null 2>&1; then
+  echo "ERROR: golangci-lint is not installed -- the lint gate cannot run." >&2
+  echo "Install golangci-lint v2 (see https://golangci-lint.run/docs/welcome/install/)" >&2
+  echo "or use the provided dev container, which installs it. Aborting." >&2
+  exit 1
 fi
+golangci-lint run
 
 echo
 echo "==> [4/4] go test (unit + functional; e2e excluded)"

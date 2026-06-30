@@ -1,0 +1,91 @@
+name: CI
+
+# Tests the ForgeWorks template itself: validates the sources and proves each
+# complete language profile generates a project whose quality gate is GREEN on
+# the first run. This is the evidence behind the "complete profile" claim.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax (bash -n)
+        run: |
+          fail=0
+          while IFS= read -r f; do bash -n "$f" || fail=1; done < <(git ls-files '*.sh')
+          exit $fail
+      - name: JSON validity (excluding JSONC devcontainers)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            case "$f" in */.devcontainer/*) continue;; esac
+            python3 -m json.tool "$f" >/dev/null || { echo "bad JSON: $f"; fail=1; }
+          done < <(git ls-files '*.json')
+          exit $fail
+      - name: No unresolved placeholders outside templates
+        run: |
+          if git ls-files | grep -vE '^init-project/templates/' | xargs grep -l '{{[A-Z0-9_]*}}' 2>/dev/null; then
+            echo "Unresolved {{PLACEHOLDER}} outside templates/"; exit 1
+          fi
+
+  python-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv python install 3.12
+      - name: Generate Python project from the profile and run QA
+        run: |
+          mkdir -p /tmp/py && cp -R init-project/templates/profiles/python/. /tmp/py/
+          cd /tmp/py
+          mv pyproject.toml.example pyproject.toml
+          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g; s/{{PROJECT_GOAL}}/ci smoke/g' pyproject.toml
+          uv sync
+          uv run qa
+
+  typescript-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Generate TS project from the profile and run QA + audit
+        run: |
+          mkdir -p /tmp/ts && cp -R init-project/templates/profiles/typescript/. /tmp/ts/
+          cd /tmp/ts
+          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g; s/{{PROJECT_GOAL}}/ci smoke/g' package.json
+          npm install
+          npm run qa
+          npm audit --audit-level=high
+          npm run e2e
+
+  go-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Install golangci-lint (pinned, matches the profile)
+        run: |
+          curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.12.2
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Generate Go project from the profile and run QA
+        run: |
+          mkdir -p /tmp/go && cp -R init-project/templates/profiles/go/. /tmp/go/
+          cd /tmp/go
+          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g' go.mod
+          bash scripts/qa.sh

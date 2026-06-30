@@ -12,7 +12,7 @@ This skill brings an **existing** generated project up to the current template s
 - **Non-destructive.** Never overwrite a file that holds project content. Only create files that are absent, and only *insert into* existing files (never replace them wholesale).
 - **Idempotent.** Every step checks "already present?" first. Running the skill twice changes nothing the second time.
 - **Automate the safe part, assist the rest.** New placeholder-free files are copied automatically. Merges into hand-edited files (`AGENTS.md`, subagents, manifest) are proposed and shown before applying, because merging prose is a judgment call.
-- **Reconcile against the live template, not a hardcoded list.** The skill diffs the project against a fresh copy of `init-project/templates/base`, so files added to the template in future versions are picked up without changing this skill.
+- **Reconcile against the live template, not a hardcoded list.** The skill diffs the project against a fresh copy of `init-project/templates/core` plus the project's own `init-project/templates/profiles/<lang>`, so files added to the template in future versions are picked up without changing this skill.
 
 ## When this skill runs
 
@@ -42,7 +42,7 @@ The upgrade has no interview answers on hand, so recover what it needs from the 
 - **Language** -- from the manifest file present (`pyproject.toml` -> Python, `package.json` -> TypeScript, `Cargo.toml` -> Rust, `go.mod` -> Go).
 - **AI features?** -- detect a `prompts/` dir, an LLM SDK in the manifest, or an existing `<ai-discipline>` block. Confirm with the user (yes/no).
 - **Codex available?** -- ask the user (yes/no); cannot be detected.
-- **Current version stamp** -- read `.claude/.template-version` if present (informational: "upgrading from X to <current>").
+- **Current version stamp ("from" version)** -- read `.claude/.template-version` if present. This is the project's real source version (install.sh does NOT overwrite it). Hold it for the from->to report; it is rewritten only in Phase 4 after a successful upgrade.
 
 Ask the user only for what you could not detect. Keep it to 2-3 questions.
 
@@ -51,13 +51,13 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.0.0 /tmp/upgrade-core --force
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.0.0 /tmp/upgrade-profile --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.0 /tmp/upgrade-core --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.0 /tmp/upgrade-profile --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain.
 
-Reconcile against this skill's own released version (`v1.0.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- an immutable, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v1.1.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -84,11 +84,11 @@ Walk the template tree. For every template path, decide and act:
 - Add the separate `e2e` job to `.github/workflows/qa.yml`.
 For other languages, leave clearly-marked TODOs and report them.
 
-### Phase 4: Stamp, verify, report
+### Phase 4: Verify, then stamp, then report
 
-1. Write the current version to `.claude/.template-version`.
-2. If new scripts/hooks were added, `chmod +x` them.
-3. Run the project's quality gate (`docs/language-standards.md` has the command) and confirm it still passes. If a newly added marker or dependency broke it, fix that before finishing.
+1. If new scripts/hooks were added, `chmod +x` them.
+2. Run the project's quality gate (`docs/language-standards.md` has the command) and confirm it still passes. If a newly added marker or dependency broke it, fix that before finishing.
+3. **Only after the gate passes,** write the new version to `.claude/.template-version` -- overwriting the "from" version you recorded in Phase 1. Stamp last, so an upgrade that fails partway leaves the old stamp intact and is safe to re-run. (`install.sh` does NOT stamp; this is the single place the version is written.)
 4. Report, in three buckets:
    - **Added automatically** (the additive files).
    - **Merged** (which `AGENTS.md` blocks / subagent sections were inserted).
@@ -106,4 +106,4 @@ For other languages, leave clearly-marked TODOs and report them.
 
 ## Note for template maintainers
 
-This skill reconciles against `templates/base`, so a **new always-on, placeholder-free file** added to the template is picked up automatically. You must touch this skill only when you add: a file with new tooling placeholders (extend the Phase 3-A special cases), a new `AGENTS.md` rule block that needs explicit detection, or a tooling-delta step for a language profile (extend Phase 3-C). See the repo `AGENTS.md` `<editing-the-upgrade-skill>`.
+This skill reconciles against `templates/core` + the project's `templates/profiles/<lang>`, so a **new always-on, placeholder-free file** added to `core/` is picked up automatically. You must touch this skill only when you add: a file with new tooling placeholders (extend the Phase 3-A special cases), a new `AGENTS.md` rule block that needs explicit detection, or a tooling-delta step for a language profile (extend Phase 3-C). See the repo `AGENTS.md` `<editing-the-upgrade-skill>`.

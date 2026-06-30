@@ -11,6 +11,9 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: check-json
+        # .devcontainer/*.json is JSONC (comments allowed by the devcontainer
+        # spec) and would fail strict check-json.
+        exclude: ^\.devcontainer/
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ['--maxkb=500']

@@ -38,7 +38,7 @@ AGENTS.md                          # the constitution (read first, every convers
 CLAUDE.md                          # symlink to AGENTS.md (for Claude Code compatibility)
 
 CI:
-.github/workflows/qa.yml           # fast quality gate + separate end-to-end job, on every push and PR
+.github/workflows/qa.yml           # fast quality gate + separate e2e job, on PRs and pushes to main
 .github/pull_request_template.md   # short PR checklist
 
 Dev environment:
