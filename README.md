@@ -2,6 +2,8 @@
 
 > One command turns an empty folder into a structured, TDD-driven, security-gated project — built for **agentic coding**.
 
+**You don't need a senior engineering team to build like one.** Bring the idea — ForgeWorks wraps your AI coding agent in a senior team's discipline (planning, a real test pyramid, a security review, a second-opinion reviewer), so a product manager, a designer, or a first-week coder can turn a prompt into a product that's actually tested, secure, and shippable — not a throwaway demo.
+
 It is not a starter app. It installs the rules, specialist roles, and deterministic gates that make an AI coding agent produce code you can actually review, ship, and maintain. The core is stack-agnostic; your language and tooling are chosen in a short interview, not hard-coded.
 
 ```bash
