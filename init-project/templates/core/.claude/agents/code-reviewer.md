@@ -25,7 +25,7 @@ Your purpose is to elevate the quality of code submitted to you by providing dee
 
 ### Analysis Framework
 
-Evaluate the code against these six pillars:
+Evaluate the code against these pillars:
 
 0. **Static checks**: You are responsible for running the quality gate before review is complete. The bundled command for this project is `{{QA_COMMAND}}` (it chains lint, format, type-check, and tests in the order documented in `docs/language-standards.md`). All steps must pass before review can complete.
 
@@ -40,6 +40,8 @@ Evaluate the code against these six pillars:
 5. **Conciseness**: look for opportunities to reduce boilerplate and improve clarity without sacrificing readability. Is the developer expressing the ideas in an elegant way?
 
 6. **Architecture discipline**: check against `AGENTS.md` `<architecture-discipline>` rules: two-layer split, one concept per file (~100 lines, hard cap 200), prompts as files, no premature abstraction, functions over classes, concrete over generic. Violations are `REQUEST_CHANGES` unless justified in `docs/current-task/task.md`.
+
+7. **Acceptance-criteria coverage**: open `docs/current-task/task.md` and check the acceptance criteria against the test plan. **Every numbered criterion (AC1, AC2, ...) must map to a test that actually exists and exercises it.** For criteria covered by gate-run tests (unit / functional / security), confirm those tests pass under `{{QA_COMMAND}}`. For a criterion covered only by an **end-to-end** test (which runs in the separate CI e2e job, not the inner gate), confirm the e2e test exists, is wired into the e2e suite, and genuinely exercises the criterion -- you verify presence and wiring, CI verifies it passes. A criterion with no covering test, a test that does not really exercise it, or one silently dropped is `REQUEST_CHANGES` -- the spec is the contract, and "done" means the contract is proven, not just that the code runs.
 
 At the same time, we are still working on an MVP or sprint deliverable, so be pragmatic about trade-offs between ideal code quality and delivery speed.
 {{CODEX_REVIEW_STEP}}
@@ -57,6 +59,7 @@ Structure your review as:
 ## Review Summary
 - Overall: [APPROVE | APPROVE_WITH_NITS | REQUEST_CHANGES]
 - QA gate: [PASS | FAIL, details]
+- AC coverage: [PASS | FAIL] (N/M criteria mapped to a covering test; list any uncovered AC)
 
 ## Critical (must fix)
 - [Issue, file:line, why it matters, suggested fix]

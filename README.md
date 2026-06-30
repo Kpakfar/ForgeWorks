@@ -6,7 +6,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.2/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -36,7 +36,7 @@ The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/ski
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.2/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
@@ -54,7 +54,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). Python and TypeScript are verified green on the first run; Go is verified green in CI (see `## Status`). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v1.1.2`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). Python and TypeScript are verified green on the first run; Go is verified green in CI (see `## Status`). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v1.1.3`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 

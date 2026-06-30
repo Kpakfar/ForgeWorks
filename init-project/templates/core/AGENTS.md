@@ -173,7 +173,7 @@ At the start of any non-trivial slice, the main-context agent runs a planning pa
 - **Riskiest assumption.** The one thing that, if wrong, sinks the slice. Plan to test it first.
 - **Explicit non-goals.** What this slice deliberately does NOT do. Push those to `docs/proposals-ideas.md` or a new backlog row.
 - **Data shapes.** The shape of the data crossing each boundary (request, response, stored record, tool I/O).
-- **Test plan.** Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`. e2e and functional specs are written in the same Red phase as the unit specs.
+- **Acceptance criteria as a contract.** Write numbered, observable criteria (AC1, AC2, ...) and map each to the test(s) that prove it. A criterion with no test isn't testable as written; "done" means every criterion has a covering test -- gate-run tests pass under `{{QA_COMMAND}}`, and an e2e-only criterion is verified present/wired (CI runs it). Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`, in the same Red phase.
 - **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice makes a significant visual or UX choice, the plan includes building a mockup to decide from (see `<design-discipline>`).
 
 **Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then summarize the plan back and get explicit sign-off before any code.

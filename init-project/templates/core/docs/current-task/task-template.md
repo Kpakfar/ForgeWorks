@@ -15,9 +15,15 @@
 
 ## Acceptance criteria
 
-- [ ]
-- [ ]
-- [ ]
+The contract for this task: numbered (slice-scoped `AC1..n`), observable, each one
+proven by a test named in the test plan below, and each citing the iteration
+`REQ-AC` it advances (from `docs/requirements.md`). The task is not done until every
+criterion maps to a covering test (gate-run tests pass; an e2e-only criterion is
+present and run by CI -- the reviewer checks the mapping).
+
+- [ ] **AC1** (advances REQ-AC?):
+- [ ] **AC2** (advances REQ-AC?):
+- [ ] **AC3** (advances REQ-AC?):
 
 ## Relevant docs and files
 
@@ -40,10 +46,16 @@
 
 ### Test plan (name every test before code -- see <test-discipline>)
 
+Tag each test with the acceptance criterion it proves (`(AC1)`, `(AC2)`, ...). Every
+AC above must appear on at least one line here; if one doesn't, it isn't testable as
+written -- sharpen the criterion.
+
 - [ ] Unit:
 - [ ] Functional / API:
 - [ ] End-to-end (headless browser if UI, else full request->state):
 - [ ] Security / red-team (if the slice adds an attack surface):
+
+**Coverage:** AC1 -> ; AC2 -> ; AC3 -> .
 
 ## Spec (by test-spec-writer)
 

@@ -2,7 +2,7 @@
 
 **Verified:** 2026-06-30
 
-**Release:** `v1.1.2` / `86a2f4d`
+**Release:** `v1.1.3` / `86a2f4d`
 
 **Purpose:** independent verification after the v1.0.0 and v1.1.0 audit remediations.
 
@@ -14,7 +14,7 @@ It is still not a deterministic production bootstrapper: generation remains an A
 
 **Before calling the portfolio review finished, fix V1 below.** It is a real false-positive in the new render test. The remaining V2 items are polish or acknowledged roadmap work.
 
-| Area | v1.0.0 | v1.1.2 | Assessment |
+| Area | v1.0.0 | v1.1.3 | Assessment |
 |---|---:|---:|---|
 | Product and positioning | 8/10 | 8/10 | Strong, differentiated product idea. |
 | First-use UX | 5/10 | 7/10 | Setup contradictions largely removed; full flow is still agent-driven. |
@@ -27,7 +27,7 @@ It is still not a deterministic production bootstrapper: generation remains an A
 
 ## Verified resolved
 
-- Release `v1.1.2` points at current `main`; `VERSION` is `1.1.1` and the installer/docs are pinned to that tag.
+- Release `v1.1.3` points at current `main`; `VERSION` is `1.1.1` and the installer/docs are pinned to that tag.
 - Exact release CI run [28442058120](https://github.com/Kpakfar/ForgeWorks/actions/runs/28442058120) passed sources, render-smoke, deps-guard, Python, TypeScript, and Go jobs.
 - `CLAUDE.md` is again a real `120000` symlink to `AGENTS.md`, and CI protects it.
 - Python profile: manifest rename is explicit; QA and JSONC-aware pre-commit were previously re-tested green.

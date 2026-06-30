@@ -2,7 +2,7 @@
 # install.sh - Bootstrap a new project from this template.
 #
 # Usage (pinned to a versioned release tag -- recommended):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.2/bootstrap/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bootstrap/install.sh)
 #
 # The template files this script fetches are pinned to one ref (default: the
 # release tag below), so they do not change under you when `main` moves. (Runtime
@@ -25,7 +25,7 @@ set -euo pipefail
 
 REPO="${REPO:-Kpakfar/ForgeWorks}"
 # Pinned, versioned release ref. Overridable for development (BRANCH=main, etc.).
-REF="${REF:-${BRANCH:-v1.1.2}}"
+REF="${REF:-${BRANCH:-v1.1.3}}"
 RAW="https://raw.githubusercontent.com/${REPO}/${REF}"
 
 echo "==> Bootstrapping AI project from ${REPO} (ref: ${REF})"

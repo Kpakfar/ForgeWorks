@@ -27,11 +27,15 @@ The single flow this project must support well in the first iteration:
 
 ## Acceptance criteria (MVP)
 
-Derived from the core flow above. Make each one demonstrable.
+Derived from the core flow above. Numbered and observable -- these are the
+**iteration-level** contract (REQ-AC1, REQ-AC2, ...). A slice's
+`docs/current-task/task.md` has its own slice-scoped `AC1..n` that each cite the
+`REQ-AC` they advance, and a test proves each. (Distinct numbering avoids confusing
+iteration criteria with a slice's.)
 
-- [ ] TODO: criterion 1
-- [ ] TODO: criterion 2
-- [ ] TODO: criterion 3
+- [ ] **REQ-AC1:** TODO
+- [ ] **REQ-AC2:** TODO
+- [ ] **REQ-AC3:** TODO
 
 ## Stack
 
