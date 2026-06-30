@@ -53,6 +53,17 @@ COMMON = dict(
 FENCE = [r"<!-- AI-SECURITY-START -->.*?<!-- AI-SECURITY-END -->\n",
          r"<!-- AI-REDTEAM-START -->.*?<!-- AI-REDTEAM-END -->\n"]
 
+# Hidden files/dirs (.claude, .github, .env.example, ...) that MUST be visited.
+# glob('**/*') silently skips dotfiles, so we walk instead and assert coverage.
+SENTINELS = (".claude/hooks/quality-gate.sh", ".github/workflows/qa.yml", ".env.example")
+
+
+def all_files(root: str) -> list[str]:
+    out = []
+    for dirpath, _, names in os.walk(root):  # os.walk includes dotfiles/dirs
+        out += [os.path.join(dirpath, n) for n in names]
+    return out
+
 
 def render(lang: str, out: str) -> list[str]:
     shutil.copytree(f"{T}/core", out)
@@ -70,25 +81,26 @@ def render(lang: str, out: str) -> list[str]:
         s = re.sub(pat, "", s, flags=re.S)
     open(sec, "w").write(s)
     mapping = {**COMMON, **PROFILE[lang]}
-    for f in glob.glob(f"{out}/**/*", recursive=True):
-        if not os.path.isfile(f):
-            continue
+    for f in all_files(out):
         try:
             c = open(f, encoding="utf-8").read()
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, IsADirectoryError):
             continue
         for k, v in mapping.items():
             c = c.replace("{{%s}}" % k, v)
         open(f, "w", encoding="utf-8").write(c)
     leftover = []
-    for f in glob.glob(f"{out}/**/*", recursive=True):
-        if os.path.isfile(f):
-            try:
-                leftover += re.findall(r"\{\{[A-Z0-9_]+\}\}", open(f, encoding="utf-8").read())
-            except UnicodeDecodeError:
-                pass
+    for f in all_files(out):
+        try:
+            leftover += re.findall(r"\{\{[A-Z0-9_]+\}\}", open(f, encoding="utf-8").read())
+        except (UnicodeDecodeError, IsADirectoryError):
+            pass
     if not os.path.exists(os.path.join(out, mapping["MANIFEST_FILE"])):
         leftover.append("<missing manifest %s>" % mapping["MANIFEST_FILE"])
+    # Assert the hidden files were actually present and visited.
+    for s in SENTINELS:
+        if not os.path.exists(os.path.join(out, s)):
+            leftover.append("<sentinel not rendered: %s>" % s)
     return leftover
 
 

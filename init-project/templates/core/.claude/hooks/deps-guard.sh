@@ -50,9 +50,11 @@ fi
 # code. Flags may appear before the package name. (Lockfile installs such as
 # `npm ci`, `uv sync`, `pip install -r` do not match.)
 pkg='([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]"'"'"']'
-# Remote-execute forms (run an arbitrary remote package): npx / bunx / uvx,
-# pnpm|yarn dlx, npm exec, and npm --prefix ... install.
-remote_exec='(npx|bunx|uvx)[[:space:]]+[^-[:space:]]|(pnpm|yarn)[[:space:]]+dlx[[:space:]]+[^-[:space:]]|npm[[:space:]]+exec[[:space:]]|npm[[:space:]]+--prefix[[:space:]]'
+# Remote-execute forms (run an arbitrary remote package): npx / bunx / uvx and
+# pnpm|yarn dlx (flags such as -y / --yes / --from may precede the package),
+# npm exec, and `npm --prefix <dir>` when it is an install/add/exec (not e.g.
+# `npm --prefix . test`, which installs nothing).
+remote_exec='(npx|bunx|uvx)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|(pnpm|yarn)[[:space:]]+dlx([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|npm[[:space:]]+exec[[:space:]]|npm[[:space:]]+--prefix[[:space:]]+[^[:space:]]+[[:space:]]+(install|add|i|exec|ci)'
 if printf '%s' "$cmd" | grep -Eq \
   "(npm|pnpm|yarn|bun)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(install|add|i)${pkg}|pip3?[[:space:]]+install${pkg}|pipx[[:space:]]+(install|run|inject)${pkg}|uv[[:space:]]+(add|pip[[:space:]]+install)${pkg}|poetry[[:space:]]+add${pkg}|cargo[[:space:]]+(add|install|update)|go[[:space:]]+(get|install)${pkg}|gem[[:space:]]+install${pkg}|${remote_exec}"; then
   {

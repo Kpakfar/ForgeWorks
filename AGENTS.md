@@ -55,7 +55,7 @@ When you ship a backport that changes the generated structure, bump `VERSION` (s
 </editing-the-upgrade-skill>
 
 <testing-changes>
-The template cannot be unit-tested in the usual sense -- the only way to validate a change is to bootstrap a throwaway project and inspect what landed.
+Root CI (`.github/workflows/ci.yml`) smoke-tests every push -- it renders each profile (no leftover placeholders), runs each profile's quality gate, and exercises the deps-guard. Beyond that, the way to fully validate a change is to bootstrap a throwaway project and inspect what landed.
 
 ```bash
 # In an empty directory outside this repo. The published one-liner is pinned to a

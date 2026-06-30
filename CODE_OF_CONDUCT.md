@@ -25,9 +25,10 @@ when an individual is representing the project in public spaces.
 
 ## Enforcement
 
-Report unacceptable behavior privately via the repository's **Security** tab
-(private advisory) or to the maintainer. Reports will be reviewed and handled
-confidentially. Maintainers may remove, edit, or reject contributions that violate
+Report unacceptable behavior privately to the maintainer (via their GitHub
+profile). Conduct reports go to the maintainer directly -- not through the
+Security advisory channel, which is reserved for vulnerabilities. Reports are
+reviewed and handled confidentially. Maintainers may remove, edit, or reject contributions that violate
 this Code, and may ban contributors for serious or repeated violations.
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.

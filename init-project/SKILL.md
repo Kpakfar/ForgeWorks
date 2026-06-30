@@ -150,9 +150,9 @@ Save the location (URL or path) for each. If the user has nothing for the positi
 
 Yes / No. Default: No.
 
-#### Q12. Seed `gotchas.md` with two starter entries (opt-in)
+#### Q12. Seed `gotchas.md` with three starter entries (opt-in)
 
-> "Do you want `docs/gotchas.md` pre-seeded with two generic lessons (patch the cause not the symptom; trust artifacts not summaries)? Demonstrates the file's purpose and shape."
+> "Do you want `docs/gotchas.md` pre-seeded with three generic lessons (patch the cause not the symptom; trust artifacts not summaries; handle external I/O at one boundary)? Demonstrates the file's purpose and shape."
 
 Yes / No. Default: Yes.
 
@@ -256,7 +256,7 @@ After the base substitution pass, apply these rules:
 
 2. **Per-slice explanation memos (Q11).** If `{{GENERATE_EXPLANATIONS}}` is `no`: delete `docs/explanations/` from the generated tree. If `yes`: leave the README in place (it ships in the template).
 
-3. **Gotchas seed (Q12).** If `{{SEED_GOTCHAS}}` is `yes`: append the two starter entries below to `docs/gotchas.md`, inserted between the `## Entries` heading and the `## Generic lessons` section.
+3. **Gotchas seed (Q12).** If `{{SEED_GOTCHAS}}` is `yes`: append the three starter entries below to `docs/gotchas.md`, inserted between the `## Entries` heading and the `## Generic lessons` section.
 
    ```
    ### [General] Patch the cause, not the symptom
@@ -343,7 +343,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.1" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.2" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
@@ -708,7 +708,7 @@ If they proceed, copy `templates/core/` only, leave clearly-marked TODOs in `doc
 ## Failure modes and how to handle them
 
 **The user can't decide on a language.**
-Default to Python (the only fully-supported profile). Don't let analysis paralysis block progress.
+Python, TypeScript, and Go are all complete profiles; default to Python if there is no other signal. Don't let analysis paralysis block progress.
 
 **The user wants to skip the interview.**
 OK, but require minimum answers: project name, language, dev container yes/no. Skip everything else and generate with sensible defaults. Leave TODO markers in `requirements.md` for them to fill in later.

@@ -39,12 +39,12 @@ The init-project skill will interview the user about scope and stack, then gener
 - `.mcp.json` with Context7 MCP server wired up for live library docs lookup
 - `.github/workflows/qa.yml` (CI: fast quality gate plus a separate end-to-end job on push and PR)
 - `.github/pull_request_template.md` (short PR checklist)
-- `.pre-commit-config.yaml` (local pre-commit hooks)
+- `.pre-commit-config.yaml` (Python profile only; TypeScript/Go use their qa gate + CI)
 - `docs/` with templates filled in from the interview, including `language-standards.md` and `SECURITY.md`
 - `.devcontainer/` if requested
-- `scripts/` with the language-specific quality-gate runner and a separate end-to-end runner
-- The chosen language's manifest file (`pyproject.toml`, `package.json`, `Cargo.toml`, etc.)
-- A working environment via the chosen package manager (`uv sync`, `pnpm install`, etc.), unless dev container is chosen
+- The chosen language's runners: a verify-only quality gate, a local fix, and a separate end-to-end runner (shell scripts for Python/Go; npm scripts for TypeScript)
+- The chosen language's manifest file (`pyproject.toml`, `package.json`, or `go.mod`)
+- A working environment via the chosen package manager (`uv sync` / `npm install` / `go mod download`), unless a dev container is chosen
 </bootstrap-mode>
 
 <development-process>

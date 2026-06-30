@@ -51,13 +51,13 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.1 /tmp/upgrade-core --force
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.1 /tmp/upgrade-profile --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.2 /tmp/upgrade-core --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.2 /tmp/upgrade-profile --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain.
 
-Reconcile against this skill's own released version (`v1.1.1`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v1.1.2`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 

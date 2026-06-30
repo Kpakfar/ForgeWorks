@@ -28,7 +28,9 @@ for c in \
   'pip install -U requests' 'pipx install x' 'poetry add flask' \
   'cargo add serde' 'cargo install ripgrep' 'cargo update' \
   'go get example.com/x' 'go install example.com/x@latest' 'gem install x' \
-  'npx cowsay' 'bunx evil' 'uvx evil' 'pnpm dlx evil' 'yarn dlx evil' 'npm exec evil' \
+  'npx cowsay' 'npx -y cowsay' 'npx --yes cowsay' 'bunx evil' 'uvx evil' \
+  'uvx --from pkg cmd' 'pnpm dlx evil' 'yarn dlx evil' 'npm exec evil' \
+  'npm --prefix . install evil' \
   'echo DEPS_VETTED && npm install evil' 'DEPS_VETTED=0 npm install evil'; do
   expect 2 "$c"
 done
@@ -38,7 +40,7 @@ for c in \
   'DEPS_VETTED=1 uv add httpx' 'DEPS_VETTED=1 npx playwright install' \
   'uv sync' 'npm ci' 'pnpm install' 'pip install -r requirements.txt' \
   'pip install -e .' 'poetry install' 'go build ./...' 'go mod download' \
-  'cargo build' 'ls -la && echo hi' 'git status'; do
+  'cargo build' 'npm --prefix . test' 'ls -la && echo hi' 'git status'; do
   expect 0 "$c"
 done
 
