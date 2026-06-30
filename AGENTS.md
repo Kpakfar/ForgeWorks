@@ -32,7 +32,7 @@ When editing files in `init-project/templates/`:
 - **Conditional files.** Files that should NOT ship when an opt-in is `no` (`docs/explanations/`, `docs/memory.md`) live in the template folder unconditionally; `SKILL.md` Phase 4 deletes them from the generated tree when the opt-in is off. New conditional files follow the same pattern.
 - **Conditional content inside always-on files.** `docs/SECURITY.md` ships for every project, but its LLM/agent sections are fenced with `<!-- AI-SECURITY-START/END -->` and `<!-- AI-REDTEAM-START/END -->` markers; `SKILL.md` Phase 4 rule 5 keeps or strips them by Q6. Fence any future sometimes-on content the same way.
 - **Security files are always-on and stack-neutral.** `docs/SECURITY.md`, `.claude/settings.json`, `.claude/hooks/deps-guard.sh`, `.claude/agents/security-reviewer.md`, and `.claude/agents/tech-debt.md` ship unchanged for every language. Keep their wording stack-agnostic; the LLM-specific security rules live only in the fenced sections and the conditional `<ai-discipline>` block.
-- **Line caps.** The architecture rules apply to template files too. Target ~100 lines per file; hard cap 200.
+- **Line caps.** The ~100-line target / 200-line hard cap applies to **generated project files** -- everything under `templates/core/` and `templates/profiles/` (it becomes someone else's code). It does NOT apply to the generator/meta files: `init-project/SKILL.md`, `upgrade-project/SKILL.md`, and this repo's `AGENTS.md` are reference documents (interview + emission logic) and are necessarily longer.
 </editing-the-template>
 
 <editing-the-skill>

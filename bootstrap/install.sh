@@ -2,7 +2,7 @@
 # install.sh - Bootstrap a new project from this template.
 #
 # Usage (pinned to a versioned release tag -- recommended):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.0/bootstrap/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.1/bootstrap/install.sh)
 #
 # The template files this script fetches are pinned to one ref (default: the
 # release tag below), so they do not change under you when `main` moves. (Runtime
@@ -17,7 +17,7 @@
 #      .claude/skills/init-project/ using `npx degit`.
 #   4. Prints next steps.
 #
-# Language-specific prerequisites (uv, pnpm, cargo, go, etc.) are NOT
+# Language-specific prerequisites (uv, npm, go, cargo, etc.) are NOT
 # checked here. /init-project asks you the language and verifies its
 # package manager once the choice is made.
 
@@ -25,7 +25,7 @@ set -euo pipefail
 
 REPO="${REPO:-Kpakfar/ForgeWorks}"
 # Pinned, versioned release ref. Overridable for development (BRANCH=main, etc.).
-REF="${REF:-${BRANCH:-v1.1.0}}"
+REF="${REF:-${BRANCH:-v1.1.1}}"
 RAW="https://raw.githubusercontent.com/${REPO}/${REF}"
 
 echo "==> Bootstrapping AI project from ${REPO} (ref: ${REF})"
@@ -115,12 +115,9 @@ Next steps:
      (or just say: "bootstrap this project")
 
 /init-project installs the supporting skills (tdd, grill-me, ... from
-mattpocock/skills) itself, then interviews you and generates the project.
-
-The init skill will interview you about scope and stack, then generate the full
-structure including a .mcp.json with Context7, a GitHub Actions CI workflow,
-a PR template, pre-commit config, and (for fully-supported languages) a working
-venv or equivalent. Language-specific prerequisites (uv for Python, pnpm for
-TypeScript, etc.) are checked by /init-project after you pick a language.
+mattpocock/skills), interviews you about scope and stack, then generates the full
+project for your chosen language (Python, TypeScript, or Go): AGENTS.md, a .mcp.json
+with Context7, CI, a PR template, and a green-on-first-run scaffold. It checks the
+language's package manager (uv / npm / go) after you pick.
 
 EOF

@@ -30,6 +30,6 @@ This is the **self-improvement memory** of the project. Agents update this after
 
 ## Generic lessons (candidates for backporting to template)
 
-When a gotcha is **truly generic** (would apply to any AI engineering project, not just this one), flag it here. During periodic reviews, decide whether to backport to `~/ForgeWorks/`.
+When a gotcha is **truly generic** (would apply to any AI engineering project, not just this one), flag it here. During periodic reviews, decide whether to backport to the ForgeWorks template.
 
 <!-- Add generic lessons here. -->

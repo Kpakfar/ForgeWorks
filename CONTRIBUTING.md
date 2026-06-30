@@ -23,8 +23,10 @@ the profile; `core/` must work for every language. See `AGENTS.md`
 
 ## Testing a change
 
-The template can't be unit-tested; bootstrap a throwaway project and inspect what
-landed. In an empty directory outside this repo:
+Root CI (`.github/workflows/ci.yml`) smoke-tests the template on every push: it
+renders each profile (no leftover placeholders), runs each profile's quality gate
+green, and exercises the deps-guard. For a full check, also bootstrap a throwaway
+project and inspect what landed. In an empty directory outside this repo:
 
 ```bash
 mkdir /tmp/forgeworks-smoke && cd /tmp/forgeworks-smoke && git init

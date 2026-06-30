@@ -10,10 +10,10 @@ tool does mechanically versus what is still future work.
   (language-free files: `AGENTS.md`, docs, security files, `.mcp.json`, CI shape)
   plus exactly one `init-project/templates/profiles/<lang>/`. No second language's
   files ever leak in.
-- **Language profiles.** Python, TypeScript, and Go are complete profiles. Python
-  and TypeScript are verified green on the first run; **Go is config-verified,
-  pending a CI run**. Rust and "Other" are not built — the interview says so and
-  asks for consent before continuing.
+- **Language profiles.** Python, TypeScript, and Go are complete profiles, each
+  **verified green on the first run by the root CI** (`.github/workflows/ci.yml`).
+  Rust and "Other" are not built — the interview says so and asks for consent
+  before continuing.
 - **Generation.** The interview and file substitution are driven by an AI agent
   following `init-project/SKILL.md`, in Claude Code today.
 - **Portability.** The rules and docs (`AGENTS.md`, symlinked to `CLAUDE.md`) are
@@ -33,7 +33,5 @@ tool does mechanically versus what is still future work.
 - **Cross-agent parity beyond `AGENTS.md` is future.** Other agents inherit the
   rules and docs, but dedicated adapters that reproduce the Claude Code subagents,
   hooks, and MCP orchestration elsewhere are not built.
-- **Run-verify the Go profile.** Confirm `go test` green on a real Go toolchain
-  (or via the first CI run) to move Go from config-verified to run-verified.
 - **A Rust profile is not built.** It is an experimental slot, not a complete
   profile.

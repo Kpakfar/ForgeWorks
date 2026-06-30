@@ -306,8 +306,8 @@ After the base substitution pass, apply these rules:
    If `{{USE_MEM0}}` is `no`: delete `docs/memory.md`, render `{{MEMORY_DOC_LINE}}` as an empty string, do not insert the `<memory>` block, do not add the dep.
 
 5. **Security profile (Q14).** `docs/SECURITY.md`, `.claude/settings.json` (deps-guard hook), `.claude/hooks/deps-guard.sh`, and `.claude/agents/security-reviewer.md` always ship -- the universal risks (access control, secrets, supply chain) apply to every project. Then adjust for the AI answer:
-   - If **any AI feature** was selected (Q6): in `docs/SECURITY.md`, remove only the fence comment lines (`<!-- AI-SECURITY-START -->`, `<!-- AI-SECURITY-END -->`, `<!-- AI-REDTEAM-START -->`, `<!-- AI-REDTEAM-END -->`) and keep the LLM/agent sections.
-   - If **no AI feature** was selected: delete the whole fenced blocks (the markers and everything between them) from `docs/SECURITY.md`.
+   - If **any AI feature** was selected (Q6): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`) and keep the content.
+   - If **no AI feature** was selected: delete the whole fenced blocks (markers and everything between) -- the AI sections of `docs/SECURITY.md` AND the `## AI features in scope` block of `docs/requirements.md`. A non-AI project ships no AI/RAG TODOs.
    - Seed the `## Attack surface` table and the trifecta line from the Q14 answers (reads untrusted / holds private / acts outward). If all three are `yes` for a single LLM agent, write an explicit note in `docs/SECURITY.md` and `docs/requirements.md` that the lethal trifecta is present and must be broken (split the agent, drop a capability, or gate the action behind a human).
 
 6. **Codex reviewer (Q15).** Two separate placeholders (one value each, so plain string-replace stays correct): `{{CODEX_REVIEW_STEP}}` in `.claude/agents/code-reviewer.md`, and `{{CODEX_ROSTER_NOTE}}` in the `<agent-roster>` of `AGENTS.md`.
@@ -343,7 +343,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.1" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies

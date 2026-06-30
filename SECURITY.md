@@ -7,13 +7,13 @@ ships into every project ForgeWorks creates.
 
 ## Reporting a vulnerability
 
-If you find a vulnerability in ForgeWorks itself, please report it privately:
-open a **private security advisory** from the repository's **Security** tab on
-GitHub (`Security` → `Advisories` → `Report a vulnerability`). If you can't use a
-private advisory, open a GitHub issue describing the impact without including a
-working exploit, and we'll move it to a private channel.
+If you find a vulnerability in ForgeWorks itself, please report it **privately**:
+open a private security advisory from the repository's **Security** tab on GitHub
+(`Security` → `Advisories` → `Report a vulnerability`). Private vulnerability
+reporting is enabled, so this channel is always available.
 
-Please don't disclose publicly until a fix is available.
+Please do **not** open a public issue for an undisclosed vulnerability, and don't
+disclose publicly until a fix is available.
 
 ## Scope and limitations
 

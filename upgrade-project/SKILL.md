@@ -51,13 +51,13 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.0 /tmp/upgrade-core --force
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.0 /tmp/upgrade-profile --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.1 /tmp/upgrade-core --force
+npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.1 /tmp/upgrade-profile --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain.
 
-Reconcile against this skill's own released version (`v1.1.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v1.1.1`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -71,18 +71,17 @@ Walk the template tree. For every template path, decide and act:
   *Special cases:*
   - `.claude/settings.json` -- if the project already has one, **merge** the `PreToolUse` deps-guard hook into the existing `hooks` object; never replace the file (that would drop the project's own hooks).
   - `docs/SECURITY.md` -- after substituting `{{PROJECT_NAME}}`: if the project uses AI, delete only the `<!-- AI-SECURITY-START/END -->` and `<!-- AI-REDTEAM-START/END -->` marker lines (keep the content); if not, delete those fenced blocks entirely.
-  - `scripts/e2e.sh` -- the template's copy is Python-specific. Copy it only for a Python project; for other languages write a stub (`echo "TODO: e2e"; exit 0`) and report it.
+  - **Profile files come from the project's OWN profile** (Phase 2 pulled `profiles/<lang>/`). Copy them verbatim where absent -- including that language's real `scripts/` (Python and Go have `scripts/e2e.sh`; TypeScript runs e2e via an `npm run e2e` script in `package.json`). Never substitute another language's runner or a stub for a complete profile; the Go profile has a real e2e runner.
 
 **B. File PRESENT in both (merge target).** Compare the template version against the project's. Insert what is new, preserve what the project filled in. Never blow away the project's content.
 - **`AGENTS.md`** -- the high-value merge. Identify rule blocks the current template has that the project's `AGENTS.md` lacks (likely `<security-discipline>`, `<test-discipline>`, `<planning-discipline>`, `<recurring-reviews>`, the bounded-DRY bullet, the updated `<quality-gate>` and `<agent-roster>`). Insert each missing block in the same position it sits in the template, leaving the project's existing blocks, filled style references, `{{...}}`-substituted values, and the trailing project-metadata comment untouched. For a block present in both but materially changed, show the project and template versions side by side and let the user choose. **Renamed/superseded blocks:** a new block can replace an old-named one (e.g. `<planning-discipline>` superseded `<starting-a-slice>`). After grafting the new block, check for an old block in the project whose role it replaces and flag it as superseded for the user to remove -- do not silently delete it. Known supersessions: `<starting-a-slice>` -> `<planning-discipline>`. Show the full set of proposed insertions before writing.
 - **Subagents** (`implementer.md`, `test-spec-writer.md`, `code-reviewer.md`) -- graft sections the template added (e.g. the implementer "step back / full picture" section, the test-spec-writer pyramid table, the `{{CODEX_REVIEW_STEP}}` slot) if absent. If the user customized a subagent, surface the diff rather than overwriting.
 
-**C. Tooling delta (language-gated).** Apply the toolchain changes the current version introduced. For **Python**:
-- Add the `e2e` and `security` pytest markers to `[tool.pytest.ini_options].markers` (required: with `--strict-markers`, an unregistered `e2e` marker breaks the gate).
-- Add `pytest-playwright` to the dev dependency group.
-- Change the test step in `scripts/qa.sh` to `pytest -m "not e2e"` so the fast gate excludes e2e.
-- Add the separate `e2e` job to `.github/workflows/qa.yml`.
-For other languages, leave clearly-marked TODOs and report them.
+**C. Tooling delta (language-gated).** Apply the toolchain changes between the project's "from" version (Phase 1 stamp) and this release, for the project's language only. Compare the freshly-fetched profile's manifest / scripts / CI against the project's and surface the diffs; the high-value ones per language:
+- **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present.
+- **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`.
+- **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it).
+Show each proposed change against the project's current file before applying; don't overwrite hand-edits. For an experimental language with no profile, leave clearly-marked TODOs and report them.
 
 ### Phase 4: Verify, then stamp, then report
 

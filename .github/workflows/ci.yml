@@ -1,8 +1,14 @@
 name: CI
 
-# Tests the ForgeWorks template itself: validates the sources and proves each
-# complete language profile generates a project whose quality gate is GREEN on
-# the first run. This is the evidence behind the "complete profile" claim.
+# Tests the ForgeWorks template itself. These are SMOKE TESTS, not full-generation
+# proof: generation is performed by an agent following init-project/SKILL.md (no
+# deterministic renderer yet -- see docs/ROADMAP.md). What CI proves:
+#   - sources       : shell/JSON syntax + the CLAUDE.md symlink.
+#   - render-smoke  : core + each profile substitutes with NO leftover placeholders.
+#   - deps-guard    : the supply-chain hook blocks/allows the expected commands.
+#   - <lang>-profile: each profile's own quality gate is GREEN on a fresh install.
+# It does NOT exercise the interview, the conditional matrix (AI/devcontainer/...),
+# or hostile display-value escaping (that escaping is agent-executed).
 
 on:
   push:
@@ -26,7 +32,7 @@ jobs:
           fail=0
           while IFS= read -r f; do bash -n "$f" || fail=1; done < <(git ls-files '*.sh')
           exit $fail
-      - name: JSON validity (excluding JSONC devcontainers)
+      - name: JSON validity (excluding JSONC devcontainers, which allow comments)
         run: |
           fail=0
           while IFS= read -r f; do
@@ -34,10 +40,27 @@ jobs:
             python3 -m json.tool "$f" >/dev/null || { echo "bad JSON: $f"; fail=1; }
           done < <(git ls-files '*.json')
           exit $fail
-      # Note: {{PLACEHOLDER}} tokens are expected in templates/ and are documented
-      # in SKILL.md / AGENTS.md. The meaningful "no leftover placeholder" check is
-      # post-substitution, exercised by the profile jobs below (a left-over token
-      # would break uv sync / npm install / go build).
+      - name: CLAUDE.md is a symlink to AGENTS.md
+        run: |
+          test -L CLAUDE.md && [ "$(readlink CLAUDE.md)" = "AGENTS.md" ] \
+            || { echo "CLAUDE.md must be a symlink -> AGENTS.md"; exit 1; }
+
+  render-smoke:
+    # Deterministically render core + each profile with safe values and assert NO
+    # leftover {{PLACEHOLDER}} remains (template completeness). Does NOT test the
+    # interview, conditional matrix, or hostile-value escaping (agent-executed).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render core+profile, assert no leftover placeholders
+        run: python3 .github/scripts/render_smoke.py
+
+  deps-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: deps-guard blocks/allows the expected commands
+        run: bash .github/scripts/deps_guard_test.sh
 
   python-profile:
     runs-on: ubuntu-latest

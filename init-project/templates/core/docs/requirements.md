@@ -51,6 +51,7 @@ Derived from the core flow above. Make each one demonstrable.
 
 Language- and tool-specific conventions are in `docs/language-standards.md`.
 
+<!-- AI-FEATURES-START -->
 ## AI features in scope
 
 {{AI_FEATURES}}
@@ -59,6 +60,7 @@ Specifically:
 - TODO: describe RAG approach (chunking strategy, retrieval method, generation pattern)
 - TODO: describe agent loop if applicable
 - TODO: describe evals if applicable
+<!-- AI-FEATURES-END -->
 
 ## Security profile (threat model)
 

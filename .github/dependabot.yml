@@ -5,12 +5,13 @@ updates:
     schedule:
       interval: "weekly"
 
+  # The TS profile's package.json carries real dependency versions Dependabot
+  # can bump (its name is a {{PLACEHOLDER}}, which Dependabot tolerates).
   - package-ecosystem: "npm"
     directory: "/init-project/templates/profiles/typescript"
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "gomod"
-    directory: "/init-project/templates/profiles/go"
-    schedule:
-      interval: "weekly"
+  # No gomod entry: the Go profile's go.mod module path is a {{PROJECT_SLUG}}
+  # placeholder (invalid until rendered), so Dependabot cannot parse it. The Go
+  # toolchain/linter versions are pinned in the profile + CI and bumped manually.

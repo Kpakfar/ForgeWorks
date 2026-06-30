@@ -34,10 +34,10 @@ fi
 # Not a Bash command (no command field) -> nothing to guard.
 [ -z "${cmd}" ] && exit 0
 
-# Vetted ONLY when DEPS_VETTED= is a real env-assignment prefix at the start of
-# the command (optionally after other VAR=val prefixes). Rejects tricks like
-# `echo DEPS_VETTED && npm install evil`.
-if printf '%s' "$cmd" | grep -Eq '^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*DEPS_VETTED='; then
+# Vetted ONLY when DEPS_VETTED=1 is a real env-assignment prefix at the start of
+# the command (optionally after other VAR=val prefixes). Requires exactly `=1`
+# (rejects `=0`) and rejects tricks like `echo DEPS_VETTED && npm install evil`.
+if printf '%s' "$cmd" | grep -Eq '^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*DEPS_VETTED=1[[:space:]]'; then
   exit 0
 fi
 
@@ -50,8 +50,11 @@ fi
 # code. Flags may appear before the package name. (Lockfile installs such as
 # `npm ci`, `uv sync`, `pip install -r` do not match.)
 pkg='([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]"'"'"']'
+# Remote-execute forms (run an arbitrary remote package): npx / bunx / uvx,
+# pnpm|yarn dlx, npm exec, and npm --prefix ... install.
+remote_exec='(npx|bunx|uvx)[[:space:]]+[^-[:space:]]|(pnpm|yarn)[[:space:]]+dlx[[:space:]]+[^-[:space:]]|npm[[:space:]]+exec[[:space:]]|npm[[:space:]]+--prefix[[:space:]]'
 if printf '%s' "$cmd" | grep -Eq \
-  "(npm|pnpm|yarn|bun)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(install|add|i)${pkg}|pip3?[[:space:]]+install${pkg}|pipx[[:space:]]+(install|run|inject)${pkg}|uv[[:space:]]+(add|pip[[:space:]]+install)${pkg}|poetry[[:space:]]+add${pkg}|cargo[[:space:]]+(add|install|update)|go[[:space:]]+(get|install)${pkg}|gem[[:space:]]+install${pkg}"; then
+  "(npm|pnpm|yarn|bun)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(install|add|i)${pkg}|pip3?[[:space:]]+install${pkg}|pipx[[:space:]]+(install|run|inject)${pkg}|uv[[:space:]]+(add|pip[[:space:]]+install)${pkg}|poetry[[:space:]]+add${pkg}|cargo[[:space:]]+(add|install|update)|go[[:space:]]+(get|install)${pkg}|gem[[:space:]]+install${pkg}|${remote_exec}"; then
   {
     echo "Supply-chain guard (best-effort): this command installs a new dependency or runs remote code."
     echo "Before it runs, confirm the package:"
