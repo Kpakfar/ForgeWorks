@@ -33,15 +33,19 @@ present and run by CI -- the reviewer checks the mapping).
 
 ## Plan (by main-context driver, or inline for small tasks)
 
-<!-- Run the planning pass in AGENTS.md <planning-discipline> before writing code.
-     For tasks under 1h, this can be a few lines; do not skip the security row. -->
+<!-- Run the planning pass in AGENTS.md <planning-discipline> before writing code --
+     for EVERY non-trivial task, not just the first: brainstorm the options, then
+     grill the chosen one (grill-me). For tasks under 1h, this can be a few lines;
+     do not skip the security row. -->
 
+- **Options considered (brainstorm -- name at least two, and why this one):**
 - **Core journey (what the user sees):**
 - **Concrete examples (inputs / outputs / file to pattern-match):**
 - **Riskiest assumption (test this first):**
 - **Non-goals (explicitly out of this slice):**
 - **Data shapes at each boundary:**
 - **Security surface (new input / tool / auth, and which SECURITY.md defense covers it):**
+- **Mockup (required BEFORE Red phase if this slice makes a significant UI/UX choice -- path/link + user approval):**
 - **What might be missing (proactive pass -- error states, empty/edge inputs, auth, scale, the unhappy path):**
 
 ### Test plan (name every test before code -- see <test-discipline>)

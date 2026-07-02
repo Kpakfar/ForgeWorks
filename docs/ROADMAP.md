@@ -11,7 +11,9 @@ tool does mechanically versus what is still future work.
   plus exactly one `init-project/templates/profiles/<lang>/`. No second language's
   files ever leak in.
 - **Language profiles.** Python, TypeScript, and Go are complete profiles, each
-  **verified green on the first run by the root CI** (`.github/workflows/ci.yml`).
+  **verified green on the first run by the root CI** (`.github/workflows/ci.yml`),
+  which renders the merged core+profile tree — the exact shape a generated
+  project has — and runs the real quality gate and e2e runner on it.
   Rust and "Other" are not built — the interview says so and asks for consent
   before continuing.
 - **Generation.** The interview and file substitution are driven by an AI agent

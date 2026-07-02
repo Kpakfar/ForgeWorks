@@ -50,8 +50,11 @@ COMMON = dict(
                         "TEST_LAYOUT_NOTES", "PRECOMMIT_HOOKS_NOTES")},
 )
 
-FENCE = [r"<!-- AI-SECURITY-START -->.*?<!-- AI-SECURITY-END -->\n",
-         r"<!-- AI-REDTEAM-START -->.*?<!-- AI-REDTEAM-END -->\n"]
+# The rendered tree simulates a NO-AI project (AI_DISCIPLINE_BLOCK=""), so every
+# AI fence is stripped the same way /init-project Phase 4 rule 5 strips them on a
+# no-AI answer -- in EVERY file that carries one (SECURITY.md, requirements.md,
+# implementer.md, code-reviewer.md, and any future fenced file).
+FENCE = re.compile(r"<!-- AI-[A-Z]+-START -->.*?<!-- AI-[A-Z]+-END -->\n?", re.S)
 
 # Hidden files/dirs (.claude, .github, .env.example, ...) that MUST be visited.
 # glob('**/*') silently skips dotfiles, so we walk instead and assert coverage.
@@ -75,17 +78,13 @@ def render(lang: str, out: str) -> list[str]:
             shutil.copy2(os.path.join(root, fn), os.path.join(d, fn))
     if lang == "python" and os.path.exists(f"{out}/pyproject.toml.example"):
         os.rename(f"{out}/pyproject.toml.example", f"{out}/pyproject.toml")
-    sec = f"{out}/docs/SECURITY.md"
-    s = open(sec).read()
-    for pat in FENCE:
-        s = re.sub(pat, "", s, flags=re.S)
-    open(sec, "w").write(s)
     mapping = {**COMMON, **PROFILE[lang]}
     for f in all_files(out):
         try:
             c = open(f, encoding="utf-8").read()
         except (UnicodeDecodeError, IsADirectoryError):
             continue
+        c = FENCE.sub("", c)
         for k, v in mapping.items():
             c = c.replace("{{%s}}" % k, v)
         open(f, "w", encoding="utf-8").write(c)
@@ -105,6 +104,18 @@ def render(lang: str, out: str) -> list[str]:
 
 
 def main() -> int:
+    # --emit <lang> <dir>: render ONE merged core+profile tree to <dir> so CI can
+    # run the language's real quality gate on the same shape a generated project
+    # has (profile-only runs miss core/profile interactions, e.g. a formatter
+    # that scans core files).
+    if len(sys.argv) == 4 and sys.argv[1] == "--emit":
+        lang, out = sys.argv[2], sys.argv[3]
+        left = render(lang, out)
+        if left:
+            print(f"FAIL [{lang}] leftover/missing: {sorted(set(left))}")
+            return 1
+        print(f"ok   [{lang}] merged core+profile rendered to {out}")
+        return 0
     rc = 0
     for lang in ("python", "typescript", "go"):
         with tempfile.TemporaryDirectory() as tmp:

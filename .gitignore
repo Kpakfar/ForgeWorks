@@ -6,3 +6,6 @@ node_modules/
 # Private dev notes -- not for upstream.
 /CLAUDE.local.md
 
+
+# Python bytecode
+__pycache__/

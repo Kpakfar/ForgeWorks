@@ -8,7 +8,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -16,7 +16,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bo
 
 - **Works with any agentic coder.** The whole constitution lives in `AGENTS.md` (symlinked to `CLAUDE.md`) — the cross-tool standard read by Claude Code, Codex, Cursor, opencode, and others. The rules and docs (`AGENTS.md`) are portable to any agent; the deep orchestration and local gates (subagents, hooks, MCP) run in Claude Code today, and other agents ignore the Claude-specific parts gracefully.
 - **Two agents, two perspectives.** Drive with your primary agent and bring a **second one as an independent reviewer** — e.g. **Codex** (opt in during setup) — for a genuine second opinion on important changes. Two models reviewing beats one.
-- **Plans from the heart, not lazily.** A structured discovery — core flow, riskiest assumption, non-goals, named test plan, a proactive "what's missing?" pass — is signed off *before* any code.
+- **Plans from the heart, not lazily — on every slice.** A structured discovery — brainstorm the options, then grill the plan: core flow, riskiest assumption, non-goals, named test plan, a proactive "what's missing?" pass — is signed off *before* any code, for **every** feature and cycle, not just at setup. UI-heavy slices get a real mockup to approve *before* implementation.
 - **The whole test pyramid, at spec time.** Unit + functional/API + headless-browser e2e + security tests are named in the plan and written first (Red phase).
 - **Security is enforced, not requested.** Access-control/IDOR, secrets, supply chain, and (for AI apps) prompt-injection defenses live in `AGENTS.md` + `docs/SECURITY.md`, backed by a real `PreToolUse` supply-chain hook (a best-effort guard, not a sandbox) — because prompt-level security is theater.
 - **Self-improving & upgradeable.** Lessons flow back into the template; existing projects pull updates with `/upgrade-project`, non-destructively.
@@ -38,7 +38,7 @@ The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/ski
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.3/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
@@ -56,7 +56,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). Python and TypeScript are verified green on the first run; Go is verified green in CI (see `## Status`). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v1.1.3`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All three are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v1.1.4`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 
@@ -64,7 +64,7 @@ ForgeWorks is an opinionated, agent-driven harness — a capable v1 with a clear
 
 - **Generation is executed by an AI agent following a skill, not a deterministic engine.** The interview and file substitution are driven by an agent, not a renderer with golden-fixture tests (that's roadmap — see `docs/ROADMAP.md`).
 - **The supply-chain guard is best-effort.** The `deps-guard` hook reduces risk; it is not a sandbox. The real controls are lockfile review and CI scanning.
-- **Profiles:** Python and TypeScript are verified green; **Go is verified green in CI**.
+- **Profiles:** Python, TypeScript, and Go are each verified green in CI on the merged core+profile tree, quality gate and e2e runner included.
 
 ## License
 

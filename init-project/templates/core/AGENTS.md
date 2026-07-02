@@ -38,7 +38,7 @@ These rules are universal: they hold for any stack and any subject. The threat m
 - **Least privilege, limit blast radius.** Scope every tool, query, and file path to the current owner. A successful attacker -- or a compromised agent -- must not be able to reach another owner's data even technically. Validate and sandbox any path or id that arrives from input (no `../` escapes).
 - **Bound inputs and outputs.** Length-limit anything that flows into a prompt, a log, or storage.
 - **Secrets stay out of the repo.** Keep them in env or a secret store, never in source, prompts, or committed config; the ignore file must exclude them.
-- **Supply chain is not trusted by default.** Install from lockfiles only; no blind updates; confirm every new dependency is the real, established package, not a hallucinated lookalike. The `deps-guard` hook is a best-effort reminder (see `<quality-gate>`); the real controls are committed lockfiles, reviewed updates, and CI vulnerability scanning.
+- **Supply chain is not trusted by default.** Install from lockfiles only; no blind updates; confirm every new dependency is the real, established package, not a hallucinated lookalike. The `deps-guard` hook is a best-effort reminder (see `<quality-gate>`); the real controls are committed lockfiles, reviewed updates, and CI dependency scanning.
 - **Fail closed.** On any security-check error or ambiguity, refuse rather than proceed.
 - **Security lives in hooks and tests, not in prose.** Prompt-level "be careful" is theater. The real controls are the deps-guard hook, the access-control middleware, and the red-team tests in the suite. If this project uses LLMs or agents, the prompt-injection and lethal-trifecta rules are in `<ai-discipline>` and `docs/SECURITY.md`.
 </security-discipline>
@@ -64,7 +64,7 @@ A reference can be a public repo, a deployed product, a folder on disk, screensh
 </style-references>
 
 <design-discipline>
-When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch. Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
+When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch, and do not start implementing and "show the UI later". **Mockup comes FIRST -- before the Red phase, before any implementation code.** Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Only after the user picks does the slice enter TDD. Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
 </design-discipline>
 
 <global-documents>
@@ -119,7 +119,7 @@ This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 prov
 The gate is deterministic and enforced by hooks, not by remembering to run it. Three layers:
 
 1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer` subagent runs `{{QA_COMMAND}}` during review; a `Stop` hook (auto-converted to `SubagentStop`) re-runs it and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build. Because the gate never mutates code, it cannot silently "fix" and pass.
-2. **Supply-chain guard hook (best-effort).** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) blocks the common dependency-install / remote-execute Bash commands until they are vetted (re-run with `DEPS_VETTED=1` at the start). It is a heuristic speed bump, not a boundary: it does not catch installs via scripts, direct manifest edits, or novel package managers. The real controls are committed lockfiles, reviewed dependency updates, and CI vulnerability scanning (`npm audit`, Dependabot).
+2. **Supply-chain guard hook (best-effort).** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) blocks the common dependency-install / remote-execute Bash commands until they are vetted (re-run with `DEPS_VETTED=1` at the start). It is a heuristic speed bump, not a boundary: it does not catch installs via scripts, direct manifest edits, or novel package managers. The real controls are committed lockfiles, reviewed dependency updates, and CI vulnerability scanning (the language's audit tooling, Dependabot).
 3. **CI.** CI runs the same non-mutating `{{QA_COMMAND}}` plus the slower end-to-end (headless-browser) suite (see `.github/workflows/qa.yml`). Note: the shipped workflow runs on pull requests and on pushes to `main`; **merge-blocking requires enabling branch protection** on the repo (the template cannot set that for you).
 </quality-gate>
 
@@ -139,7 +139,7 @@ The main-context driver (you, in Claude Code) is the orchestrator. The upstream 
 
 **Skills (upstream, from mattpocock/skills -- keep current; pull the latest each project):**
 - `tdd` : Red -> Green -> Refactor methodology. Invoke in main context when writing tests and making them pass.
-- `grill-me` : structured interrogation. Invoke when planning a slice (see `<planning-discipline>`).
+- `grill-me` : structured interrogation. Invoke at the start of EVERY non-trivial slice or feature, not only the first (see `<planning-discipline>`).
 
 **Subagents** (use when a phase is complex enough to warrant an isolated context):
 - `@test-spec-writer` : writes the failing test suite (unit + functional + e2e + security) for a requirement.
@@ -165,7 +165,7 @@ These are rituals by default: the orchestrator triggers them. To run them unatte
 <planning-discipline>
 Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it.
 
-At the start of any non-trivial slice, the main-context agent runs a planning pass BEFORE writing code, and does not skip questions to move faster. If the `grill-me` skill (from mattpocock/skills) is installed, run it with the agenda below; otherwise apply the agenda directly.
+This pass is **recurring, not once-per-project**: it runs at the start of EVERY non-trivial slice, new feature, and change cycle -- the interview at bootstrap does not exhaust it. Each pass has two movements: **brainstorm first** (divergent -- what could this be? name at least two ways to build it and pick one for a reason; use a brainstorming skill if one is installed), **then grill** (convergent -- if the `grill-me` skill from mattpocock/skills is installed, run it with the agenda below; otherwise apply the agenda directly). Do not skip questions to move faster, and do not write code before both movements are done.
 
 **Required discovery -- the plan is not done until each is answered (in writing, in `docs/current-task/task.md`):**
 - **Core journey.** The exact user-visible flow this slice delivers, step by step. If it cannot be demoed when done, cut scope until it can.
@@ -174,7 +174,7 @@ At the start of any non-trivial slice, the main-context agent runs a planning pa
 - **Explicit non-goals.** What this slice deliberately does NOT do. Push those to `docs/proposals-ideas.md` or a new backlog row.
 - **Data shapes.** The shape of the data crossing each boundary (request, response, stored record, tool I/O).
 - **Acceptance criteria as a contract.** Write numbered, observable criteria (AC1, AC2, ...) and map each to the test(s) that prove it. A criterion with no test isn't testable as written; "done" means every criterion has a covering test -- gate-run tests pass under `{{QA_COMMAND}}`, and an e2e-only criterion is verified present/wired (CI runs it). Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`, in the same Red phase.
-- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice makes a significant visual or UX choice, the plan includes building a mockup to decide from (see `<design-discipline>`).
+- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice is complicated and makes a significant visual or UX choice, the plan includes building a mockup and getting it approved BEFORE the Red phase -- mockup first, then tests, then code (see `<design-discipline>`).
 
 **Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then summarize the plan back and get explicit sign-off before any code.
 

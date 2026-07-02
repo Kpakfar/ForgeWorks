@@ -2,9 +2,15 @@
 
 **Verified:** 2026-06-30
 
-**Release:** `v1.1.3` / `86a2f4d`
+**Release:** `v1.1.1` / `86a2f4d` (header corrected 2026-07-02: this audit ran against the v1.1.1 commit; the `v1.1.3` tag is `4348008`)
 
 **Purpose:** independent verification after the v1.0.0 and v1.1.0 audit remediations.
+
+> **Status update (2026-07-02).** This document is a historical snapshot; the release-quality items below have since been fixed and verified:
+> - **V1 (render smoke skips dotfiles): FIXED** in v1.1.2 -- `render_smoke.py` now walks with `os.walk` and asserts sentinel dotfiles were rendered; the render is exercised in CI on every push.
+> - **V2 guard flag variants: FIXED** -- `npx -y` / `--yes`, `uvx --from`, and `npm --prefix . test` behave correctly and are in the CI regression suite, which was later extended with quoted-package, compound-command, and pipe-to-shell cases.
+> - **V2 wording drift: FIXED** in v1.1.2/v1.1.3 (pre-commit/pnpm claims, "only Python complete", gotchas count, line-cap exemption for skills).
+> - The remaining V2 presentation/roadmap items (deterministic renderer, SHA pinning, homepage/demo) stay tracked in `docs/ROADMAP.md`.
 
 ## Verdict
 
@@ -14,7 +20,7 @@ It is still not a deterministic production bootstrapper: generation remains an A
 
 **Before calling the portfolio review finished, fix V1 below.** It is a real false-positive in the new render test. The remaining V2 items are polish or acknowledged roadmap work.
 
-| Area | v1.0.0 | v1.1.3 | Assessment |
+| Area | v1.0.0 | v1.1.1 | Assessment |
 |---|---:|---:|---|
 | Product and positioning | 8/10 | 8/10 | Strong, differentiated product idea. |
 | First-use UX | 5/10 | 7/10 | Setup contradictions largely removed; full flow is still agent-driven. |
@@ -27,7 +33,7 @@ It is still not a deterministic production bootstrapper: generation remains an A
 
 ## Verified resolved
 
-- Release `v1.1.3` points at current `main`; `VERSION` is `1.1.1` and the installer/docs are pinned to that tag.
+- Release `v1.1.1` points at the audited commit; `VERSION` was `1.1.1` and the installer/docs were pinned to that tag.
 - Exact release CI run [28442058120](https://github.com/Kpakfar/ForgeWorks/actions/runs/28442058120) passed sources, render-smoke, deps-guard, Python, TypeScript, and Go jobs.
 - `CLAUDE.md` is again a real `120000` symlink to `AGENTS.md`, and CI protects it.
 - Python profile: manifest rename is explicit; QA and JSONC-aware pre-commit were previously re-tested green.
