@@ -51,13 +51,13 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/core#v1.1.3 /tmp/upgrade-core --force
-npx --yes degit Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.3 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v1.1.4 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v1.1.4 /tmp/upgrade-profile --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain.
 
-Reconcile against this skill's own released version (`v1.1.3`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v1.1.4`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -70,7 +70,8 @@ Walk the template tree. For every template path, decide and act:
 
   *Special cases:*
   - `.claude/settings.json` -- if the project already has one, **merge** the `PreToolUse` deps-guard hook into the existing `hooks` object; never replace the file (that would drop the project's own hooks).
-  - `docs/SECURITY.md` -- after substituting `{{PROJECT_NAME}}`: if the project uses AI, delete only the `<!-- AI-SECURITY-START/END -->` and `<!-- AI-REDTEAM-START/END -->` marker lines (keep the content); if not, delete those fenced blocks entirely.
+  - **AI fences** (same rule everywhere a template file carries them): if the project uses AI, delete only the marker lines and keep the content; if not, delete the fenced blocks entirely. Current fences: `<!-- AI-SECURITY-START/END -->` + `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`, `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`, `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`, `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`.
+  - **Manifest `.example` suffix** (Python): the template ships `pyproject.toml.example` so the template repo's own tooling ignores it. A generated project already has a real `pyproject.toml` -- never copy the `.example` file in as "absent"; treat it as the merge source for the existing manifest (Phase 3-C), not a new file.
   - **Profile files come from the project's OWN profile** (Phase 2 pulled `profiles/<lang>/`). Copy them verbatim where absent -- including that language's real `scripts/` (Python and Go have `scripts/e2e.sh`; TypeScript runs e2e via an `npm run e2e` script in `package.json`). Never substitute another language's runner or a stub for a complete profile; the Go profile has a real e2e runner.
 
 **B. File PRESENT in both (merge target).** Compare the template version against the project's. Insert what is new, preserve what the project filled in. Never blow away the project's content.
@@ -87,7 +88,7 @@ Show each proposed change against the project's current file before applying; do
 
 1. If new scripts/hooks were added, `chmod +x` them.
 2. Run the project's quality gate (`docs/language-standards.md` has the command) and confirm it still passes. If a newly added marker or dependency broke it, fix that before finishing.
-3. **Only after the gate passes,** write the new version to `.claude/.template-version` -- overwriting the "from" version you recorded in Phase 1. Stamp last, so an upgrade that fails partway leaves the old stamp intact and is safe to re-run. (`install.sh` does NOT stamp; this is the single place the version is written.)
+3. **Only after the gate passes,** write the new version to `.claude/.template-version` -- overwriting the "from" version you recorded in Phase 1. Stamp last, so an upgrade that fails partway leaves the old stamp intact and is safe to re-run. (`install.sh` stamps only on first bootstrap; its upgrade-mode run does not touch the stamp, so during an upgrade this step is the single place the version is written.)
 4. Report, in three buckets:
    - **Added automatically** (the additive files).
    - **Merged** (which `AGENTS.md` blocks / subagent sections were inserted).

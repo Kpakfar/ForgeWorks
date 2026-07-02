@@ -14,6 +14,12 @@
 
 set -euo pipefail
 
+# Only exit 2 blocks the subagent; any other non-zero exit is logged and
+# IGNORED by the hook runner. Without this trap, an infrastructure error (a
+# failing cd, a missing tool outside the guarded `if`) would exit 1 and the
+# review would complete with no gate at all -- fail CLOSED instead.
+trap 'echo "FAILED: quality-gate hook errored before QA could complete." >&2; exit 2' ERR
+
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
 echo "==> Quality gate: running {{QA_COMMAND}}"

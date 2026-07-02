@@ -18,7 +18,6 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=500']
 
-  # Language-specific hooks. /init-project substitutes this block based on
-  # the chosen language profile (ruff for Python, eslint+prettier for
-  # TypeScript, cargo fmt + clippy for Rust, etc.).
+  # Language-specific hooks, substituted by /init-project from the language
+  # profile. (This file ships with the Python profile only.)
   {{LANGUAGE_PRECOMMIT_HOOKS}}

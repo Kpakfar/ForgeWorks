@@ -62,20 +62,23 @@ jobs:
       - name: deps-guard blocks/allows the expected commands
         run: bash .github/scripts/deps_guard_test.sh
 
+  # Each profile job renders the MERGED core+profile tree (the shape a generated
+  # project actually has) and runs the language's real gate + e2e runner on it.
+  # Profile-only runs miss core/profile interactions (e.g. a formatter that
+  # scans core files) -- the merged render is the contract "green on first run".
   python-profile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv python install 3.12
-      - name: Generate Python project from the profile and run QA
+      - name: Render merged core+profile and run QA + e2e
         run: |
-          mkdir -p /tmp/py && cp -R init-project/templates/profiles/python/. /tmp/py/
+          python3 .github/scripts/render_smoke.py --emit python /tmp/py
           cd /tmp/py
-          mv pyproject.toml.example pyproject.toml
-          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g; s/{{PROJECT_GOAL}}/ci smoke/g' pyproject.toml
           uv sync
           uv run qa
+          bash scripts/e2e.sh
 
   typescript-profile:
     runs-on: ubuntu-latest
@@ -84,11 +87,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Generate TS project from the profile and run QA + audit
+      - name: Render merged core+profile and run QA + audit + e2e
         run: |
-          mkdir -p /tmp/ts && cp -R init-project/templates/profiles/typescript/. /tmp/ts/
+          python3 .github/scripts/render_smoke.py --emit typescript /tmp/ts
           cd /tmp/ts
-          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g; s/{{PROJECT_GOAL}}/ci smoke/g' package.json
           npm install
           npm run qa
           npm audit --audit-level=high
@@ -105,9 +107,9 @@ jobs:
         run: |
           curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.12.2
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - name: Generate Go project from the profile and run QA
+      - name: Render merged core+profile and run QA + e2e
         run: |
-          mkdir -p /tmp/go && cp -R init-project/templates/profiles/go/. /tmp/go/
+          python3 .github/scripts/render_smoke.py --emit go /tmp/go
           cd /tmp/go
-          sed -i 's/{{PROJECT_SLUG}}/fw-ci/g; s/{{PROJECT_NAME}}/fw-ci/g' go.mod
           bash scripts/qa.sh
+          bash scripts/e2e.sh

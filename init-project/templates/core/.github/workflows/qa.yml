@@ -21,9 +21,8 @@ jobs:
         uses: actions/checkout@v4
 
       # Language and toolchain setup. Substituted by /init-project from the
-      # chosen language profile. The placeholder block becomes the right
-      # `uses: ...` / `run: ...` steps (e.g. setup-uv + uv sync for Python,
-      # setup-node + pnpm install for TypeScript).
+      # chosen language profile's ci_setup_steps: the right `uses: ...` /
+      # `run: ...` steps for this project's toolchain.
       {{CI_SETUP_STEPS}}
 
       - name: Run quality gate (lint, format, types, unit + functional)

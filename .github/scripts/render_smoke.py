@@ -105,6 +105,18 @@ def render(lang: str, out: str) -> list[str]:
 
 
 def main() -> int:
+    # --emit <lang> <dir>: render ONE merged core+profile tree to <dir> so CI can
+    # run the language's real quality gate on the same shape a generated project
+    # has (profile-only runs miss core/profile interactions, e.g. a formatter
+    # that scans core files).
+    if len(sys.argv) == 4 and sys.argv[1] == "--emit":
+        lang, out = sys.argv[2], sys.argv[3]
+        left = render(lang, out)
+        if left:
+            print(f"FAIL [{lang}] leftover/missing: {sorted(set(left))}")
+            return 1
+        print(f"ok   [{lang}] merged core+profile rendered to {out}")
+        return 0
     rc = 0
     for lang in ("python", "typescript", "go"):
         with tempfile.TemporaryDirectory() as tmp:

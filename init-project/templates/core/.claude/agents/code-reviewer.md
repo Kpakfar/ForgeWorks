@@ -29,17 +29,20 @@ Evaluate the code against these pillars:
 
 0. **Static checks**: You are responsible for running the quality gate before review is complete. The bundled command for this project is `{{QA_COMMAND}}` (it chains lint, format, type-check, and tests in the order documented in `docs/language-standards.md`). All steps must pass before review can complete.
 
-1. **Correctness**: identify logical errors, race conditions, off-by-one bugs, and edge cases that could cause failure. Pay special attention to LLM and RAG code where silent failures are common (wrong embedding model, mismatched vector dimensions, unhandled rate limits).
+1. **Correctness**: identify logical errors, race conditions, off-by-one bugs, and edge cases that could cause failure.
 
-2. **Security**: scrutinize against `AGENTS.md` `<security-discipline>` and `docs/SECURITY.md`. Universal: broken access control / IDOR (any user-supplied id trusted without a verified-session check), secrets in source/logs, path traversal, unbounded input, new dependencies that bypass the lockfile or are unvetted. AI-specific (when applicable): prompt-injection vectors, untrusted input flowing into prompts, the lethal trifecta in one agent, PII leakage in logs, unbounded token/query cost. Any new external input, tool, or auth boundary must have a `docs/SECURITY.md` entry and security tests -- flag it for `@security-reviewer` if not.
+2. **Security**: scrutinize against `AGENTS.md` `<security-discipline>` and `docs/SECURITY.md`. Universal: broken access control / IDOR (any user-supplied id trusted without a verified-session check), secrets in source/logs, path traversal, unbounded input, new dependencies that bypass the lockfile or are unvetted. Any new external input, tool, or auth boundary must have a `docs/SECURITY.md` entry and security tests -- flag it for `@security-reviewer` if not.
 
-3. **Performance**: redundant computations, N+1 queries, missing indexes, unnecessary LLM calls, embeddings computed at request time instead of cached. For RAG specifically: chunk size sanity, retrieval result size, top-k tuning.
+3. **Performance**: redundant computations, N+1 queries, missing indexes, work repeated per request that could be computed once and cached.
+<!-- AI-REVIEW-START -->
+This project uses LLMs/agents, so extend the pillars above: for **correctness**, pay special attention to LLM and RAG code where silent failures are common (wrong embedding model, mismatched vector dimensions, unhandled rate limits). For **security**, also check prompt-injection vectors, untrusted input flowing into prompts, the lethal trifecta in one agent, PII leakage in logs, and unbounded token/query cost. For **performance**, look for unnecessary LLM calls and embeddings computed at request time instead of cached; for RAG specifically: chunk size sanity, retrieval result size, top-k tuning. The binding rules live in `AGENTS.md` `<ai-discipline>` (prompts as files, no prompt-builder classes, every LLM response schema-validated).
+<!-- AI-REVIEW-END -->
 
 4. **Maintainability**: assess readability, naming conventions, modularity, and adherence to SOLID/DRY principles. Is type information honest about what the code does? Are pure functions actually pure?
 
 5. **Conciseness**: look for opportunities to reduce boilerplate and improve clarity without sacrificing readability. Is the developer expressing the ideas in an elegant way?
 
-6. **Architecture discipline**: check against `AGENTS.md` `<architecture-discipline>` rules: two-layer split, one concept per file (~100 lines, hard cap 200), prompts as files, no premature abstraction, functions over classes, concrete over generic. Violations are `REQUEST_CHANGES` unless justified in `docs/current-task/task.md`.
+6. **Architecture discipline**: check against `AGENTS.md` `<architecture-discipline>` rules: two-layer split, one concept per file (~100 lines, hard cap 200), no premature abstraction, functions over classes, concrete over generic. When the project has AI features, also check `<ai-discipline>`. Violations are `REQUEST_CHANGES` unless justified in `docs/current-task/task.md`.
 
 7. **Acceptance-criteria coverage**: open `docs/current-task/task.md` and check the acceptance criteria against the test plan. **Every numbered criterion (AC1, AC2, ...) must map to a test that actually exists and exercises it.** For criteria covered by gate-run tests (unit / functional / security), confirm those tests pass under `{{QA_COMMAND}}`. For a criterion covered only by an **end-to-end** test (which runs in the separate CI e2e job, not the inner gate), confirm the e2e test exists, is wired into the e2e suite, and genuinely exercises the criterion -- you verify presence and wiring, CI verifies it passes. A criterion with no covering test, a test that does not really exercise it, or one silently dropped is `REQUEST_CHANGES` -- the spec is the contract, and "done" means the contract is proven, not just that the code runs.
 

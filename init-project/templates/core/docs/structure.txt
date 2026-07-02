@@ -3,6 +3,7 @@ Update this file whenever the layout changes.
 
 Living docs:
 docs/structure.txt                 # this file
+docs/PRODUCT_VISION.md             # north star -- what we're building and why (stable)
 docs/requirements.md               # what we're building, for whom, why
 docs/language-standards.md         # language- and tooling-specific conventions
 docs/documentation.md              # links to library docs the agent should consult
@@ -25,8 +26,8 @@ Configuration:
 {{MANIFEST_FILE}}                  # dependencies + tool config + bundled scripts
 .env.example                       # template for environment variables (never commit .env)
 .gitignore
-.pre-commit-config.yaml            # local pre-commit hooks (optional)
 README.md
+(some language profiles add more here -- e.g. a pre-commit config; see docs/language-standards.md)
 
 Agent infrastructure:
 .claude/agents/                    # subagents: test-spec-writer, implementer, code-reviewer, security-reviewer, tech-debt
@@ -43,4 +44,5 @@ CI:
 
 Dev environment:
 .devcontainer/                     # dev container config (if {{USES_DEVCONTAINER}} = yes)
-scripts/                           # qa.sh (verify-only gate) + fix.sh (local auto-repair) + e2e.sh (slow gate)
+(the qa / fix / e2e runners are shell scripts under scripts/ OR package scripts in
+{{MANIFEST_FILE}}, per the language profile -- the commands are in docs/language-standards.md)
