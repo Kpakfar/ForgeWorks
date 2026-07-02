@@ -37,6 +37,8 @@
     // credentials out of the container — the whole point of running the agent
     // in an isolated environment. The project's own .claude/ (agents, hooks,
     // settings) already travels with the workspace.
+    // NOTE: Docker fails container creation if the source dir does not exist --
+    // run `mkdir -p ~/.claude/skills` once on the host, or remove this mount.
     "source=${localEnv:HOME}/.claude/skills,target=/home/vscode/.claude/skills,type=bind,readonly"
     // Opt-in ONLY if you knowingly accept the risk: mounting all of ~/.claude
     // exposes settings.local.json (which may hold API keys) to anything running

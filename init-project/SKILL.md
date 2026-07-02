@@ -222,6 +222,9 @@ For each file in `templates/core/` AND in `templates/profiles/{{LANGUAGE}}/`:
 
 Do NOT read or copy `templates/profiles/<other-language>/`. The manifest, scripts, scaffold, dev container, `.gitignore`, and (Python-only) pre-commit config all come from the chosen profile, so the project carries only its own language's tooling and libraries. The core files reference the toolchain through placeholders (`{{QA_COMMAND}}`, `{{CI_SETUP_STEPS}}`, ...) filled from the profile's YAML.
 
+**Multi-line placeholders must be re-indented (do not skip -- plain replace breaks YAML):**
+`{{CI_SETUP_STEPS}}` (in `.github/workflows/qa.yml`, at 6-space indent) and `{{LANGUAGE_PRECOMMIT_HOOKS}}` (in `.pre-commit-config.yaml`, at 2-space indent) are multi-line values written at column 0 in the profile YAML. A literal string-replace indents only the first line and produces invalid YAML. When substituting a multi-line value, prefix EVERY line after the first with the placeholder's own indentation (the column where `{{` sits). Verify the result parses as YAML before moving on.
+
 **Identifiers and escaping (do not skip -- raw display values break structured files):**
 - Use `{{PROJECT_SLUG}}` (not `{{PROJECT_NAME}}`) for every identifier field: the package name in `pyproject.toml`/`package.json` and the module path in `go.mod`. A display name like `My Project` is not a valid TOML package name or Go module path.
 - When you substitute a display value (`{{PROJECT_NAME}}`, `{{PROJECT_GOAL}}`, ...) into a structured file (JSON, TOML, YAML, `go.mod`), escape it for that format: in JSON escape `"`, `\`, and control characters; in TOML escape `"` or use a literal string. A goal like `A "quoted" goal` must not produce invalid JSON in `package.json`. Display values flow unescaped only into Markdown prose.
@@ -306,8 +309,8 @@ After the base substitution pass, apply these rules:
    If `{{USE_MEM0}}` is `no`: delete `docs/memory.md`, render `{{MEMORY_DOC_LINE}}` as an empty string, do not insert the `<memory>` block, do not add the dep.
 
 5. **Security profile (Q14).** `docs/SECURITY.md`, `.claude/settings.json` (deps-guard hook), `.claude/hooks/deps-guard.sh`, and `.claude/agents/security-reviewer.md` always ship -- the universal risks (access control, secrets, supply chain) apply to every project. Then adjust for the AI answer:
-   - If **any AI feature** was selected (Q6): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`) and keep the content.
-   - If **no AI feature** was selected: delete the whole fenced blocks (markers and everything between) -- the AI sections of `docs/SECURITY.md` AND the `## AI features in scope` block of `docs/requirements.md`. A non-AI project ships no AI/RAG TODOs.
+   - If **any AI feature** was selected (Q6): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`; `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`; `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`) and keep the content.
+   - If **no AI feature** was selected: delete the whole fenced blocks (markers and everything between) in all four files -- the AI sections of `docs/SECURITY.md`, the `## AI features in scope` block of `docs/requirements.md`, and the AI-specific rules in the implementer and code-reviewer subagents. A non-AI project ships no AI/RAG rules or TODOs anywhere.
    - Seed the `## Attack surface` table and the trifecta line from the Q14 answers (reads untrusted / holds private / acts outward). If all three are `yes` for a single LLM agent, write an explicit note in `docs/SECURITY.md` and `docs/requirements.md` that the lethal trifecta is present and must be broken (split the agent, drop a capability, or gate the action behind a human).
 
 6. **Codex reviewer (Q15).** Two separate placeholders (one value each, so plain string-replace stays correct): `{{CODEX_REVIEW_STEP}}` in `.claude/agents/code-reviewer.md`, and `{{CODEX_ROSTER_NOTE}}` in the `<agent-roster>` of `AGENTS.md`.
@@ -343,7 +346,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.3" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v1.1.4" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
@@ -382,7 +385,7 @@ Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exist
 Then check no unresolved placeholders remain:
 
 ```bash
-! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.toml' --include='*.yml' --include='*.json' --include='*.sh' --include='*.ts' --include='*.go' --include='*.mod' 2>/dev/null
+! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv 2>/dev/null
 ```
 
 Finally, **run the quality gate** (inside the dev container if one is used): `{{QA_COMMAND}}`. Every complete profile ships a green-on-first-run scaffold, so the gate must pass on the first run. If it is not green, fix the scaffold before handing off -- a project that starts red is a bug.
@@ -457,7 +460,6 @@ Q14 (security profile) has no placeholder: it conditionally prunes the AI sectio
 | `{{FORMAT_COMMAND}}` | profile.format_command |
 | `{{TYPE_TOOL}}` | profile.type_tool |
 | `{{TYPE_COMMAND}}` | profile.type_command |
-| `{{LANG_EXT}}` | profile.file_extension (e.g. `py`, `ts`) |
 | `{{PRECOMMIT_INSTALL_COMMAND}}` | profile.precommit_install_command |
 | `{{CI_SETUP_STEPS}}` | profile.ci_setup_steps (multi-line YAML block) |
 | `{{LANGUAGE_PRECOMMIT_HOOKS}}` | profile.precommit_hooks (multi-line YAML block) |
@@ -500,7 +502,7 @@ precommit_install_command: "uv run pre-commit install"
 
 ci_setup_steps: |
   - name: Set up uv
-    uses: astral-sh/setup-uv@v3
+    uses: astral-sh/setup-uv@v5
     with:
       enable-cache: true
   - name: Set up Python
@@ -510,7 +512,7 @@ ci_setup_steps: |
 
 precommit_hooks: |
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
+    rev: v0.15.8
     hooks:
       - id: ruff
         args: [--fix]

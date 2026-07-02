@@ -20,7 +20,7 @@ dev = [
     # End-to-end / headless browser. Run via scripts/e2e.sh (CI, not the fast gate).
     "pytest-playwright>=0.5",
     "mypy>=1.13",
-    "ruff>=0.8",
+    "ruff>=0.15",
     "pre-commit>=4.0",
     "factory-boy>=3.3",
 ]
@@ -53,25 +53,20 @@ select = [
     "ANN",               # flake8-annotations
     "RET",               # flake8-return
     "SIM",               # flake8-simplify
-    "TCH",               # flake8-type-checking
-]
-ignore = [
-    "ANN101", "ANN102",  # missing annotation for self/cls (deprecated rules anyway)
+    "TC",                # flake8-type-checking
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]      # annotations not required in tests
 
+# The gate runs `mypy src/` (tests are covered by ruff + pytest, not mypy) --
+# no per-module overrides needed; add them here if you extend mypy to tests/.
 [tool.mypy]
 python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

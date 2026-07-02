@@ -54,13 +54,16 @@ These rules are language-agnostic. They keep the codebase concrete and easy to r
 
 - **Concrete over abstract.** Functions that take simple types and return them. Avoid classes unless state genuinely lives on the object across method calls. Avoid strategy/factory/registry patterns. Bar: a competent peer reading this for the first time should understand it in one minute.
 
-- **One concept per file.** Backend files own a single domain concept and rarely cross 150 lines. If a file approaches 200, split it BEFORE adding more code. Target ~100 lines per file.
+- **One concept per file.** Each file owns a single domain concept. Target ~100 lines per file; hard cap 200. If a file approaches the cap, split it BEFORE adding more code.
 
+- **Structured outputs only where it matters.** Validate at module and API boundaries where a mismatch would silently corrupt state, and capture domain models. Do NOT wrap UI/session state, do NOT model every value that crosses an internal function boundary.
+<!-- AI-IMPL-START -->
 - **Prompts as plain text files.** Never embed long prompt strings in code. Save them under `prompts/` (or equivalent), load with a short helper, substitute variables with plain string replacement.
 
 - **Prompt variants are filenames.** If two versions of a prompt exist, select by filename via a config or session-state value. Do not introduce a class hierarchy or strategy pattern to swap them.
 
-- **Structured outputs only where it matters.** Validate LLM responses, define tool I/O, capture domain models. Do NOT wrap UI/session state, do NOT model every dict that crosses a function boundary.
+- **Validate every LLM response.** Schema-validate any model output downstream code depends on, and define tool I/O shapes explicitly. Fail closed on mismatch. (Full rules: `AGENTS.md` `<ai-discipline>`.)
+<!-- AI-IMPL-END -->
 
 - **No premature abstraction.** Three similar lines are better than a class with a strategy pattern. The bar for adding an abstraction is two real callers, not one hypothetical one.
 
