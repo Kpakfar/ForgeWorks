@@ -33,6 +33,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bo
 
 The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/skills`) drive the methodology and planning. Three subagents pair with the per-slice **Red → Green → Refactor → Review** loop; two more run on a recurring cadence. Sub-1h tasks skip the ceremony entirely. The same gate runs locally (a `Stop` hook that blocks a red build) and in CI.
 
+![The ForgeWorks multi-agent TDD loop: a one-time bootstrap session, then a repeating seven-step cycle driven by an orchestration layer that dispatches five specialist subagents](docs/forgeworks-loop.png)
+
 ## Upgrade an existing project
 
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
