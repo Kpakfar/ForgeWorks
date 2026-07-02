@@ -64,7 +64,7 @@ A reference can be a public repo, a deployed product, a folder on disk, screensh
 </style-references>
 
 <design-discipline>
-When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch. Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
+When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch, and do not start implementing and "show the UI later". **Mockup comes FIRST -- before the Red phase, before any implementation code.** Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Only after the user picks does the slice enter TDD. Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
 </design-discipline>
 
 <global-documents>
@@ -139,7 +139,7 @@ The main-context driver (you, in Claude Code) is the orchestrator. The upstream 
 
 **Skills (upstream, from mattpocock/skills -- keep current; pull the latest each project):**
 - `tdd` : Red -> Green -> Refactor methodology. Invoke in main context when writing tests and making them pass.
-- `grill-me` : structured interrogation. Invoke when planning a slice (see `<planning-discipline>`).
+- `grill-me` : structured interrogation. Invoke at the start of EVERY non-trivial slice or feature, not only the first (see `<planning-discipline>`).
 
 **Subagents** (use when a phase is complex enough to warrant an isolated context):
 - `@test-spec-writer` : writes the failing test suite (unit + functional + e2e + security) for a requirement.
@@ -165,7 +165,7 @@ These are rituals by default: the orchestrator triggers them. To run them unatte
 <planning-discipline>
 Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it.
 
-At the start of any non-trivial slice, the main-context agent runs a planning pass BEFORE writing code, and does not skip questions to move faster. If the `grill-me` skill (from mattpocock/skills) is installed, run it with the agenda below; otherwise apply the agenda directly.
+This pass is **recurring, not once-per-project**: it runs at the start of EVERY non-trivial slice, new feature, and change cycle -- the interview at bootstrap does not exhaust it. Each pass has two movements: **brainstorm first** (divergent -- what could this be? name at least two ways to build it and pick one for a reason; use a brainstorming skill if one is installed), **then grill** (convergent -- if the `grill-me` skill from mattpocock/skills is installed, run it with the agenda below; otherwise apply the agenda directly). Do not skip questions to move faster, and do not write code before both movements are done.
 
 **Required discovery -- the plan is not done until each is answered (in writing, in `docs/current-task/task.md`):**
 - **Core journey.** The exact user-visible flow this slice delivers, step by step. If it cannot be demoed when done, cut scope until it can.
@@ -174,7 +174,7 @@ At the start of any non-trivial slice, the main-context agent runs a planning pa
 - **Explicit non-goals.** What this slice deliberately does NOT do. Push those to `docs/proposals-ideas.md` or a new backlog row.
 - **Data shapes.** The shape of the data crossing each boundary (request, response, stored record, tool I/O).
 - **Acceptance criteria as a contract.** Write numbered, observable criteria (AC1, AC2, ...) and map each to the test(s) that prove it. A criterion with no test isn't testable as written; "done" means every criterion has a covering test -- gate-run tests pass under `{{QA_COMMAND}}`, and an e2e-only criterion is verified present/wired (CI runs it). Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`, in the same Red phase.
-- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice makes a significant visual or UX choice, the plan includes building a mockup to decide from (see `<design-discipline>`).
+- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice is complicated and makes a significant visual or UX choice, the plan includes building a mockup and getting it approved BEFORE the Red phase -- mockup first, then tests, then code (see `<design-discipline>`).
 
 **Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then summarize the plan back and get explicit sign-off before any code.
 

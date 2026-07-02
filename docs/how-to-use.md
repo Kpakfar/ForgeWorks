@@ -66,7 +66,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 3. Add the language to Q3's menu (mark `[complete]` only once it passes).
 4. Bootstrap a throwaway project in that language and confirm `qa` is **green on the first run**.
 
-**Python, TypeScript, and Go** are complete profiles — Python and TypeScript are verified green; Go is verified green in CI. Rust and "Other" are not built yet.
+**Python, TypeScript, and Go** are complete profiles — all three are verified green in CI on the merged core+profile tree (quality gate + e2e runner). Rust and "Other" are not built yet.
 
 ## Troubleshooting
 

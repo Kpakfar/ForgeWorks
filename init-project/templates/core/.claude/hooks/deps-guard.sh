@@ -52,35 +52,56 @@ pkg='([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]'
 # npm exec / npm x, uv tool install|run, yarn global add, `npm --prefix <dir>`
 # when it is an install/add/exec (not e.g. `npm --prefix . test`), piping a
 # download into a shell, and process-substituting a download into a shell.
-remote_exec='(npx|bunx|uvx)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|(pnpm|yarn)[[:space:]]+dlx([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|npm[[:space:]]+(exec|x)([[:space:]]|$)|npm[[:space:]]+--prefix[[:space:]]+[^[:space:]]+[[:space:]]+(install|add|i|exec|ci)|uv[[:space:]]+tool[[:space:]]+(install|run)|yarn[[:space:]]+global[[:space:]]+add|(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|da)?sh([[:space:]]|$)|(ba|z|da)?sh[[:space:]]+(-[^[:space:]]+[[:space:]]+)*<\((curl|wget)'
+remote_exec='(npx|bunx|uvx)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|(pnpm|yarn)[[:space:]]+dlx([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+[^-[:space:]]|npm[[:space:]]+(exec|x)([[:space:]]|$)|npm[[:space:]]+--prefix[[:space:]]+[^[:space:]]+[[:space:]]+(install|add|i|exec|ci)|uv[[:space:]]+tool[[:space:]]+(install|run)|yarn[[:space:]]+global[[:space:]]+add|(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|da)?sh([[:space:]]|$)|(ba|z|da)?sh[[:space:]]+(-[^[:space:]]+[[:space:]]+)*(<[[:space:]]*)?<\((curl|wget)'
 block_re="(npm|pnpm|yarn|bun)([[:space:]]+-{1,2}[^[:space:]]+)*[[:space:]]+(install|add|i)${pkg}|pip3?[[:space:]]+install${pkg}|pipx[[:space:]]+(install|run|inject)${pkg}|uv[[:space:]]+(add|pip[[:space:]]+install)${pkg}|poetry[[:space:]]+add${pkg}|cargo[[:space:]]+(add|install|update)|go[[:space:]]+(get|install)${pkg}|gem[[:space:]]+install${pkg}|brew[[:space:]]+install${pkg}|${remote_exec}"
 
-# pip install whose every argument is a flag, -r/-c <file>, -e <path>, or `.`
-# is a from-lock / editable install -> allow. Anchored to the segment end so
-# `pip install -r requirements.txt evil-extra` does NOT slip through.
-pip_allow='^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*(uv[[:space:]]+|python3?[[:space:]]+-m[[:space:]]+)?pip3?[[:space:]]+install([[:space:]]+(-r|--requirement|-c|--constraint|-e|--editable)[[:space:]]+[^[:space:]]+|[[:space:]]+-{1,2}[^[:space:]]+|[[:space:]]+\.)*[[:space:]]*$'
+# pip install whose every argument is a flag, -r/-c <local file>, -e <local
+# path>, or `.` is a from-lock / editable install -> allow. Anchored to the
+# segment end so `pip install -r requirements.txt evil-extra` does NOT slip
+# through, and the -r/-e argument may not contain `:` so remote requirements
+# (`-r https://...`) and VCS editables (`-e git+https://...`) stay blocked.
+pip_allow='^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*(uv[[:space:]]+|python3?[[:space:]]+-m[[:space:]]+)?pip3?[[:space:]]+install([[:space:]]+(-r|--requirement|-c|--constraint|-e|--editable)[[:space:]]+[^[:space:]:]+|[[:space:]]+-{1,2}[^[:space:]]+|[[:space:]]+\.)*[[:space:]]*$'
 
 # Vetted segment: DEPS_VETTED=1 as a real env-assignment prefix (optionally
 # after other VAR=val prefixes). Requires exactly `=1` (rejects `=0`) and
-# rejects tricks like `echo DEPS_VETTED && npm install evil`.
+# rejects tricks like `echo DEPS_VETTED && npm install evil`. The prefix vets
+# only the FIRST command of a pipeline; `| <install>` later is still checked.
 vetted='^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*DEPS_VETTED=1[[:space:]]'
 
 # Split on command separators (&& / || / ;) but NOT on single | -- pipelines
-# stay whole so `curl ... | bash` is visible. Each segment is judged alone.
+# stay whole so `curl ... | bash` is visible. The split is pure bash (no
+# heredoc/herestring: those need a writable temp dir on some systems and a
+# failure there would make the whole hook FAIL OPEN). Each segment is judged
+# alone; noglob (set -f) keeps the unquoted expansion from globbing.
 blocked=0
-while IFS= read -r seg; do
+nl=$'\n'
+seglist=${cmd//'&&'/$nl}
+seglist=${seglist//'||'/$nl}
+seglist=${seglist//';'/$nl}
+set -f
+IFS=$nl
+for seg in $seglist; do
   [ -z "${seg//[[:space:]]/}" ] && continue
-  printf '%s' "$seg" | grep -Eq "$vetted" && continue
-  # Strip quotes on the matching copy only, so quoting cannot hide a package.
-  m=$(printf '%s' "$seg" | tr -d '"'"'")
+  # Strip quotes and backslashes on the matching copy only, so quoting tricks
+  # ("evil", n\pm) cannot hide a package or command name.
+  m=$(printf '%s' "$seg" | tr -d '"'"'"'\\')
+  if printf '%s' "$seg" | grep -Eq "$vetted"; then
+    # Vetted prefix covers only the first pipeline command -- check the rest.
+    case "$m" in
+      *\|*)
+        rest=${m#*|}
+        if printf '%s' "$rest" | grep -Eq "$block_re"; then blocked=1; break; fi ;;
+    esac
+    continue
+  fi
   printf '%s' "$m" | grep -Eq "$pip_allow" && continue
   if printf '%s' "$m" | grep -Eq "$block_re"; then
     blocked=1
     break
   fi
-done <<EOF
-$(printf '%s\n' "$cmd" | awk '{gsub(/&&|\|\||;/, "\n"); print}')
-EOF
+done
+unset IFS
+set +f
 
 if [ "$blocked" -eq 1 ]; then
   {

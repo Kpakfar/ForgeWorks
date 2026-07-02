@@ -735,7 +735,7 @@ Once bootstrap completes, the project enters normal mode. The agent should:
 
 1. Read `AGENTS.md` on every new conversation
 2. Read `docs/structure.txt`, `docs/requirements.md`, and `docs/language-standards.md` first when starting work; read `docs/SECURITY.md` for any task touching auth, input, external content, or tools
-3. Run the `<planning-discipline>` pass (with `grill-me`) before any non-trivial slice -- name the full test plan (unit + functional + e2e + security) before writing code
+3. Run the `<planning-discipline>` pass before EVERY non-trivial slice or new feature, not only the first: brainstorm the options, then grill the chosen one (with `grill-me`) -- name the full test plan (unit + functional + e2e + security) before writing code, and build the mockup first when the slice makes a significant UI/UX choice
 4. Use `docs/current-task/task.md` as shared memory across agents during a task
 5. Use the upstream `tdd` skill (mattpocock/skills) for the Red to Green to Refactor methodology
 6. Delegate to subagents (`@test-spec-writer`, `@implementer`, `@code-reviewer`) for complex phases; run `@security-reviewer` and `@tech-debt` on their recurring cadence
