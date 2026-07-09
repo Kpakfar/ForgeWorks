@@ -59,6 +59,12 @@ select = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN"]      # annotations not required in tests
 
+[tool.ruff.lint.flake8-bugbear]
+# Calls that are immutable-by-convention as parameter defaults. Extend for your
+# framework (FastAPI users add: fastapi.Depends, fastapi.Query, fastapi.Body,
+# fastapi.File) so B008 does not fire on idiomatic DI.
+extend-immutable-calls = []
+
 # The gate runs `mypy src/` (tests are covered by ruff + pytest, not mypy) --
 # no per-module overrides needed; add them here if you extend mypy to tests/.
 [tool.mypy]
@@ -76,6 +82,7 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+    "--import-mode=importlib",
 ]
 markers = [
     "slow: marks tests as slow",

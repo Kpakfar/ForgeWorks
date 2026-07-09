@@ -655,12 +655,14 @@ notes:
   imports: |
     - Order: stdlib -> third-party -> local. Sorted by ruff (`I` rule set).
     - One module per import line for stdlib and third-party.
+    - If a name is used ONLY in annotations, ruff's TC rules will move it under `if TYPE_CHECKING:` -- but a name a framework resolves at RUNTIME from the annotation (e.g. FastAPI's `Request`/`Response`/`UploadFile` in route signatures) must stay a real import. Keep those imports at runtime and mark them `# noqa: TC002` if flagged.
   async: |
     - Match the project shape: in a server or any concurrent context, I/O (HTTP, DB, LLM) should be `async`. In a CLI, script, batch job, or library with no concurrency, plain sync is simpler and fine -- do not add async for its own sake.
     - When you do go async, use `asyncio.TaskGroup` (Python 3.11+) for concurrent work, and keep the whole I/O path async (no sync calls blocking the loop).
   errors: |
     - Specific exception classes per domain. Never bare `Exception`.
     - Fail-closed on safety/security: if uncertain, refuse rather than proceed.
+    - Framework dependency-injection defaults (e.g. FastAPI `Depends(...)`) are called markers, not values: never replace `Depends(get_settings)` with a bare `get_settings()` call at import time -- the first form resolves per-request, the second freezes one instance at import and 500s under test overrides.
   config: |
     - `pydantic-settings` for all configuration.
     - Never hardcode API keys, URLs, or model names. Pull from env or settings.
@@ -674,6 +676,7 @@ notes:
     - Use `pytest-asyncio` for async tests. Inject fakes via fixtures/dependency objects; no mocks for code you own.
     - `factory-boy` or hand-rolled fixtures in `tests/fixtures/` for data.
     - `hypothesis` for property-based tests on pure functions.
+    - `--import-mode=importlib` is set in addopts: test files may share basenames across folders without `__init__.py` shims.
   precommit_hooks: |
     This profile ships `.pre-commit-config.yaml` with `ruff` (`--fix`) and `ruff-format`, plus the generic hooks (trailing-whitespace, yaml/toml/json validation, large-file guard). Install once with `uv run pre-commit install`. (TypeScript and Go profiles ship no pre-commit; their `qa` gate + CI are the enforcement.)
 ```
