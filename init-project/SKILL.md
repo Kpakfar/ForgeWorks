@@ -65,13 +65,21 @@ After the user picks them in the skills picker, verify `tdd` and `grill-me` are 
 
 This is a planning interview, not a form. Do not be lazy here and do not just transcribe answers -- interrogate them. Run the `grill-me` skill (from mattpocock/skills) to drive it; if unavailable, mirror its style: probe assumptions, surface trade-offs, ask the follow-up.
 
-Start from the **heart of the project**: the one flow that, if it works, makes the project worth building. Get that crisp before anything about stack or tooling. Ask the questions below one at a time (or in tight groups of 2-3 if obviously related), but treat Q1-Q2 as a real discovery, not a single line each.
+Start from the **heart of the project**: the one flow that, if it works, makes the project worth building. Get that crisp before anything about stack or tooling. Ask the questions below one at a time (or in tight groups of 2-3 if obviously related), but treat A1-A2 as a real discovery, not a single line each.
 
 **Be proactive about what's missing.** The complaint that drove this design is interviews that record what the user says and stop there. After the core questions, run one explicit "what haven't we talked about?" pass and name the gaps yourself: error and empty states, the unhappy path, auth and who can see what, scale, observability, the riskiest assumption. Tell the user what you think they have not considered. A good interview leaves the user thinking "I hadn't thought of that."
 
 Save answers to a temporary file `docs/_init-answers.md` as you go (this will be deleted after generation).
 
-#### Q1. Project name and one-sentence goal
+The interview has two parts, in this order: **Part A -- product discovery** (the
+project itself; this is where surprises are killed) and **Part B -- stack and
+options** (machinery). Rule zero: **nothing this interview can elicit ships as a
+TODO in the generated docs.** When an answer is vague, grill it: "How would you
+verify that?", "What breaks first?", "Give me a real example input and output."
+
+**Part A -- product discovery**
+
+#### A1. Project name and one-sentence goal
 - What's the project called?
 - In one sentence, what does it do and for whom?
 
@@ -79,7 +87,7 @@ Probe: who is the *primary* user? If they list multiple, narrow to one for the M
 
 From the name, derive a **`{{PROJECT_SLUG}}`** for use in manifests / module paths: lowercase, ASCII, words joined by hyphens, no spaces or punctuation (e.g. "My Project!" -> `my-project`). The display `{{PROJECT_NAME}}` is for prose only; the slug is what goes into a package name, `package.json` name, or Go module path -- raw display names break TOML/JSON/`go.mod`. If the derived slug is empty or invalid, ask the user for one.
 
-#### Q2. The core problem and the heart of the project
+#### A2. The core problem, the heart, and the positioning
 - What problem is this solving that existing tools don't solve well? Why now?
 - **The heart:** describe the single most important user-visible flow end to end -- the one that, if it works, makes the whole thing worth building. This is what the first slices target.
 - What does success look like concretely? How will you know the flow works (a metric, an example output, a user reaction)?
@@ -87,7 +95,68 @@ From the name, derive a **`{{PROJECT_SLUG}}`** for use in manifests / module pat
 
 Probe until these are concrete. If the answers are abstract, ask for a worked example (a real input and the output it should produce).
 
-#### Q3. Language
+Also pin the positioning while you are here (these feed `docs/PRODUCT_VISION.md`
+directly -- do not leave them for later): what CATEGORY is this product
+(one noun phrase), what is the user's PAIN in one line, what is the CURRENT
+ALTERNATIVE they use today, what is the KEY BENEFIT in one line, and what is the
+KEY DIFFERENTIATOR versus that alternative?
+
+#### A3. Acceptance criteria for the first iteration
+
+Ask for 3-5 numbered, observable statements that, when all true, mean the MVP
+works. These become `REQ-AC1..n` in `docs/requirements.md` -- the iteration
+contract every slice cites. Probe each until it is verifiable by hand: "How
+would you check this one?" Reject vague criteria ("it should be fast") and
+help sharpen them ("p95 under 2s on 1k documents").
+
+#### A4. Non-goals
+
+What will this project deliberately NOT do in the first iteration? Get at least
+two concrete non-goals. These render into `{{NON_GOALS}}` -- they are the main
+defense against scope surprises.
+
+#### A5. Constraints
+
+- Time: deadline or cadence (sprint, hackathon, side project)? Derive the first
+  milestone date if one exists.
+- Cost: any budget, INCLUDING an LLM/API budget if AI features are likely?
+- Data: corpus size, allowed sources, licensing constraints?
+
+#### A6. Deployment target
+
+Where does this run for its users -- local CLI, internal tool, public web app,
+mobile, embedded? And where will it be hosted or deployed first (a laptop, a
+VPS, a PaaS, on-prem)?
+
+#### A7. Scale and performance expectations
+
+Order of magnitude for the first iteration: how many users, requests, and how
+much data? Any hard latency expectation on the core flow? "Just me, small" is a
+fine answer -- but it must be recorded, not assumed.
+
+#### A8. External systems and integrations
+
+What existing systems, third-party APIs, or data sources must this talk to?
+List each. Every one of these will need a reality probe (`docs/probes/`) before
+any code builds on it -- say so now so it is not a surprise later.
+
+#### A9. Other user segments
+
+Besides the primary user (A1): who else might use this later? One line each;
+they are recorded as deferred, not built.
+
+#### A10. Style references
+
+Every project drifts without a style anchor. Pick one positive reference for the agent to pattern-match.
+
+- **Positive reference (required):** a concrete artifact -- public repo URL, deployed product, folder on disk, design system, or screenshot directory -- that this project should resemble in shape and idioms. Ask: "Is there a project you have looked at and thought 'I want this codebase to feel like that one'?"
+- **Negative reference (optional):** a concrete artifact whose shape you want to avoid.
+
+Save the location (URL or path) for each. If the user has nothing for the positive reference, suggest picking one before the first real slice; leave a TBD placeholder for now.
+
+**Part B -- stack and options**
+
+#### B1. Language
 
 ```
   1) Python       (uv, ruff, mypy, pytest)            [complete]
@@ -99,18 +168,22 @@ Probe until these are concrete. If the answers are abstract, ask for a worked ex
 
 Python, TypeScript, and Go each have a **complete profile** (`templates/profiles/<lang>/`) with a working toolchain and a green-on-first-run scaffold -- pick any of them and the quality gate passes immediately. Rust and "Other" are not yet built; see "Experimental languages" below before generating one.
 
-#### Q4. Frontend
+#### B2. Frontend
 
 - Will this project have a frontend in this sprint?
   - **yes-spa**: full SPA (React, Next, Vue, etc.)
   - **yes-minimal**: Streamlit, Gradio, plain HTML
   - **no**: API-only or notebook-only
 
-#### Q5. Backend framework (if applicable)
+#### B3. Backend framework (if applicable)
 
-Depends on language choice. Example for Python: FastAPI / Streamlit-only / Flask / none. Example for TypeScript: Next.js / Express / Fastify / none.
+Offer the menu for the chosen language; do not improvise:
 
-#### Q6. AI features
+- Python: 1) FastAPI  2) Flask  3) Streamlit/Gradio only  4) none (CLI/library)
+- TypeScript: 1) Next.js  2) Express  3) Fastify  4) none (CLI/library)
+- Go: 1) stdlib net/http  2) chi  3) gin  4) none (CLI/library)
+
+#### B4. AI features
 
 - Will this project use:
   - RAG (retrieval-augmented generation)? Vector DB choice: pgvector / Chroma / Pinecone / Qdrant
@@ -120,14 +193,14 @@ Depends on language choice. Example for Python: FastAPI / Streamlit-only / Flask
 
 Record answers for `requirements.md` and to scaffold relevant test categories.
 
-#### Q7. LLM provider and embeddings model
+#### B5. LLM provider and embeddings model
 - Provider: OpenAI / Anthropic / Google / Together / OpenRouter / local (Ollama / LM Studio) / multiple via a router
 - Embeddings model: name (e.g. `text-embedding-3-small`, `bge-large-en-v1.5`)
 
-#### Q8. Database / persistence (if applicable)
+#### B6. Database / persistence (if applicable)
 - None / SQLite / Postgres / DuckDB / KV store / file-based
 
-#### Q9. Dev container?
+#### B7. Dev container?
 - Do you want to run this project in a dev container? (yes / no)
 - If yes, base image defaults to the language profile's recommendation.
 
@@ -135,34 +208,7 @@ Trade-offs:
 - **Yes:** isolated environment, reproducible across machines, matches production, and confines what an agent with broad permissions can touch on the host filesystem.
 - **No:** simpler setup, no Docker required, easier if you're on a constrained machine or just prototyping.
 
-#### Q10. Style references
-
-Every project drifts without a style anchor. Pick one positive reference for the agent to pattern-match.
-
-- **Positive reference (required):** a concrete artifact -- public repo URL, deployed product, folder on disk, design system, or screenshot directory -- that this project should resemble in shape and idioms. Ask: "Is there a project you have looked at and thought 'I want this codebase to feel like that one'?"
-- **Negative reference (optional):** a concrete artifact whose shape you want to avoid.
-
-Save the location (URL or path) for each. If the user has nothing for the positive reference, suggest picking one before the first real slice; leave a TBD placeholder for now.
-
-#### Q11. Per-slice explanation memos (opt-in)
-
-> "Do you want a plain-English memo generated when each slice ships? Useful for learning projects, handoffs, and codebases that need to be defended in review. Skip if you do not need the trail."
-
-Yes / No. Default: No.
-
-#### Q12. Seed `gotchas.md` with three starter entries (opt-in)
-
-> "Do you want `docs/gotchas.md` pre-seeded with three generic lessons (patch the cause not the symptom; trust artifacts not summaries; handle external I/O at one boundary)? Demonstrates the file's purpose and shape."
-
-Yes / No. Default: Yes.
-
-#### Q13. Pre-wire mem0 for persistent memory (opt-in)
-
-> "Does this project need persistent memory across sessions (user preferences, agent state, conversation history)? If yes, mem0 is added as a dependency in local library mode."
-
-Yes / No. Default: No. Link: https://github.com/mem0ai/mem0
-
-#### Q14. Security profile
+#### B8. Security profile
 
 Three quick yes/no questions that set the project's threat model (these seed `docs/SECURITY.md` and `docs/requirements.md`):
 
@@ -172,36 +218,54 @@ Three quick yes/no questions that set the project's threat model (these seed `do
 
 Any "yes" means the security blocks and red-team tests matter. All three "yes" on a single LLM agent is the **lethal trifecta** -- flag it explicitly and note in `docs/SECURITY.md` how the project breaks one leg (split the agent, drop a capability, or gate the action behind a human).
 
-#### Q15. Codex as a second-opinion reviewer (opt-in)
+#### B9. Per-slice explanation memos (opt-in)
+
+> "Do you want a plain-English memo generated when each slice ships? Useful for learning projects, handoffs, and codebases that need to be defended in review. Skip if you do not need the trail."
+
+Yes / No. Default: No.
+
+#### B10. Seed `gotchas.md` with three starter entries (opt-in)
+
+> "Do you want `docs/gotchas.md` pre-seeded with three generic lessons (patch the cause not the symptom; trust artifacts not summaries; handle external I/O at one boundary)? Demonstrates the file's purpose and shape."
+
+Yes / No. Default: Yes.
+
+#### B11. Pre-wire mem0 for persistent memory (opt-in)
+
+> "Does this project need persistent memory across sessions (user preferences, agent state, conversation history)? If yes, mem0 is added as a dependency in local library mode."
+
+Yes / No. Default: No. Link: https://github.com/mem0ai/mem0
+
+#### B12. Codex as a second-opinion reviewer (opt-in)
 
 > "Do you have the Codex CLI available? If so, the code-reviewer can run an independent Codex pass for a second perspective on important changes."
 
 Yes / No. Default: No. If yes, the generated `code-reviewer` agent includes a step to invoke Codex and reconcile its findings.
 
-### Phase 3: Confirm the plan
+### Phase 3: Confirm the plan -- show the filled docs, not a settings list
 
-Before generating files, summarize back:
+Render (in memory) the discovery content that will land in the docs and show it
+to the user BEFORE generating -- surprises must surface here, not after:
 
-> "Based on your answers, I'll generate:
-> - Language: {language}
-> - Frontend: {frontend or 'none'}
-> - Backend framework: {framework or 'none'}
-> - Dev container: {yes/no}
-> - AI features: {list}
-> - LLM provider: {provider}
-> - Primary user: {user}
-> - Core flow: {one-sentence flow}
-> - Positive style reference: {location or 'TBD -- to be picked before first slice'}
-> - Negative style reference: {location or 'none'}
-> - Per-slice explanation memos: {yes/no}
-> - Gotchas seed: {yes/no}
-> - mem0 pre-wired: {yes/no}
-> - Security profile: reads untrusted: {yes/no}, holds private data: {yes/no}, acts outward: {yes/no} {lethal-trifecta warning if all three on one agent}
-> - Codex second-opinion reviewer: {yes/no}
+> "Here is what your docs will say. Correct anything that reads wrong.
+>
+> **Positioning:** For {primary user} who {pain}, {name} is a {category} that
+> {key benefit}. Unlike {alternative}, we {differentiator}.
+> **Core flow:** {numbered steps}
+> **Acceptance criteria:** {REQ-AC1..n}
+> **Non-goals:** {list}   **Constraints:** {time / cost / data}
+> **Deployment:** {target}   **Scale:** {expectations}
+> **Integrations (each will need a reality probe):** {list}
+> **Success metric:** {metric}   **Riskiest assumption:** {assumption}
+>
+> Stack: {language}, frontend {answer}, backend {answer}, DB {answer},
+> AI {list or none}, LLM {provider or none}, dev container {yes/no},
+> security profile {three answers}{trifecta warning if all three},
+> opt-ins: memos {y/n}, gotchas seed {y/n}, mem0 {y/n}, Codex {y/n}.
 >
 > This will create approximately {N} files. Proceed?"
 
-Wait for confirmation.
+Wait for confirmation and apply corrections before Phase 4.
 
 ### Phase 4: Generate the scaffold
 
@@ -233,7 +297,7 @@ Do NOT read or copy `templates/profiles/<other-language>/`. The manifest, script
 
 After the base substitution pass, apply these rules:
 
-0. **AI discipline block (Q6).** If any AI feature was selected (RAG, agents, evals, streaming), render `{{AI_DISCIPLINE_BLOCK}}` in `AGENTS.md` as the block below. If no AI feature was selected, render it as an empty string.
+0. **AI discipline block (B4).** If any AI feature was selected (RAG, agents, evals, streaming), render `{{AI_DISCIPLINE_BLOCK}}` in `AGENTS.md` as the block below. If no AI feature was selected, render it as an empty string.
 
    ```
    <ai-discipline>
@@ -251,15 +315,15 @@ After the base substitution pass, apply these rules:
    </ai-discipline>
    ```
 
-1. **Style references (Q10).** Render `{{POSITIVE_REFERENCE_TEXT}}` and `{{NEGATIVE_REFERENCE_TEXT}}` in `AGENTS.md`:
+1. **Style references (A10).** Render `{{POSITIVE_REFERENCE_TEXT}}` and `{{NEGATIVE_REFERENCE_TEXT}}` in `AGENTS.md`:
    - Positive reference provided: `Pattern-match every file you write or modify to <ref>. Reference material: <location>.`
    - Positive is TBD: `<!-- No positive reference yet. Add one to this block when you choose one. -->`
    - Negative reference provided: `Explicitly avoid the shape of <ref>. Anti-pattern material: <location>.`
    - No negative reference: empty string.
 
-2. **Per-slice explanation memos (Q11).** If `{{GENERATE_EXPLANATIONS}}` is `no`: delete `docs/explanations/` from the generated tree. If `yes`: leave the README in place (it ships in the template).
+2. **Per-slice explanation memos (B9).** If `{{GENERATE_EXPLANATIONS}}` is `no`: delete `docs/explanations/` from the generated tree. If `yes`: leave the README in place (it ships in the template).
 
-3. **Gotchas seed (Q12).** If `{{SEED_GOTCHAS}}` is `yes`: append the three starter entries below to `docs/gotchas.md`, inserted between the `## Entries` heading and the `## Generic lessons` section.
+3. **Gotchas seed (B10).** If `{{SEED_GOTCHAS}}` is `yes`: append the three starter entries below to `docs/gotchas.md`, inserted between the `## Entries` heading and the `## Generic lessons` section.
 
    ```
    ### [General] Patch the cause, not the symptom
@@ -281,7 +345,7 @@ After the base substitution pass, apply these rules:
    **Date / Task:** seeded by `/init-project`.
    ```
 
-4. **mem0 (Q13).** If `{{USE_MEM0}}` is `yes`:
+4. **mem0 (B11).** If `{{USE_MEM0}}` is `yes`:
    - Keep `docs/memory.md` in the generated tree.
    - Render `{{MEMORY_DOC_LINE}}` in `AGENTS.md` as: `- \`docs/memory.md\` : memory scopes (User, Session, Agent), what is stored, what is not.`
    - Insert this block into `AGENTS.md` between `<library-docs>` and `<tools>`:
@@ -308,12 +372,12 @@ After the base substitution pass, apply these rules:
 
    If `{{USE_MEM0}}` is `no`: delete `docs/memory.md`, render `{{MEMORY_DOC_LINE}}` as an empty string, do not insert the `<memory>` block, do not add the dep.
 
-5. **Security profile (Q14).** `docs/SECURITY.md`, `.claude/settings.json` (deps-guard hook), `.claude/hooks/deps-guard.sh`, and `.claude/agents/security-reviewer.md` always ship -- the universal risks (access control, secrets, supply chain) apply to every project. Then adjust for the AI answer:
-   - If **any AI feature** was selected (Q6): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`; `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`; `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`) and keep the content.
+5. **Security profile (B8).** `docs/SECURITY.md`, `.claude/settings.json` (deps-guard hook), `.claude/hooks/deps-guard.sh`, and `.claude/agents/security-reviewer.md` always ship -- the universal risks (access control, secrets, supply chain) apply to every project. Then adjust for the AI answer:
+   - If **any AI feature** was selected (B4): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`; `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`; `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`) and keep the content.
    - If **no AI feature** was selected: delete the whole fenced blocks (markers and everything between) in all four files -- the AI sections of `docs/SECURITY.md`, the `## AI features in scope` block of `docs/requirements.md`, and the AI-specific rules in the implementer and code-reviewer subagents. A non-AI project ships no AI/RAG rules or TODOs anywhere.
-   - Seed the `## Attack surface` table and the trifecta line from the Q14 answers (reads untrusted / holds private / acts outward). If all three are `yes` for a single LLM agent, write an explicit note in `docs/SECURITY.md` and `docs/requirements.md` that the lethal trifecta is present and must be broken (split the agent, drop a capability, or gate the action behind a human).
+   - Seed the `## Attack surface` table and the trifecta line from the B8 answers (reads untrusted / holds private / acts outward). If all three are `yes` for a single LLM agent, write an explicit note in `docs/SECURITY.md` and `docs/requirements.md` that the lethal trifecta is present and must be broken (split the agent, drop a capability, or gate the action behind a human).
 
-6. **Codex reviewer (Q15).** Two separate placeholders (one value each, so plain string-replace stays correct): `{{CODEX_REVIEW_STEP}}` in `.claude/agents/code-reviewer.md`, and `{{CODEX_ROSTER_NOTE}}` in the `<agent-roster>` of `AGENTS.md`.
+6. **Codex reviewer (B12).** Two separate placeholders (one value each, so plain string-replace stays correct): `{{CODEX_REVIEW_STEP}}` in `.claude/agents/code-reviewer.md`, and `{{CODEX_ROSTER_NOTE}}` in the `<agent-roster>` of `AGENTS.md`.
    - If `yes`, render `{{CODEX_REVIEW_STEP}}` (the code-reviewer block) as:
 
      ```
@@ -331,15 +395,15 @@ After the base substitution pass, apply these rules:
      and render `{{CODEX_ROSTER_NOTE}}` (the one-line roster note, which sits right after the `@code-reviewer` line) as: ` Runs an independent Codex second-opinion pass on important changes.`
    - If `no`, render BOTH `{{CODEX_REVIEW_STEP}}` and `{{CODEX_ROSTER_NOTE}}` as empty strings.
 
-7. **Discovery answers (Q1-Q2).** Render the interview's discovery answers as real content, not TODOs: `{{CORE_JOURNEY}}` as a numbered list of the core-flow steps, `{{SUCCESS_MEASURE}}` as the concrete success sentence, `{{RISKIEST_ASSUMPTION}}` as the one-line assumption, and `{{NON_GOALS}}` as a bullet list of explicit out-of-scope items. These flow into `docs/requirements.md` and `docs/PRODUCT_VISION.md`. A generated project must not ship these as `TODO` -- the planning conversation is the point.
+7. **Discovery answers (A1-A9).** Render the interview's discovery answers as real content, not TODOs: `{{CORE_JOURNEY}}` as a numbered list of the core-flow steps, `{{SUCCESS_MEASURE}}` as the concrete success sentence, `{{RISKIEST_ASSUMPTION}}` as the one-line assumption, and `{{NON_GOALS}}` as a bullet list of explicit out-of-scope items. These flow into `docs/requirements.md` and `docs/PRODUCT_VISION.md`. A generated project must not ship these as `TODO` -- the planning conversation is the point.
 
-8. **Capability dependencies (Q5-Q8).** The manifest ships a minimal core only; append ONLY the dependencies the answers call for, using the chosen profile's `add_dep_command` (prefix Python's `uv add` with `DEPS_VETTED=1` so the deps-guard hook allows it). Map intent to packages, per language:
+8. **Capability dependencies (B3-B6).** The manifest ships a minimal core only; append ONLY the dependencies the answers call for, using the chosen profile's `add_dep_command` (prefix Python's `uv add` with `DEPS_VETTED=1` so the deps-guard hook allows it). Map intent to packages, per language:
    - **Python** -- FastAPI: `fastapi`, `uvicorn[standard]`; Flask: `flask`; Streamlit/Gradio: `streamlit`/`gradio`; Postgres: `sqlalchemy`, `alembic`, `psycopg[binary]`; SQLite/DuckDB: `sqlalchemy`/`duckdb`; vectors: `pgvector`/`chromadb`/`pinecone-client`/`qdrant-client`; LLM: `openai` (also OpenRouter)/`anthropic`/`google-genai`; `httpx` for outbound HTTP.
    - **TypeScript** -- API: `express` or `fastify` (+ `@types/*`); Postgres: `pg`+`@types/pg` or `drizzle-orm`; vectors: `chromadb`/`@pinecone-database/pinecone`/`@qdrant/js-client-rest`; LLM: `openai`/`@anthropic-ai/sdk`/`@google/genai`; config validation: `zod`. Frontend frameworks (React/Next/Vue) per the user's choice.
    - **Go** -- HTTP: stdlib `net/http` (no dep) or `chi`/`gin`; Postgres: `github.com/jackc/pgx/v5`; LLM: the provider's official Go SDK or `net/http`. Add via `go get`.
    Choose the smallest set that covers the answers; do not add a database/vector/LLM dep the project did not ask for.
 
-9. **End-to-end browser install (Q4).** If the project has a UI (Q4 is `yes-spa` or `yes-minimal`) and the profile defines `e2e_browser_install`, uncomment the browser-install step in `.github/workflows/qa.yml` and set it to `{{E2E_BROWSER_INSTALL}}`. If Q4 is `no` (API-only) or the profile has no browser install (Go), delete that commented step -- the e2e job still runs `{{E2E_COMMAND}}` for full request->state e2e.
+9. **End-to-end browser install (B2).** If the project has a UI (B2 is `yes-spa` or `yes-minimal`) and the profile defines `e2e_browser_install`, uncomment the browser-install step in `.github/workflows/qa.yml` and set it to `{{E2E_BROWSER_INSTALL}}`. If B2 is `no` (API-only) or the profile has no browser install (Go), delete that commented step -- the e2e job still runs `{{E2E_COMMAND}}` for full request->state e2e.
 
 After all files are written:
 
@@ -408,36 +472,36 @@ Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
 
 | Placeholder | Source |
 |---|---|
-| `{{PROJECT_NAME}}` | Q1 |
-| `{{PROJECT_GOAL}}` | Q1 |
-| `{{PROJECT_SLUG}}` | Q1 -- derived: lowercase, hyphenated, valid package/module identifier |
-| `{{PRIMARY_USER}}` | Q1 |
-| `{{CORE_PROBLEM}}` | Q2 |
-| `{{CORE_JOURNEY}}` | Q2 (the heart: the core user-visible flow, as steps) |
-| `{{SUCCESS_MEASURE}}` | Q2 (what success looks like, concretely) |
-| `{{RISKIEST_ASSUMPTION}}` | Q2 (the assumption that sinks the project if wrong) |
-| `{{NON_GOALS}}` | Q2/interview (explicit out-of-scope items) |
-| `{{LANGUAGE}}` | Q3 |
-| `{{HAS_FRONTEND}}` | Q4 |
-| `{{BACKEND_FRAMEWORK}}` | Q5 |
-| `{{AI_FEATURES}}` | Q6 (comma-separated) |
-| `{{VECTOR_DB}}` | Q6 |
-| `{{LLM_PROVIDER}}` | Q7 |
-| `{{EMBEDDINGS_MODEL}}` | Q7 |
-| `{{DATABASE}}` | Q8 |
-| `{{USES_DEVCONTAINER}}` | Q9 (`yes`/`no`) |
-| `{{POSITIVE_REFERENCE_TEXT}}` | Q10 -- rendered line (see Phase 4) |
-| `{{NEGATIVE_REFERENCE_TEXT}}` | Q10 -- rendered line, may be empty |
-| `{{GENERATE_EXPLANATIONS}}` | Q11 (`yes`/`no`) |
-| `{{SEED_GOTCHAS}}` | Q12 (`yes`/`no`) |
-| `{{USE_MEM0}}` | Q13 (`yes`/`no`) |
-| `{{MEMORY_DOC_LINE}}` | Derived from Q13 (see Phase 4) |
-| `{{AI_DISCIPLINE_BLOCK}}` | Derived from Q6 (see Phase 4) |
-| `{{CODEX_REVIEW_STEP}}` | Derived from Q15 -- the review-step block in `code-reviewer.md` (see Phase 4) |
-| `{{CODEX_ROSTER_NOTE}}` | Derived from Q15 -- the one-line roster note in `AGENTS.md` (see Phase 4) |
+| `{{PROJECT_NAME}}` | A1 |
+| `{{PROJECT_GOAL}}` | A1 |
+| `{{PROJECT_SLUG}}` | A1 -- derived: lowercase, hyphenated, valid package/module identifier |
+| `{{PRIMARY_USER}}` | A1 |
+| `{{CORE_PROBLEM}}` | A2 |
+| `{{CORE_JOURNEY}}` | A2 (the heart: the core user-visible flow, as steps) |
+| `{{SUCCESS_MEASURE}}` | A2 (what success looks like, concretely) |
+| `{{RISKIEST_ASSUMPTION}}` | A2 (the assumption that sinks the project if wrong) |
+| `{{NON_GOALS}}` | A2/interview (explicit out-of-scope items) |
+| `{{LANGUAGE}}` | B1 |
+| `{{HAS_FRONTEND}}` | B2 |
+| `{{BACKEND_FRAMEWORK}}` | B3 |
+| `{{AI_FEATURES}}` | B4 (comma-separated) |
+| `{{VECTOR_DB}}` | B4 |
+| `{{LLM_PROVIDER}}` | B5 |
+| `{{EMBEDDINGS_MODEL}}` | B5 |
+| `{{DATABASE}}` | B6 |
+| `{{USES_DEVCONTAINER}}` | B7 (`yes`/`no`) |
+| `{{POSITIVE_REFERENCE_TEXT}}` | A10 -- rendered line (see Phase 4) |
+| `{{NEGATIVE_REFERENCE_TEXT}}` | A10 -- rendered line, may be empty |
+| `{{GENERATE_EXPLANATIONS}}` | B9 (`yes`/`no`) |
+| `{{SEED_GOTCHAS}}` | B10 (`yes`/`no`) |
+| `{{USE_MEM0}}` | B11 (`yes`/`no`) |
+| `{{MEMORY_DOC_LINE}}` | Derived from B11 (see Phase 4) |
+| `{{AI_DISCIPLINE_BLOCK}}` | Derived from B4 (see Phase 4) |
+| `{{CODEX_REVIEW_STEP}}` | Derived from B12 -- the review-step block in `code-reviewer.md` (see Phase 4) |
+| `{{CODEX_ROSTER_NOTE}}` | Derived from B12 -- the one-line roster note in `AGENTS.md` (see Phase 4) |
 | `{{DATE}}` | today, ISO format |
 
-Q14 (security profile) has no placeholder: it conditionally prunes the AI sections of `docs/SECURITY.md` and seeds the threat model (Phase 4 rule 5).
+B8 (security profile) has no placeholder: it conditionally prunes the AI sections of `docs/SECURITY.md` and seeds the threat model (Phase 4 rule 5).
 
 ### Language-derived placeholders (from the profile)
 
@@ -713,7 +777,12 @@ If they proceed, copy `templates/core/` only, leave clearly-marked TODOs in `doc
 Python, TypeScript, and Go are all complete profiles; default to Python if there is no other signal. Don't let analysis paralysis block progress.
 
 **The user wants to skip the interview.**
-OK, but require minimum answers: project name, language, dev container yes/no. Skip everything else and generate with sensible defaults. Leave TODO markers in `requirements.md` for them to fill in later.
+OK for Part B (stack): require only language + dev container and default the
+rest. Part A cannot be fully skipped -- minimum: name, one-sentence goal, the
+core flow, and at least one acceptance criterion. Explain why: every Part A
+answer that is missing ships as a TODO that later becomes a surprise, which is
+the exact failure this template exists to prevent. Mark whatever the user still
+refuses as explicit `TODO(interview-skipped)` so it is greppable.
 
 **The user wants to bootstrap into a non-empty directory.**
 Refuse unless they explicitly confirm overwriting. Show what would be overwritten first.
@@ -734,8 +803,8 @@ Check that `npx` is available. The Context7 server in `.mcp.json` uses `npx -y @
 Once bootstrap completes, the project enters normal mode. The agent should:
 
 1. Read `AGENTS.md` on every new conversation
-2. Read `docs/structure.txt`, `docs/requirements.md`, and `docs/language-standards.md` first when starting work; read `docs/SECURITY.md` for any task touching auth, input, external content, or tools
-3. Run the `<planning-discipline>` pass before EVERY non-trivial slice or new feature, not only the first: brainstorm the options, then grill the chosen one (with `grill-me`) -- name the full test plan (unit + functional + e2e + security) before writing code, and build the mockup first when the slice makes a significant UI/UX choice
+2. Read `docs/structure.txt`, `docs/requirements.md`, and `docs/language-standards.md` first when starting work; read `docs/SECURITY.md` for any task touching auth, input, external content, or tools -- the main-context driver reads this doc set once per session; subagent briefs name the docs each task needs, not the full set every hop
+3. Run the `<planning-discipline>` pass before EVERY non-trivial slice or new feature, not only the first: brainstorm the options, then grill the chosen one (with `grill-me`) -- name the full test plan (unit + functional + e2e + security) before writing code, build the mockup first when the slice makes a significant UI/UX choice, and write the design memo (docs/designs/) -- the user must approve it before any code (see <investigation-discipline>)
 4. Use `docs/current-task/task.md` as shared memory across agents during a task
 5. Use the upstream `tdd` skill (mattpocock/skills) for the Red to Green to Refactor methodology
 6. Delegate to subagents (`@test-spec-writer`, `@implementer`, `@code-reviewer`) for complex phases; run `@security-reviewer` and `@tech-debt` on their recurring cadence
