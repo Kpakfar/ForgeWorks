@@ -43,7 +43,7 @@ The upgrade has no interview answers on hand, so recover what it needs from the 
 - **AI features?** -- detect a `prompts/` dir, an LLM SDK in the manifest, or an existing `<ai-discipline>` block. Confirm with the user (yes/no).
 - **mem0 / persistent memory?** -- detect `docs/memory.md`, a `<memory>` block in `AGENTS.md`, or `mem0ai` in the manifest. If absent, ask the user once whether to add it (yes/no; default no).
 - **Quality-gate command** -- recover `{{QA_COMMAND}}` from `docs/language-standards.md` (the "Quality-gate command" line) or the manifest's scripts; needed to regenerate `.claude/hooks/quality-gate.sh` if missing.
-- **Codex available?** -- ask the user (yes/no); cannot be detected.
+- **Codex available?** -- detect it first: an existing "Second opinion (Codex)" section in .claude/agents/code-reviewer.md or a Codex note in the AGENTS.md agent roster means the project already opted in -- keep it, do not ask and NEVER remove it on a "no". Only when no Codex trace exists, ask the user (yes/no).
 - **Current version stamp ("from" version)** -- read `.claude/.template-version` if present. This is the project's real source version (install.sh does NOT overwrite it). Hold it for the from->to report; it is rewritten only in Phase 4 after a successful upgrade.
 
 Ask the user only for what you could not detect. Keep it to 2-3 questions.
@@ -55,9 +55,10 @@ The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both t
 ```bash
 npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.0.0 /tmp/upgrade-core --force
 npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.0.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.0.0 /tmp/upgrade-skill --force
 ```
 
-Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain.
+Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>) live in init-project/SKILL.md Phase 4, not in templates/ -- reconcile AI/memory-conditional content against /tmp/upgrade-skill/SKILL.md.
 
 Reconcile against this skill's own released version (`v2.0.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
@@ -77,6 +78,8 @@ Walk the template tree. For every template path, decide and act:
   - **Profile files come from the project's OWN profile** (Phase 2 pulled `profiles/<lang>/`). Copy them verbatim where absent -- including that language's real `scripts/` (Python and Go have `scripts/e2e.sh`; TypeScript runs e2e via an `npm run e2e` script in `package.json`). Never substitute another language's runner or a stub for a complete profile; the Go profile has a real e2e runner.
   - `.claude/hooks/quality-gate.sh` -- carries `{{QA_COMMAND}}`, which IS recoverable (Phase 1). If the hook is missing, substitute the recovered command and copy it; never report it as manual.
   - **Discovery placeholders (interview-sourced) in an absent file** (e.g. `{{SUCCESS_MEASURE}}`, `{{NON_GOALS}}`, `{{REQ_AC_LIST}}`, the positioning and constraints values): do NOT report "add manually" and do NOT half-write `{{...}}`. Queue the file for the Phase 3-D mini-interview.
+  - **.devcontainer/** -- respect the project's original opt-out: if the project has no .devcontainer/, do not copy it in as "absent"; note the availability once in the report instead.
+  - **Renamed/reshaped placeholders** -- when a template file's placeholder changed name or shape between versions (e.g. a commented step replaced by a rendered one), recover the concrete value from the project's already-rendered copy of that file (it holds the substituted value) before falling back to the mini-interview. Do not punt.
 
 **B. File PRESENT in both (merge target).** Compare the template version against the project's. Insert what is new, preserve what the project filled in. Never blow away the project's content.
 - **`AGENTS.md`** -- deterministic via FW-BLOCK markers. Since v2.0.0 every rule block in the template is wrapped in `<!-- FW-BLOCK: <name> vX.Y.Z -->` ... `<!-- /FW-BLOCK: <name> -->`. Reconcile by marker, not judgment:
@@ -84,7 +87,7 @@ Walk the template tree. For every template path, decide and act:
   2. Block absent in the project -> insert it (with its markers) at the same position it holds in the template.
   3. Block present with an OLDER marker version -> show the two versions side by side ONCE (in the Phase 4 report) and let the user choose; never silently overwrite.
   4. Block present at the current version -> skip (this is the idempotency check -- mechanical, not judgment).
-  5. Project block with NO markers (pre-v2 project): match by tag name (`<security-discipline>` etc.); when matched, wrap it with markers stamped at the project's "from" version so the next run is mechanical.
+  5. Project block with NO markers (pre-v2 project): match by tag name (`<security-discipline>` etc.); when matched, wrap it with markers stamped at the project's "from" version so the next run is mechanical. Then continue in the SAME run: the freshly wrapped block now carries an older version, so it immediately re-enters rule 3 (older version -> side-by-side) -- wrapping is bookkeeping, not the upgrade itself. A pre-v2 project gets both the markers AND the content reconciliation in one run.
   **Supersession registry** (complete -- extend on every rename):
 
   | Old block | Replaced by | Since |
@@ -93,6 +96,7 @@ Walk the template tree. For every template path, decide and act:
 
   After grafting, flag any superseded block present in the project for the user to remove -- do not silently delete.
 - **Subagents** (`implementer.md`, `test-spec-writer.md`, `code-reviewer.md`) -- graft sections the template added (e.g. the implementer "step back / full picture" section, the test-spec-writer pyramid table, the `{{CODEX_REVIEW_STEP}}` slot) if absent. If the user customized a subagent, surface the diff rather than overwriting.
+- **Any other file present in both** (hooks, .mcp.json, workflows, docs templates) -- diff it against the fetched template version. If the project's copy is byte-identical to an OLDER template release (no hand edits), queue the template's current version as a straight update in the batch report. If the project's copy differs from every template version (hand-edited), show the diff side-by-side in the report and let the user choose -- never overwrite silently, and never assume the template is ahead: the project may carry a fix the template lacks (report that upstream).
 
 **C. Tooling delta (language-gated).** Apply the toolchain changes between the project's "from" version (Phase 1 stamp) and this release, for the project's language only. Compare the freshly-fetched profile's manifest / scripts / CI against the project's and surface the diffs; the high-value ones per language:
 - **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present.
@@ -136,4 +140,4 @@ zero punted files. If the user declines a question, write
 
 ## Note for template maintainers
 
-This skill reconciles against `templates/core` + the project's `templates/profiles/<lang>`, so a **new always-on, placeholder-free file** added to `core/` is picked up automatically. You must touch this skill only when you add: a file with new tooling placeholders (extend the Phase 3-A special cases), a tooling-delta step for a language profile (extend Phase 3-C), or a new `AGENTS.md` rule block -- which needs (a) FW-BLOCK markers in the template and (b) a supersession-registry row (Phase 3-B) if it replaces an old block. New interview-sourced placeholders must also be added to the Phase 3-A discovery list so the Phase 3-D mini-interview picks them up. See the repo `AGENTS.md` `<editing-the-upgrade-skill>`.
+This skill reconciles against `templates/core` + the project's `templates/profiles/<lang>`, so a **new always-on, placeholder-free file** added to `core/` is picked up automatically. You must touch this skill only when you add: a file with new tooling placeholders (extend the Phase 3-A special cases), a tooling-delta step for a language profile (extend Phase 3-C), or a new `AGENTS.md` rule block -- which needs (a) FW-BLOCK markers in the template and (b) a supersession-registry row (Phase 3-B) if it replaces an old block. New interview-sourced placeholders must also be added to the Phase 3-A discovery list so the Phase 3-D mini-interview picks them up. Renamed placeholders and conditional-block (`<ai-discipline>`, `<memory>`) changes also must be reflected in the Phase 3-A special cases -- both are recovery rules, not new files, so they are easy to forget. See the repo `AGENTS.md` `<editing-the-upgrade-skill>`.
