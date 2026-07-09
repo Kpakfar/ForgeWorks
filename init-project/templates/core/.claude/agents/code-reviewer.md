@@ -61,7 +61,7 @@ Structure your review as:
 
 ```markdown
 ## Review Summary
-- Overall: [APPROVE | APPROVE_WITH_NITS | REQUEST_CHANGES]
+- Overall: [APPROVE | APPROVE_WITH_NITS | REQUEST_CHANGES | DESIGN_FLAW (slice returns to its design memo)]
 - QA gate: [PASS | FAIL, details]
 - AC coverage: [PASS | FAIL] (N/M criteria mapped to a covering test; list any uncovered AC)
 
