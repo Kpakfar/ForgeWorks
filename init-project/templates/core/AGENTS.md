@@ -1,6 +1,6 @@
 <development-process>
 - Dev container: {{USES_DEVCONTAINER}}. If yes, all commands run inside the container: do not install anything globally on the host.
-- Always start by reading `docs/structure.txt` and `docs/requirements.md` in parallel to orient yourself. For any task touching auth, input handling, external content, or tools, also read `docs/SECURITY.md`.
+- Orient once per session: the main-context driver reads `docs/structure.txt` and `docs/requirements.md` at session start, and `docs/SECURITY.md` for any task touching auth, input handling, external content, or tools. Subagents do NOT re-read the full doc set -- each dispatch brief names the exact docs that task needs (see `<token-discipline>`).
 - Always consult `docs/documentation.md` for links to library docs. Prefer Context7 (see below) for live API lookups.
 - If you encounter unfamiliar libraries, APIs, or patterns, research online before guessing. Fetch the actual documentation. Never write library code from training memory: API names and signatures drift, and guessed names are how hallucinated/typosquatted imports get in.
 - Work in this directory/repo only. Never touch files outside this repo unless explicitly instructed.
@@ -53,6 +53,17 @@ Prose gets a gate too: code has TDD, decisions have this block. No feature code 
 - **UI slices additionally need an approved mockup** before the memo is approved (see `<design-discipline>`).
 </investigation-discipline>
 
+<token-discipline>
+Tokens are budget. Analysis is meticulous; everything else is lean. (The code-minimization ladder is adapted from Ponytail -- github.com/DietrichGebert/ponytail.)
+
+- **Terse by default.** Working output -- status updates, inter-agent briefs, review notes -- is compressed: drop filler, pleasantries, and hedging; fragments are fine; technical terms stay exact; code and errors are quoted exactly. Full prose is reserved for design memos, security warnings, irreversible-action confirmations, and user-facing docs.
+- **The ladder -- walk it before writing any new code:** does this need to exist at all -> is it already in this codebase -> does the stdlib do it -> does the platform or framework do it -> does an installed dependency do it -> is it one line -> only then write the minimum that works. Lazy about solutions, meticulous about analysis: the ladder never replaces the probe or spike, it follows them.
+- **Fix-round circuit breaker.** Maximum two fix-rounds per review finding. A third failure means the design was wrong: STOP, reopen the design memo (`docs/designs/<slice>.md`) with the user, and do not iterate further on code.
+- **One review round by default.** `@code-reviewer` runs once per slice. Re-review only the specific findings from that round; a full re-review happens only after the circuit breaker sent the slice back to design.
+- **Scoped reads.** The main-context driver reads the doc set once per session; every subagent dispatch brief names exactly the docs and sections that task needs, and the subagent reads only those. Briefs live in `docs/current-task/task.md`, not re-narrated per hop.
+- **Right-sized models.** Every dispatch states a model explicitly: cheapest tier for mechanical work (memos, doc formatting), default tier for normal implementation and review, strongest tier only for slices touching auth, payments, data deletion, or genuinely hard architecture.
+</token-discipline>
+
 <test-discipline>
 TDD is the loop; this block defines the shape of the test suite each slice must produce. Write the functional and end-to-end specs at the SAME time as the unit specs -- list every test in the task plan before any code (Red phase). A slice is not "spec'd" until its e2e/functional tests are named.
 
@@ -101,7 +112,7 @@ Each row in `docs/backlog.md` is a vertical slice that moves a working demo forw
 
 At the start of a slice, pick the row that gives the biggest user-visible step forward for the smallest amount of new code. Cut scope before adding complexity.
 
-When a slice ships, move its row from Active to Shipped (in `backlog.md` or an archive log). Empty the Active section enough that the next slice is obvious.
+When a slice ships, move its row from Active to Shipped (in `backlog.md` or an archive log), and stamp the ship record (commit message or log row) with `review rounds: N, fix rounds: M` -- squash-clean history must not hide churn from a later post-mortem. Empty the Active section enough that the next slice is obvious.
 
 Anything off-scope that comes up during a slice goes to `docs/proposals-ideas.md` (rough idea) or as a new backlog row (clearly scoped). Not into the current slice.
 </backlog-discipline>
@@ -116,7 +127,7 @@ When starting a new task, copy `task-template.md` over `task.md` and fill it in.
 <library-docs>
 This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 provides up-to-date, version-specific library documentation across languages.
 
-**When to use it (always)**: any time you write or modify code that touches a third-party library. Training-data memory will be off in subtle ways, especially for fast-moving libraries.
+**When to use it**: the FIRST time this project touches a given third-party library, and again for any version-sensitive API (signatures that shift between minor versions). Do not re-query on every edit -- record what a lookup taught you in `docs/documentation.md` and reuse it. Writing library code from training memory remains forbidden: with neither a prior lookup nor a probe on disk, look it up.
 
 **How to use it**:
 - Before writing the code, query Context7 for the relevant API of the **pinned version** in your manifest file ({{MANIFEST_FILE}}), not the latest available.
@@ -135,7 +146,7 @@ This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 prov
 <quality-gate>
 The gate is deterministic and enforced by hooks, not by remembering to run it. Three layers:
 
-1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer` subagent runs `{{QA_COMMAND}}` during review; a `Stop` hook (auto-converted to `SubagentStop`) re-runs it and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build. Because the gate never mutates code, it cannot silently "fix" and pass.
+1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer`'s `Stop` hook (auto-converted to `SubagentStop`) runs `{{QA_COMMAND}}` when the review completes and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build; the reviewer itself re-runs only the specific failing step it is investigating, not the whole gate. Because the gate never mutates code, it cannot silently "fix" and pass.
 2. **Supply-chain guard hook (best-effort).** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) blocks the common dependency-install / remote-execute Bash commands until they are vetted (re-run with `DEPS_VETTED=1` at the start). It is a heuristic speed bump, not a boundary: it does not catch installs via scripts, direct manifest edits, or novel package managers. The real controls are committed lockfiles, reviewed dependency updates, and CI vulnerability scanning (the language's audit tooling, Dependabot).
 3. **CI.** CI runs the same non-mutating `{{QA_COMMAND}}` plus the slower end-to-end (headless-browser) suite (see `.github/workflows/qa.yml`). Note: the shipped workflow runs on pull requests and on pushes to `main`; **merge-blocking requires enabling branch protection** on the repo (the template cannot set that for you).
 </quality-gate>
