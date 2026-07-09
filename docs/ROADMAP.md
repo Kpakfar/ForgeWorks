@@ -37,3 +37,4 @@ tool does mechanically versus what is still future work.
   hooks, and MCP orchestration elsewhere are not built.
 - **A Rust profile is not built.** It is an experimental slot, not a complete
   profile.
+- Conditional prototype/mockup-skill install at bootstrap (v2 spec section 7): deferred -- the visual-design baseline in the generated `<design-discipline>` block covers mockup quality without a skill dependency; revisit if a canonical prototype skill lands in the default pack.

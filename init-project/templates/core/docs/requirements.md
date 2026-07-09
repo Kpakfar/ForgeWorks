@@ -71,7 +71,7 @@ lands in its slice's design memo (`docs/designs/`), and this section links them.
 
 ## Security profile (threat model)
 
-From the setup interview (Q14). Drives `docs/SECURITY.md` and the red-team tests.
+From the setup interview (B8). Drives `docs/SECURITY.md` and the red-team tests.
 
 - **Reads untrusted content** (web, uploads, third-party/tool results, inbound messages): {{READS_UNTRUSTED}}
 - **Holds private data** (user records, secrets, anything non-public): {{HOLDS_PRIVATE_DATA}}

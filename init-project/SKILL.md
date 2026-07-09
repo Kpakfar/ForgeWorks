@@ -470,7 +470,8 @@ test -f .claude/agents/security-reviewer.md && test -f .claude/agents/tech-debt.
 test -f .claude/settings.json && test -f .claude/hooks/deps-guard.sh && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
 test -d docs && test -f docs/PRODUCT_VISION.md && test -f docs/SECURITY.md && \
-test -f docs/language-standards.md
+test -f docs/language-standards.md && \
+test -f docs/designs/README.md && test -f docs/probes/README.md
 ```
 
 Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exists, and the green-scaffold source + test exist (Python `src/example.py`+`tests/test_example.py`; TypeScript `src/example.ts`+`tests/example.test.ts`; Go `greet.go`+`greet_test.go`).
@@ -478,8 +479,10 @@ Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exist
 Then check no unresolved placeholders remain:
 
 ```bash
-! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=.claude 2>/dev/null
+! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=skills 2>/dev/null
 ```
+
+(`--exclude-dir=skills` skips only the installed skill trees under `.claude/skills/`; the generated `.claude/hooks/` and `.claude/agents/` files ARE checked -- they carry substituted values.)
 
 Finally, **run the quality gate** (inside the dev container if one is used): `{{QA_COMMAND}}`. Every complete profile ships a green-on-first-run scaffold, so the gate must pass on the first run. If it is not green, fix the scaffold before handing off -- a project that starts red is a bug.
 
