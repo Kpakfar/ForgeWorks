@@ -8,7 +8,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -40,7 +40,7 @@ The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/ski
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 

@@ -8,7 +8,7 @@ Two equivalent options:
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -17,9 +17,9 @@ Then open Claude Code and run `/init-project`.
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/AGENTS.md -o AGENTS.md
 mkdir -p .claude/skills
-npx degit Kpakfar/ForgeWorks/init-project#v1.1.4 .claude/skills/init-project --force
+npx degit Kpakfar/ForgeWorks/init-project#v2.0.0 .claude/skills/init-project --force
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -39,7 +39,7 @@ Run the **same install command** inside an already-generated project. `install.s
 
 ```bash
 # In your existing project, commit your work first, then:
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 ```
 
 Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
