@@ -456,8 +456,6 @@ If `{{USES_DEVCONTAINER}}` is `yes`: **skip** this phase. Deps will install insi
 
 ### Phase 5: Verify and report
 
-First, confirm the critical files exist:
-
 First, confirm the **core** files (every project, every language) exist:
 
 ```bash
@@ -842,7 +840,7 @@ This is a hard failure. The `tdd` skill is required. Stop and ask the user to in
 Stop with a clear install link for the chosen language's package manager (`uv`, `pnpm`, `cargo`, `go`).
 
 **Context7 MCP fails to start after bootstrap.**
-Check that `npx` is available. The Context7 server in `.mcp.json` uses `npx -y @upstash/context7-mcp@latest`. If npx is broken, document the failure in `docs/gotchas.md` and instruct the user to either fix npx or remove the Context7 entry from `.mcp.json`.
+Check that `npx` is available. The Context7 server in `.mcp.json` uses `npx -y @upstash/context7-mcp@3.2.3`. If npx is broken, document the failure in `docs/gotchas.md` and instruct the user to either fix npx or remove the Context7 entry from `.mcp.json`.
 
 ---
 

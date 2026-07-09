@@ -29,8 +29,8 @@ tool does mechanically versus what is still future work.
   future work. Today the agent is the engine.
 - **Supply-chain pinning is partial.** The `deps-guard` hook is a best-effort
   guard, not a sandbox. Full SHA-pinning of GitHub Actions, container images, and
-  installers (e.g. the `uv` installer by checksum), plus pinning the Context7 MCP
-  package to a version, is future work. The real controls today are lockfile
+  installers (e.g. the `uv` installer by checksum) is future work. (The Context7
+  MCP package is now pinned to a version.) The real controls today are lockfile
   review and CI scanning.
 - **Cross-agent parity beyond `AGENTS.md` is future.** Other agents inherit the
   rules and docs, but dedicated adapters that reproduce the Claude Code subagents,
