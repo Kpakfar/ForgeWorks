@@ -7,6 +7,12 @@ export default defineConfig({
   test: {
     // .claude/** excludes the installed /init-project skill's own template
     // tree (not project code) from a real freshly-bootstrapped project.
-    exclude: [...configDefaults.exclude, 'tests/e2e/**', 'node_modules/**', 'dist/**', '.claude/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tests/e2e/**',
+      'node_modules/**',
+      'dist/**',
+      '.claude/**',
+    ],
   },
 });
