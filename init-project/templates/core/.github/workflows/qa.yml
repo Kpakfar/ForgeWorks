@@ -38,11 +38,7 @@ jobs:
       # Same language/toolchain setup as the qa job.
       {{CI_SETUP_STEPS}}
 
-      # If this project uses a headless browser for e2e (e.g. Playwright),
-      # install the browser here. Left as a no-op-friendly step; uncomment and
-      # adapt for your toolchain once e2e tests exist.
-      # - name: Install browsers
-      #   run: {{E2E_BROWSER_INSTALL}}
+      {{E2E_BROWSER_INSTALL_STEP}}
 
       - name: Run end-to-end suite
         run: {{E2E_COMMAND}}

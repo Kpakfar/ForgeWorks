@@ -300,6 +300,7 @@ After the base substitution pass, apply these rules:
 0. **AI discipline block (B4).** If any AI feature was selected (RAG, agents, evals, streaming), render `{{AI_DISCIPLINE_BLOCK}}` in `AGENTS.md` as the block below. If no AI feature was selected, render it as an empty string.
 
    ```
+   <!-- FW-BLOCK: ai-discipline v2.0.0 -->
    <ai-discipline>
    These rules apply because this project uses prompts, LLMs, or agentic flows.
 
@@ -313,6 +314,7 @@ After the base substitution pass, apply these rules:
 
    - **Security (LLM/agent).** This project can be prompt-injected. Never let one agent read untrusted content, hold private data, AND act on the outside world (the lethal trifecta) -- break one leg: split the agent, drop a capability, or gate the action behind a human. Treat every ingested input and every model response as untrusted: sanitize at ingest, fence untrusted text as data (never as instructions), validate each response against a schema and fail closed, and filter output before it is shown or stored. No tool may act on an attacker-chosen id; bind tools to the session owner. Full threat model and red-team checklist: `docs/SECURITY.md`.
    </ai-discipline>
+   <!-- /FW-BLOCK: ai-discipline -->
    ```
 
 1. **Style references (A10).** Render `{{POSITIVE_REFERENCE_TEXT}}` and `{{NEGATIVE_REFERENCE_TEXT}}` in `AGENTS.md`:
@@ -351,6 +353,7 @@ After the base substitution pass, apply these rules:
    - Insert this block into `AGENTS.md` between `<library-docs>` and `<tools>`:
 
      ```
+     <!-- FW-BLOCK: memory v2.0.0 -->
      <memory>
      This project uses **mem0** for persistent memory across sessions.
 
@@ -366,6 +369,7 @@ After the base substitution pass, apply these rules:
 
      **Library docs:** https://docs.mem0.ai/
      </memory>
+     <!-- /FW-BLOCK: memory -->
      ```
 
    - Add `mem0ai` to the chosen language's manifest (for Python: `DEPS_VETTED=1 uv add mem0ai` -- the `DEPS_VETTED=1` prefix is how the deps-guard hook lets a vetted install through). For language profiles not implemented, leave a TODO note in `requirements.md`.
@@ -395,7 +399,18 @@ After the base substitution pass, apply these rules:
      and render `{{CODEX_ROSTER_NOTE}}` (the one-line roster note, which sits right after the `@code-reviewer` line) as: ` Runs an independent Codex second-opinion pass on important changes.`
    - If `no`, render BOTH `{{CODEX_REVIEW_STEP}}` and `{{CODEX_ROSTER_NOTE}}` as empty strings.
 
-7. **Discovery answers (A1-A9).** Render the interview's discovery answers as real content, not TODOs: `{{CORE_JOURNEY}}` as a numbered list of the core-flow steps, `{{SUCCESS_MEASURE}}` as the concrete success sentence, `{{RISKIEST_ASSUMPTION}}` as the one-line assumption, and `{{NON_GOALS}}` as a bullet list of explicit out-of-scope items. These flow into `docs/requirements.md` and `docs/PRODUCT_VISION.md`. A generated project must not ship these as `TODO` -- the planning conversation is the point.
+7. **Discovery answers (Part A).** Render EVERY Part A answer as real content --
+   a generated project must not ship a TODO for anything the interview asked:
+   `{{CORE_JOURNEY}}` (numbered steps), `{{SUCCESS_MEASURE}}`, `{{SUCCESS_METRICS}}`,
+   `{{RISKIEST_ASSUMPTION}}`, `{{REQ_AC_LIST}}`, `{{NON_GOALS}}`, `{{OTHER_USERS}}`,
+   `{{CONSTRAINT_TIME}}`, `{{CONSTRAINT_COST}}`, `{{CONSTRAINT_DATA}}`,
+   `{{FIRST_MILESTONE}}`, `{{DEPLOYMENT_TARGET}}`, `{{SCALE_EXPECTATIONS}}`,
+   `{{INTEGRATIONS}}`, `{{IN_SCOPE_LIST}}`, and the five positioning values
+   (`{{PAIN_POINT}}`, `{{PRODUCT_CATEGORY}}`, `{{CURRENT_ALTERNATIVE}}`,
+   `{{KEY_BENEFIT}}`, `{{KEY_DIFFERENTIATOR}}`). None of these may render as
+   `TODO` -- if one is unknown, the interview was not finished; go back and ask.
+   The only allowed TODO form is `TODO(interview-skipped)` when the user
+   explicitly refused a question.
 
 8. **Capability dependencies (B3-B6).** The manifest ships a minimal core only; append ONLY the dependencies the answers call for, using the chosen profile's `add_dep_command` (prefix Python's `uv add` with `DEPS_VETTED=1` so the deps-guard hook allows it). Map intent to packages, per language:
    - **Python** -- FastAPI: `fastapi`, `uvicorn[standard]`; Flask: `flask`; Streamlit/Gradio: `streamlit`/`gradio`; Postgres: `sqlalchemy`, `alembic`, `psycopg[binary]`; SQLite/DuckDB: `sqlalchemy`/`duckdb`; vectors: `pgvector`/`chromadb`/`pinecone-client`/`qdrant-client`; LLM: `openai` (also OpenRouter)/`anthropic`/`google-genai`; `httpx` for outbound HTTP.
@@ -403,7 +418,18 @@ After the base substitution pass, apply these rules:
    - **Go** -- HTTP: stdlib `net/http` (no dep) or `chi`/`gin`; Postgres: `github.com/jackc/pgx/v5`; LLM: the provider's official Go SDK or `net/http`. Add via `go get`.
    Choose the smallest set that covers the answers; do not add a database/vector/LLM dep the project did not ask for.
 
-9. **End-to-end browser install (B2).** If the project has a UI (B2 is `yes-spa` or `yes-minimal`) and the profile defines `e2e_browser_install`, uncomment the browser-install step in `.github/workflows/qa.yml` and set it to `{{E2E_BROWSER_INSTALL}}`. If B2 is `no` (API-only) or the profile has no browser install (Go), delete that commented step -- the e2e job still runs `{{E2E_COMMAND}}` for full request->state e2e.
+9. **End-to-end browser install (B2).** `.github/workflows/qa.yml` carries
+   `{{E2E_BROWSER_INSTALL_STEP}}` at 6-space indent inside the e2e job. Render it:
+   - UI project (B2 `yes-spa`/`yes-minimal`) AND the profile defines
+     `e2e_browser_install`:
+     ```
+     - name: Install browsers
+       run: <e2e_browser_install value>
+     ```
+     (multi-line: re-indent per the multi-line rule above).
+   - Otherwise (API-only, or no browser install for the profile): render exactly
+     `# no browser needed for this project's e2e suite`.
+   Never leave the placeholder or a commented stub behind.
 
 After all files are written:
 
@@ -480,7 +506,27 @@ Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
 | `{{CORE_JOURNEY}}` | A2 (the heart: the core user-visible flow, as steps) |
 | `{{SUCCESS_MEASURE}}` | A2 (what success looks like, concretely) |
 | `{{RISKIEST_ASSUMPTION}}` | A2 (the assumption that sinks the project if wrong) |
-| `{{NON_GOALS}}` | A2/interview (explicit out-of-scope items) |
+| `{{REQ_AC_LIST}}` | A3 -- rendered as `- [ ] **REQ-ACn:** <criterion>` lines |
+| `{{NON_GOALS}}` | A4 (bullet list) |
+| `{{OTHER_USERS}}` | A9 (bullet list; `- none identified yet` if empty) |
+| `{{CONSTRAINT_TIME}}` | A5 |
+| `{{CONSTRAINT_COST}}` | A5 (includes LLM/API budget when AI is in scope) |
+| `{{CONSTRAINT_DATA}}` | A5 |
+| `{{FIRST_MILESTONE}}` | A5 -- derived date or `none set` |
+| `{{DEPLOYMENT_TARGET}}` | A6 |
+| `{{SCALE_EXPECTATIONS}}` | A7 |
+| `{{INTEGRATIONS}}` | A8 (bullet list; `- none` if none) |
+| `{{PAIN_POINT}}` | A2 (positioning) |
+| `{{PRODUCT_CATEGORY}}` | A2 (positioning) |
+| `{{CURRENT_ALTERNATIVE}}` | A2 (positioning) |
+| `{{KEY_BENEFIT}}` | A2 (positioning) |
+| `{{KEY_DIFFERENTIATOR}}` | A2 (positioning) |
+| `{{IN_SCOPE_LIST}}` | Derived from A2 core flow + A3 criteria (bullet list) |
+| `{{SUCCESS_METRICS}}` | A2 success measure rendered as 1-3 `- <metric> -- target` lines |
+| `{{READS_UNTRUSTED}}` | B8 (`yes`/`no`) |
+| `{{HOLDS_PRIVATE_DATA}}` | B8 (`yes`/`no`) |
+| `{{ACTS_OUTWARD}}` | B8 (`yes`/`no`) |
+| `{{E2E_BROWSER_INSTALL_STEP}}` | Derived from B2 + profile (see Phase 4 rule 9) |
 | `{{LANGUAGE}}` | B1 |
 | `{{HAS_FRONTEND}}` | B2 |
 | `{{BACKEND_FRAMEWORK}}` | B3 |
@@ -515,7 +561,6 @@ B8 (security profile) has no placeholder: it conditionally prunes the AI section
 | `{{QA_COMMAND}}` | profile.qa_command |
 | `{{FIX_COMMAND}}` | profile.fix_command |
 | `{{E2E_COMMAND}}` | profile.e2e_command |
-| `{{E2E_BROWSER_INSTALL}}` | profile.e2e_browser_install |
 | `{{TEST_RUNNER}}` | profile.test_runner |
 | `{{TEST_COMMAND}}` | profile.test_command |
 | `{{LINT_TOOL}}` | profile.lint_tool |
