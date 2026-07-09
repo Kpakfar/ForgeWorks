@@ -105,7 +105,7 @@ Baseline for every mockup and UI screen, so improvised screens do not look templ
 - [ ] **Step 4: Verify and commit**
 
 Run: `python3 .github/scripts/render_smoke.py` -- expected: 3x `ok`.
-Run: `grep -c "investigation-discipline" init-project/templates/core/AGENTS.md` -- expected: `2` (open + close tag).
+Run: `grep -c "investigation-discipline" init-project/templates/core/AGENTS.md` -- expected: `4` (open + close tag + the two cross-references Steps 2(a)/2(b) mandate).
 Run: `grep -c "complicated and makes a significant" init-project/templates/core/AGENTS.md` -- expected: `0`.
 
 ```bash
