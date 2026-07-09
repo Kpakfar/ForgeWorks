@@ -58,7 +58,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All three are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v1.1.4`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, and Go** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All three are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). Rust and "Other" aren't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v2.0.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 
