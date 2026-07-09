@@ -13,6 +13,8 @@ docs/gotchas.md                    # known pitfalls, anti-patterns, lessons (liv
 docs/SECURITY.md                   # threat model, defenses, red-team checklist (living)
 docs/current-task/task.md          # active task brief, shared between agents
 docs/current-task/task-template.md # template; copy over task.md when starting a new task
+docs/designs/                      # one design memo per non-trivial slice (the pre-code gate)
+docs/probes/                       # recorded real observations of external collaborators
 
 Source code (use your language's idiomatic layout; see AGENTS.md <architecture-discipline>
 and docs/language-standards.md). A placeholder module + passing test ship so the gate is

@@ -122,6 +122,8 @@ Baseline for every mockup and UI screen, so improvised screens do not look templ
 - `docs/proposals-ideas.md` : out-of-scope or future ideas. Reviewed every ~2 weeks.
 - `docs/gotchas.md` : known pitfalls, anti-patterns, lessons learned. Living document. Update after every task that surfaces something worth keeping.
 - `docs/SECURITY.md` : threat model, the layered defenses in place, and the red-team checklist. Update when a new attack surface, tool, or external input is added.
+- `docs/designs/` : one approved design memo per non-trivial slice -- the pre-code gate (see `<investigation-discipline>`).
+- `docs/probes/` : recorded real observations of external collaborators; fixtures are authored from these.
 {{MEMORY_DOC_LINE}}</global-documents>
 <!-- /FW-BLOCK: global-documents -->
 
