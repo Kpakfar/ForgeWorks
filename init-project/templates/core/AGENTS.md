@@ -43,6 +43,16 @@ These rules are universal: they hold for any stack and any subject. The threat m
 - **Security lives in hooks and tests, not in prose.** Prompt-level "be careful" is theater. The real controls are the deps-guard hook, the access-control middleware, and the red-team tests in the suite. If this project uses LLMs or agents, the prompt-injection and lethal-trifecta rules are in `<ai-discipline>` and `docs/SECURITY.md`.
 </security-discipline>
 
+<investigation-discipline>
+Prose gets a gate too: code has TDD, decisions have this block. No feature code -- not even Red-phase tests -- until this gate is passed for the slice.
+
+- **Reality probe: fixtures come from observed reality.** Before building on any external collaborator (library, API, service, protocol, data source) or pinning any interface, make at least one REAL observation of it: a real call, a real dispatch, a real run. Record the observed request and response in `docs/probes/<slice>-<name>.md`. Test fixtures and fakes may only be authored from a recorded probe -- never from documentation, a README claim, a sibling endpoint, or memory. A fixture built from a description of endpoint A does not verify endpoint B.
+- **Spike before committing to an unknown.** If the slice contains a question the codebase or a probe cannot answer, run a bounded spike first (`experiments/`, no TDD -- see `<exceptional-cases>`) and put its verdict in the design memo. A spike that surfaces red flags cannot conclude "assumptions hold": every red flag gets a written mitigation or an explicit user acceptance.
+- **Design memo -- the hard gate.** Every non-trivial slice starts with a memo at `docs/designs/<slice>.md`, one page or less: the problem; 2-3 candidate approaches with trade-offs; the chosen approach and why; the riskiest assumption and the probe/spike result that de-risks it; the test plan (unit / functional / e2e / security, plus the live smoke check when the suite is fake-only). **The user must approve the memo -- an `Approved: <date>` line at the top -- before any feature code is written.** "Non-trivial" is anything beyond the trivial list in `<exceptional-cases>`.
+- **Live smoke check pairs with every fake-only suite.** If a slice's tests run entirely against fakes, its acceptance criteria must include one scripted check against the real system (real server boot, real endpoint hit, real tool dispatch), and the ship record links its output. Green fakes alone do not ship. Security-control proofs must exercise the real enforcement path with the live path's flags -- never an introspection endpoint that resolves policy with different defaults.
+- **UI slices additionally need an approved mockup** before the memo is approved (see `<design-discipline>`).
+</investigation-discipline>
+
 <test-discipline>
 TDD is the loop; this block defines the shape of the test suite each slice must produce. Write the functional and end-to-end specs at the SAME time as the unit specs -- list every test in the task plan before any code (Red phase). A slice is not "spec'd" until its e2e/functional tests are named.
 
@@ -64,7 +74,14 @@ A reference can be a public repo, a deployed product, a folder on disk, screensh
 </style-references>
 
 <design-discipline>
-When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch, and do not start implementing and "show the UI later". **Mockup comes FIRST -- before the Red phase, before any implementation code.** Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Only after the user picks does the slice enter TDD. Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
+**Trigger (canonical -- quoted verbatim wherever mockups are mentioned): any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved.** Do not settle it with an ASCII diagram or "show the UI later". Build a real mockup the user can open -- a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed -- and let the user pick from the rendered artifact. Only after the user picks does the slice enter the design memo and then TDD. Keep it throwaway.
+
+Baseline for every mockup and UI screen, so improvised screens do not look templated:
+- One type scale (a fixed ratio, e.g. 1.25) and at most two fonts; body text 16px or larger.
+- One spacing unit (4px or 8px) used everywhere; align elements to a grid.
+- One accent color plus neutrals; spend the accent on the primary action only.
+- Layout before decoration: hierarchy, alignment, and whitespace first; styling flourishes last.
+- Match the positive style reference (`<style-references>`) when one exists.
 </design-discipline>
 
 <global-documents>
@@ -163,20 +180,20 @@ These are rituals by default: the orchestrator triggers them. To run them unatte
 </recurring-reviews>
 
 <planning-discipline>
-Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it.
+Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it. The output of this pass is the design memo at `docs/designs/<slice>.md` (see `<investigation-discipline>`). Planning is done when the user approves the memo -- not when a test list exists.
 
 This pass is **recurring, not once-per-project**: it runs at the start of EVERY non-trivial slice, new feature, and change cycle -- the interview at bootstrap does not exhaust it. Each pass has two movements: **brainstorm first** (divergent -- what could this be? name at least two ways to build it and pick one for a reason; use a brainstorming skill if one is installed), **then grill** (convergent -- if the `grill-me` skill from mattpocock/skills is installed, run it with the agenda below; otherwise apply the agenda directly). Do not skip questions to move faster, and do not write code before both movements are done.
 
 **Required discovery -- the plan is not done until each is answered (in writing, in `docs/current-task/task.md`):**
 - **Core journey.** The exact user-visible flow this slice delivers, step by step. If it cannot be demoed when done, cut scope until it can.
 - **Concrete examples.** Real input samples, expected output samples, and a file or the positive style reference to pattern-match against. Abstract specs drift from the user's taste; samples anchor them. If the user has none, ask; do not invent.
-- **Riskiest assumption.** The one thing that, if wrong, sinks the slice. Plan to test it first.
+- **Riskiest assumption.** The one thing that, if wrong, sinks the slice. De-risk it with a reality probe or a bounded spike BEFORE any code (see `<investigation-discipline>`); only then plan its tests.
 - **Explicit non-goals.** What this slice deliberately does NOT do. Push those to `docs/proposals-ideas.md` or a new backlog row.
 - **Data shapes.** The shape of the data crossing each boundary (request, response, stored record, tool I/O).
 - **Acceptance criteria as a contract.** Write numbered, observable criteria (AC1, AC2, ...) and map each to the test(s) that prove it. A criterion with no test isn't testable as written; "done" means every criterion has a covering test -- gate-run tests pass under `{{QA_COMMAND}}`, and an e2e-only criterion is verified present/wired (CI runs it). Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`, in the same Red phase.
-- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice is complicated and makes a significant visual or UX choice, the plan includes building a mockup and getting it approved BEFORE the Red phase -- mockup first, then tests, then code (see `<design-discipline>`).
+- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. Any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved (see `<design-discipline>`).
 
-**Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then summarize the plan back and get explicit sign-off before any code.
+**Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then write the design memo and get the user's explicit approval on it before any code.
 
 **Then scan for parallelizable work.** If the slice has two or more independent sub-tasks (different layers, different files, no shared state), propose running them as parallel background subagents. The default is sequential; parallelism is opt-in. Parallel subagents that write files share one `.git/index`: give each its own files (or a git worktree), and have each stage only its own paths and retry on `index.lock`, or commits will collide.
 </planning-discipline>
