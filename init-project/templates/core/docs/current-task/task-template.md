@@ -41,11 +41,13 @@ present and run by CI -- the reviewer checks the mapping).
 - **Options considered (brainstorm -- name at least two, and why this one):**
 - **Core journey (what the user sees):**
 - **Concrete examples (inputs / outputs / file to pattern-match):**
-- **Riskiest assumption (test this first):**
+- **Design memo (path + `Approved:` date -- REQUIRED before any code, see <investigation-discipline>):**
+- **Riskiest assumption (de-risked by which probe/spike):**
+- **Reality probes (docs/probes/ files this slice's fixtures are authored from):**
 - **Non-goals (explicitly out of this slice):**
 - **Data shapes at each boundary:**
 - **Security surface (new input / tool / auth, and which SECURITY.md defense covers it):**
-- **Mockup (required BEFORE Red phase if this slice makes a significant UI/UX choice -- path/link + user approval):**
+- **Mockup (any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved -- path/link + approval):**
 - **What might be missing (proactive pass -- error states, empty/edge inputs, auth, scale, the unhappy path):**
 
 ### Test plan (name every test before code -- see <test-discipline>)
@@ -58,6 +60,7 @@ written -- sharpen the criterion.
 - [ ] Functional / API:
 - [ ] End-to-end (headless browser if UI, else full request->state):
 - [ ] Security / red-team (if the slice adds an attack surface):
+- [ ] Live smoke check (required when the suite above is fake-only -- the one scripted real-system check):
 
 **Coverage:** AC1 -> ; AC2 -> ; AC3 -> .
 

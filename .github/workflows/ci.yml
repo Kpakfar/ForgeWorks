@@ -75,6 +75,7 @@ jobs:
       - name: Render merged core+profile and run QA + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit python /tmp/py
+          mkdir -p /tmp/py/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/py/.claude/skills/init-project
           cd /tmp/py
           uv sync
           uv run qa
@@ -90,6 +91,7 @@ jobs:
       - name: Render merged core+profile and run QA + audit + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit typescript /tmp/ts
+          mkdir -p /tmp/ts/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/ts/.claude/skills/init-project
           cd /tmp/ts
           npm install
           npm run qa
@@ -110,6 +112,7 @@ jobs:
       - name: Render merged core+profile and run QA + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit go /tmp/go
+          mkdir -p /tmp/go/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/go/.claude/skills/init-project
           cd /tmp/go
           bash scripts/qa.sh
           bash scripts/e2e.sh

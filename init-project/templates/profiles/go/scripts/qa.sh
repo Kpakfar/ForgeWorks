@@ -20,7 +20,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "==> [1/4] gofmt (check only)"
-fmtout=$(gofmt -l .)
+# .claude/skills holds installed skill templates -- not project code.
+fmtout=$(gofmt -l . | grep -v '^\.claude/' || true)
 [ -z "$fmtout" ] || { echo "unformatted files:"; echo "$fmtout"; exit 1; }
 
 echo

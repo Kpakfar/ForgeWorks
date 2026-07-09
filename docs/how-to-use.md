@@ -8,7 +8,7 @@ Two equivalent options:
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -17,9 +17,9 @@ Then open Claude Code and run `/init-project`.
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/AGENTS.md -o AGENTS.md
 mkdir -p .claude/skills
-npx degit Kpakfar/ForgeWorks/init-project#v1.1.4 .claude/skills/init-project --force
+npx degit Kpakfar/ForgeWorks/init-project#v2.0.0 .claude/skills/init-project --force
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -39,7 +39,7 @@ Run the **same install command** inside an already-generated project. `install.s
 
 ```bash
 # In your existing project, commit your work first, then:
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v1.1.4/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.0.0/bootstrap/install.sh)
 ```
 
 Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
@@ -53,7 +53,7 @@ It is non-destructive and idempotent — safe to run more than once. **Do not** 
 
 ## Updating the template itself
 
-Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v1.1.4`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
+Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v2.0.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
 
 Backporting lessons from a real project: read that project's `docs/gotchas.md` (and reviewer notes) at the end, and for each *generic* lesson edit the corresponding file here and push. When a change alters the generated structure, bump `VERSION` and — if it adds tooling or placeholder-bearing files — extend `upgrade-project/SKILL.md` (see the repo `AGENTS.md` `<editing-the-upgrade-skill>`).
 
@@ -63,7 +63,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 
 1. Create `init-project/templates/profiles/<lang>/` with: the manifest, toolchain config, a verify-only `qa` runner + a separate `fix` runner + a separate `e2e` runner, a **green-on-first-run scaffold** (a typed example + a passing test), `.gitignore`, a hardened dev container, and (only if idiomatic) a pre-commit config. Mirror the shape of `templates/profiles/python/` (or `typescript/` / `go/`).
 2. Add a YAML block to `init-project/SKILL.md` `<language-profiles>` with the same keys as Python (`language_version`, `package_manager`, `manifest_file`, `qa_command`, `fix_command`, `e2e_command`, `ci_setup_steps`, `notes`, ...).
-3. Add the language to Q3's menu (mark `[complete]` only once it passes).
+3. Add the language to B1's menu (mark `[complete]` only once it passes).
 4. Bootstrap a throwaway project in that language and confirm `qa` is **green on the first run**.
 
 **Python, TypeScript, and Go** are complete profiles — all three are verified green in CI on the merged core+profile tree (quality gate + e2e runner). Rust and "Other" are not built yet.

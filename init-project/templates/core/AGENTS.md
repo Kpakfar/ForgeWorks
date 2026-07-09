@@ -1,13 +1,16 @@
+<!-- FW-BLOCK: development-process v2.0.0 -->
 <development-process>
 - Dev container: {{USES_DEVCONTAINER}}. If yes, all commands run inside the container: do not install anything globally on the host.
-- Always start by reading `docs/structure.txt` and `docs/requirements.md` in parallel to orient yourself. For any task touching auth, input handling, external content, or tools, also read `docs/SECURITY.md`.
+- Orient once per session: the main-context driver reads `docs/structure.txt` and `docs/requirements.md` at session start, and `docs/SECURITY.md` for any task touching auth, input handling, external content, or tools. Subagents do NOT re-read the full doc set -- each dispatch brief names the exact docs that task needs (see `<token-discipline>`).
 - Always consult `docs/documentation.md` for links to library docs. Prefer Context7 (see below) for live API lookups.
 - If you encounter unfamiliar libraries, APIs, or patterns, research online before guessing. Fetch the actual documentation. Never write library code from training memory: API names and signatures drift, and guessed names are how hallucinated/typosquatted imports get in.
 - Work in this directory/repo only. Never touch files outside this repo unless explicitly instructed.
 - It is your responsibility to manage the environment and install any new dependencies as needed. The package-manager and install commands for this project are recorded in `docs/language-standards.md`. New dependencies pass through the supply-chain guard hook (see `<quality-gate>`).
 - The bundled quality-gate command is `{{QA_COMMAND}}` (runs lint + format + types + unit/functional tests in order). It is wired into the QA hook and the CI workflow. Do not bypass it. End-to-end tests run separately (slower) in CI; see `<test-discipline>`.
 </development-process>
+<!-- /FW-BLOCK: development-process -->
 
+<!-- FW-BLOCK: architecture-discipline v2.0.0 -->
 <architecture-discipline>
 These rules are language- and stack-agnostic. Apply them on every file you write or modify.
 
@@ -29,7 +32,9 @@ These rules are language- and stack-agnostic. Apply them on every file you write
 
 The test for any new module: a competent peer reading it for the first time should understand it in under one minute.
 </architecture-discipline>
+<!-- /FW-BLOCK: architecture-discipline -->
 {{AI_DISCIPLINE_BLOCK}}
+<!-- FW-BLOCK: security-discipline v2.0.0 -->
 <security-discipline>
 These rules are universal: they hold for any stack and any subject. The threat model, the concrete per-stack defenses, and the red-team checklist live in `docs/SECURITY.md` -- read it for any task touching auth, input, external content, or tools.
 
@@ -42,7 +47,34 @@ These rules are universal: they hold for any stack and any subject. The threat m
 - **Fail closed.** On any security-check error or ambiguity, refuse rather than proceed.
 - **Security lives in hooks and tests, not in prose.** Prompt-level "be careful" is theater. The real controls are the deps-guard hook, the access-control middleware, and the red-team tests in the suite. If this project uses LLMs or agents, the prompt-injection and lethal-trifecta rules are in `<ai-discipline>` and `docs/SECURITY.md`.
 </security-discipline>
+<!-- /FW-BLOCK: security-discipline -->
 
+<!-- FW-BLOCK: investigation-discipline v2.0.0 -->
+<investigation-discipline>
+Prose gets a gate too: code has TDD, decisions have this block. No feature code -- not even Red-phase tests -- until this gate is passed for the slice.
+
+- **Reality probe: fixtures come from observed reality.** Before building on any external collaborator (library, API, service, protocol, data source) or pinning any interface, make at least one REAL observation of it: a real call, a real dispatch, a real run. Record the observed request and response in `docs/probes/<slice>-<name>.md`. Test fixtures and fakes may only be authored from a recorded probe -- never from documentation, a README claim, a sibling endpoint, or memory. A fixture built from a description of endpoint A does not verify endpoint B.
+- **Spike before committing to an unknown.** If the slice contains a question the codebase or a probe cannot answer, run a bounded spike first (`experiments/`, no TDD -- see `<exceptional-cases>`) and put its verdict in the design memo. A spike that surfaces red flags cannot conclude "assumptions hold": every red flag gets a written mitigation or an explicit user acceptance.
+- **Design memo -- the hard gate.** Every non-trivial slice starts with a memo at `docs/designs/<slice>.md`, one page or less: the problem; 2-3 candidate approaches with trade-offs; the chosen approach and why; the riskiest assumption and the probe/spike result that de-risks it; the test plan (unit / functional / e2e / security, plus the live smoke check when the suite is fake-only). **The user must approve the memo -- an `Approved: <date>` line at the top -- before any feature code is written.** "Non-trivial" is anything beyond the trivial list in `<exceptional-cases>`.
+- **Live smoke check pairs with every fake-only suite.** If a slice's tests run entirely against fakes, its acceptance criteria must include one scripted check against the real system (real server boot, real endpoint hit, real tool dispatch), and the ship record links its output. Green fakes alone do not ship. Security-control proofs must exercise the real enforcement path with the live path's flags -- never an introspection endpoint that resolves policy with different defaults.
+- **UI slices additionally need an approved mockup** before the memo is approved (see `<design-discipline>`).
+</investigation-discipline>
+<!-- /FW-BLOCK: investigation-discipline -->
+
+<!-- FW-BLOCK: token-discipline v2.0.0 -->
+<token-discipline>
+Tokens are budget. Analysis is meticulous; everything else is lean. (The code-minimization ladder is adapted from Ponytail -- github.com/DietrichGebert/ponytail.)
+
+- **Terse by default.** Working output -- status updates, inter-agent briefs, review notes -- is compressed: drop filler, pleasantries, and hedging; fragments are fine; technical terms stay exact; code and errors are quoted exactly. Full prose is reserved for design memos, security warnings, irreversible-action confirmations, and user-facing docs.
+- **The ladder -- walk it before writing any new code:** does this need to exist at all -> is it already in this codebase -> does the stdlib do it -> does the platform or framework do it -> does an installed dependency do it -> is it one line -> only then write the minimum that works. Lazy about solutions, meticulous about analysis: the ladder never replaces the probe or spike, it follows them.
+- **Fix-round circuit breaker.** Maximum two fix-rounds per review finding. A third failure means the design was wrong: STOP, reopen the design memo (`docs/designs/<slice>.md`) with the user, and do not iterate further on code.
+- **One review round by default.** `@code-reviewer` runs once per slice. Re-review only the specific findings from that round; a full re-review happens only after the circuit breaker sent the slice back to design.
+- **Scoped reads.** The main-context driver reads the doc set once per session; every subagent dispatch brief names exactly the docs and sections that task needs, and the subagent reads only those. Briefs live in `docs/current-task/task.md`, not re-narrated per hop.
+- **Right-sized models.** Every dispatch states a model explicitly: cheapest tier for mechanical work (memos, doc formatting), default tier for normal implementation and review, strongest tier only for slices touching auth, payments, data deletion, or genuinely hard architecture.
+</token-discipline>
+<!-- /FW-BLOCK: token-discipline -->
+
+<!-- FW-BLOCK: test-discipline v2.0.0 -->
 <test-discipline>
 TDD is the loop; this block defines the shape of the test suite each slice must produce. Write the functional and end-to-end specs at the SAME time as the unit specs -- list every test in the task plan before any code (Red phase). A slice is not "spec'd" until its e2e/functional tests are named.
 
@@ -53,7 +85,9 @@ TDD is the loop; this block defines the shape of the test suite each slice must 
 
 Mocks only for external services you do not own; prefer recorded responses. The inner loop stays fast: `{{QA_COMMAND}}` runs lint/format/types plus unit and functional tests. The slower **headless-browser e2e** suite runs in CI and pre-merge, not on every TDD cycle.
 </test-discipline>
+<!-- /FW-BLOCK: test-discipline -->
 
+<!-- FW-BLOCK: style-references v2.0.0 -->
 <style-references>
 {{POSITIVE_REFERENCE_TEXT}}
 {{NEGATIVE_REFERENCE_TEXT}}
@@ -62,11 +96,22 @@ When no positive reference is named (or as a baseline alongside one), apply four
 
 A reference can be a public repo, a deployed product, a folder on disk, screenshots, a design system, or a piece of writing -- a concrete artifact someone can open, not an abstract description. A new file should look like it could belong in the positive reference and pass the four default rules above.
 </style-references>
+<!-- /FW-BLOCK: style-references -->
 
+<!-- FW-BLOCK: design-discipline v2.0.0 -->
 <design-discipline>
-When this project has a UI and a slice involves a significant visual or UX decision (a new screen, a layout, a primary interaction), do not settle it with an ASCII box diagram or a terminal sketch, and do not start implementing and "show the UI later". **Mockup comes FIRST -- before the Red phase, before any implementation code.** Build a real mockup the user can look at -- a simple sketch or runnable prototype (a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed) that shows what it will actually look like, and let the user decide from the rendered artifact (for browser UIs, something they can open in a browser). Only after the user picks does the slice enter TDD. Keep it throwaway: the mockup explores the design, then you build it for real under the TDD loop.
-</design-discipline>
+**Trigger (canonical -- quoted verbatim wherever mockups are mentioned): any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved.** Do not settle it with an ASCII diagram or "show the UI later". Build a real mockup the user can open -- a standalone HTML page, or several variations toggleable from one route; use a `prototype`/mockup skill if one is installed -- and let the user pick from the rendered artifact. Only after the user picks does the slice enter the design memo and then TDD. Keep it throwaway.
 
+Baseline for every mockup and UI screen, so improvised screens do not look templated:
+- One type scale (a fixed ratio, e.g. 1.25) and at most two fonts; body text 16px or larger.
+- One spacing unit (4px or 8px) used everywhere; align elements to a grid.
+- One accent color plus neutrals; spend the accent on the primary action only.
+- Layout before decoration: hierarchy, alignment, and whitespace first; styling flourishes last.
+- Match the positive style reference (`<style-references>`) when one exists.
+</design-discipline>
+<!-- /FW-BLOCK: design-discipline -->
+
+<!-- FW-BLOCK: global-documents v2.0.0 -->
 <global-documents>
 - `docs/PRODUCT_VISION.md` : north star -- what we're building and why. Stable across iterations.
 - `docs/structure.txt` : project map (folders, what each is for). Update when layout changes.
@@ -77,29 +122,37 @@ When this project has a UI and a slice involves a significant visual or UX decis
 - `docs/proposals-ideas.md` : out-of-scope or future ideas. Reviewed every ~2 weeks.
 - `docs/gotchas.md` : known pitfalls, anti-patterns, lessons learned. Living document. Update after every task that surfaces something worth keeping.
 - `docs/SECURITY.md` : threat model, the layered defenses in place, and the red-team checklist. Update when a new attack surface, tool, or external input is added.
+- `docs/designs/` : one approved design memo per non-trivial slice -- the pre-code gate (see `<investigation-discipline>`).
+- `docs/probes/` : recorded real observations of external collaborators; fixtures are authored from these.
 {{MEMORY_DOC_LINE}}</global-documents>
+<!-- /FW-BLOCK: global-documents -->
 
+<!-- FW-BLOCK: backlog-discipline v2.0.0 -->
 <backlog-discipline>
 Each row in `docs/backlog.md` is a vertical slice that moves a working demo forward by one observable step. End-to-end through whatever layers the project has. If a row cannot be demoed when done, cut scope until it can.
 
 At the start of a slice, pick the row that gives the biggest user-visible step forward for the smallest amount of new code. Cut scope before adding complexity.
 
-When a slice ships, move its row from Active to Shipped (in `backlog.md` or an archive log). Empty the Active section enough that the next slice is obvious.
+When a slice ships, move its row from Active to Shipped (in `backlog.md` or an archive log), and stamp the ship record (commit message or log row) with `review rounds: N, fix rounds: M` -- squash-clean history must not hide churn from a later post-mortem. Empty the Active section enough that the next slice is obvious.
 
 Anything off-scope that comes up during a slice goes to `docs/proposals-ideas.md` (rough idea) or as a new backlog row (clearly scoped). Not into the current slice.
 </backlog-discipline>
+<!-- /FW-BLOCK: backlog-discipline -->
 
+<!-- FW-BLOCK: task-specific-documents v2.0.0 -->
 <task-specific-documents>
 - `docs/current-task/task.md` : coordination document for the active task. Shared memory between agents.
 - `docs/current-task/task-template.md` : template to reset `task.md` when starting a new task.
 
 When starting a new task, copy `task-template.md` over `task.md` and fill it in. When the task is done, archive the contents (move to a project log or commit message) before resetting.
 </task-specific-documents>
+<!-- /FW-BLOCK: task-specific-documents -->
 
+<!-- FW-BLOCK: library-docs v2.0.0 -->
 <library-docs>
 This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 provides up-to-date, version-specific library documentation across languages.
 
-**When to use it (always)**: any time you write or modify code that touches a third-party library. Training-data memory will be off in subtle ways, especially for fast-moving libraries.
+**When to use it**: the FIRST time this project touches a given third-party library, and again for any version-sensitive API (signatures that shift between minor versions). Do not re-query on every edit -- record what a lookup taught you in `docs/documentation.md` and reuse it. Writing library code from training memory remains forbidden: with neither a prior lookup nor a probe on disk, look it up.
 
 **How to use it**:
 - Before writing the code, query Context7 for the relevant API of the **pinned version** in your manifest file ({{MANIFEST_FILE}}), not the latest available.
@@ -108,21 +161,27 @@ This project ships with **Context7 MCP** wired up via `.mcp.json`. Context7 prov
 
 **Rule**: do not write code from training-data memory for these libraries. If Context7 returns nothing useful for a query, say so in your summary and propose a fallback (a smaller, safer call signature, or `WebFetch` of the upstream docs).
 </library-docs>
+<!-- /FW-BLOCK: library-docs -->
 
+<!-- FW-BLOCK: tools v2.0.0 -->
 <tools>
 - Use the project's package-manager exclusively (recorded in `docs/language-standards.md`). Never bypass it.
 - Use the project's lint/format/type/test toolchain (recorded in `docs/language-standards.md`). The `{{QA_COMMAND}}` script chains all of them.
 - When a tool could help, use it. Prefer Context7 for library API lookups, `WebFetch` for other web docs. Use MCP tools when relevant.
 </tools>
+<!-- /FW-BLOCK: tools -->
 
+<!-- FW-BLOCK: quality-gate v2.0.0 -->
 <quality-gate>
 The gate is deterministic and enforced by hooks, not by remembering to run it. Three layers:
 
-1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer` subagent runs `{{QA_COMMAND}}` during review; a `Stop` hook (auto-converted to `SubagentStop`) re-runs it and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build. Because the gate never mutates code, it cannot silently "fix" and pass.
+1. **Static + test hook.** Before declaring any task complete, run `{{QA_COMMAND}}` -- it **verifies only and changes no files** (lint, format *check*, type-check, then unit + functional tests, in order). All must pass. If a step fails, fix the cause; to auto-repair formatting/lint locally run `{{FIX_COMMAND}}`, review the diff, then commit. Don't skip steps. Don't comment out failing tests. The `code-reviewer`'s `Stop` hook (auto-converted to `SubagentStop`) runs `{{QA_COMMAND}}` when the review completes and blocks completion (exit code 2) on failure, so APPROVE cannot ship a red build; the reviewer itself re-runs only the specific failing step it is investigating, not the whole gate. Because the gate never mutates code, it cannot silently "fix" and pass.
 2. **Supply-chain guard hook (best-effort).** A `PreToolUse` hook (`.claude/hooks/deps-guard.sh`, wired in `.claude/settings.json`) blocks the common dependency-install / remote-execute Bash commands until they are vetted (re-run with `DEPS_VETTED=1` at the start). It is a heuristic speed bump, not a boundary: it does not catch installs via scripts, direct manifest edits, or novel package managers. The real controls are committed lockfiles, reviewed dependency updates, and CI vulnerability scanning (the language's audit tooling, Dependabot).
 3. **CI.** CI runs the same non-mutating `{{QA_COMMAND}}` plus the slower end-to-end (headless-browser) suite (see `.github/workflows/qa.yml`). Note: the shipped workflow runs on pull requests and on pushes to `main`; **merge-blocking requires enabling branch protection** on the repo (the template cannot set that for you).
 </quality-gate>
+<!-- /FW-BLOCK: quality-gate -->
 
+<!-- FW-BLOCK: self-improvement v2.0.0 -->
 <self-improvement>
 This project is designed to improve itself over time. When you finish a task:
 
@@ -133,7 +192,9 @@ This project is designed to improve itself over time. When you finish a task:
 
 Do not skip these. The system gets better only if these living docs stay current.
 </self-improvement>
+<!-- /FW-BLOCK: self-improvement -->
 
+<!-- FW-BLOCK: agent-roster v2.0.0 -->
 <agent-roster>
 The main-context driver (you, in Claude Code) is the orchestrator. The upstream `tdd` and `grill-me` skills (from `mattpocock/skills`) provide the methodology; the subagents are escape hatches for phases that benefit from isolation. Prefer the `mattpocock/skills` for the core loop; do not substitute other skill packs for them.
 
@@ -152,7 +213,9 @@ The main-context driver (you, in Claude Code) is the orchestrator. The upstream 
 
 For trivial tasks (typo fix, doc edit, single-line config): skip subagents entirely. Make the change directly, run `{{QA_COMMAND}}`, commit.
 </agent-roster>
+<!-- /FW-BLOCK: agent-roster -->
 
+<!-- FW-BLOCK: recurring-reviews v2.0.0 -->
 <recurring-reviews>
 Two reviews run on a cadence, not just per-slice, because their problems accumulate silently between features:
 
@@ -161,26 +224,30 @@ Two reviews run on a cadence, not just per-slice, because their problems accumul
 
 These are rituals by default: the orchestrator triggers them. To run them unattended, the user can wire each as a scheduled agent with `/schedule` -- offer this once the project has a stable main flow, do not assume it.
 </recurring-reviews>
+<!-- /FW-BLOCK: recurring-reviews -->
 
+<!-- FW-BLOCK: planning-discipline v2.0.0 -->
 <planning-discipline>
-Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it.
+Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it. The output of this pass is the design memo at `docs/designs/<slice>.md` (see `<investigation-discipline>`). Planning is done when the user approves the memo -- not when a test list exists.
 
 This pass is **recurring, not once-per-project**: it runs at the start of EVERY non-trivial slice, new feature, and change cycle -- the interview at bootstrap does not exhaust it. Each pass has two movements: **brainstorm first** (divergent -- what could this be? name at least two ways to build it and pick one for a reason; use a brainstorming skill if one is installed), **then grill** (convergent -- if the `grill-me` skill from mattpocock/skills is installed, run it with the agenda below; otherwise apply the agenda directly). Do not skip questions to move faster, and do not write code before both movements are done.
 
 **Required discovery -- the plan is not done until each is answered (in writing, in `docs/current-task/task.md`):**
 - **Core journey.** The exact user-visible flow this slice delivers, step by step. If it cannot be demoed when done, cut scope until it can.
 - **Concrete examples.** Real input samples, expected output samples, and a file or the positive style reference to pattern-match against. Abstract specs drift from the user's taste; samples anchor them. If the user has none, ask; do not invent.
-- **Riskiest assumption.** The one thing that, if wrong, sinks the slice. Plan to test it first.
+- **Riskiest assumption.** The one thing that, if wrong, sinks the slice. De-risk it with a reality probe or a bounded spike BEFORE any code (see `<investigation-discipline>`); only then plan its tests.
 - **Explicit non-goals.** What this slice deliberately does NOT do. Push those to `docs/proposals-ideas.md` or a new backlog row.
 - **Data shapes.** The shape of the data crossing each boundary (request, response, stored record, tool I/O).
 - **Acceptance criteria as a contract.** Write numbered, observable criteria (AC1, AC2, ...) and map each to the test(s) that prove it. A criterion with no test isn't testable as written; "done" means every criterion has a covering test -- gate-run tests pass under `{{QA_COMMAND}}`, and an e2e-only criterion is verified present/wired (CI runs it). Name the unit, functional/API, end-to-end, and (if relevant) security tests up front, per `<test-discipline>`, in the same Red phase.
-- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. If the slice is complicated and makes a significant visual or UX choice, the plan includes building a mockup and getting it approved BEFORE the Red phase -- mockup first, then tests, then code (see `<design-discipline>`).
+- **Security surface.** What new external input, tool, or auth boundary this slice introduces, and which `docs/SECURITY.md` defense covers it. Any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved (see `<design-discipline>`).
 
-**Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then summarize the plan back and get explicit sign-off before any code.
+**Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then write the design memo and get the user's explicit approval on it before any code.
 
 **Then scan for parallelizable work.** If the slice has two or more independent sub-tasks (different layers, different files, no shared state), propose running them as parallel background subagents. The default is sequential; parallelism is opt-in. Parallel subagents that write files share one `.git/index`: give each its own files (or a git worktree), and have each stage only its own paths and retry on `index.lock`, or commits will collide.
 </planning-discipline>
+<!-- /FW-BLOCK: planning-discipline -->
 
+<!-- FW-BLOCK: exceptional-cases v2.0.0 -->
 <exceptional-cases>
 **Trivial tasks** (typos, doc edits, single-line fixes): skip subagents. Make the change directly, run the quality gate, commit.
 
@@ -188,6 +255,7 @@ This pass is **recurring, not once-per-project**: it runs at the start of EVERY 
 
 **Blocked tasks**: if a task gets stuck (test can't be written, requirements unclear, dependency missing), STOP and ask the user. Do not guess. Document the block in `docs/current-task/task.md`.
 </exceptional-cases>
+<!-- /FW-BLOCK: exceptional-cases -->
 
 <!--
 Project: {{PROJECT_NAME}}
