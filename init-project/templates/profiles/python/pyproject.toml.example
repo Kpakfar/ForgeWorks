@@ -43,6 +43,9 @@ packages = ["src", "scripts"]
 line-length = 100
 target-version = "py312"
 src = ["src", "tests"]
+# The installed /init-project skill keeps its template tree under .claude/skills;
+# those files are not project code -- never lint them.
+extend-exclude = [".claude"]
 
 [tool.ruff.lint]
 select = [

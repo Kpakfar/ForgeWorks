@@ -99,7 +99,10 @@ Also pin the positioning while you are here (these feed `docs/PRODUCT_VISION.md`
 directly -- do not leave them for later): what CATEGORY is this product
 (one noun phrase), what is the user's PAIN in one line, what is the CURRENT
 ALTERNATIVE they use today, what is the KEY BENEFIT in one line, and what is the
-KEY DIFFERENTIATOR versus that alternative?
+KEY DIFFERENTIATOR versus that alternative? Phrase each so the assembled
+positioning statement reads as ONE grammatical sentence: the pain must complete
+"who ..." (e.g. "stares at a full fridge with no dinner idea"), the benefit must
+complete "that ..." (e.g. "turns what you have into what you can cook").
 
 #### A3. Acceptance criteria for the first iteration
 
@@ -264,6 +267,8 @@ to the user BEFORE generating -- surprises must surface here, not after:
 > opt-ins: memos {y/n}, gotchas seed {y/n}, mem0 {y/n}, Codex {y/n}.
 >
 > This will create approximately {N} files. Proceed?"
+
+Read the assembled positioning sentence aloud; if it does not survive being spoken, fix the phrasing with the user before generating.
 
 Wait for confirmation and apply corrections before Phase 4.
 
@@ -473,7 +478,7 @@ Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exist
 Then check no unresolved placeholders remain:
 
 ```bash
-! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv 2>/dev/null
+! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=.claude 2>/dev/null
 ```
 
 Finally, **run the quality gate** (inside the dev container if one is used): `{{QA_COMMAND}}`. Every complete profile ships a green-on-first-run scaffold, so the gate must pass on the first run. If it is not green, fix the scaffold before handing off -- a project that starts red is a bug.
