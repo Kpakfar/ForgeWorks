@@ -132,5 +132,14 @@ expect 1 "--range flags deleted record of still-shipped slice" "" --range "$base
 git revert --no-edit HEAD >/dev/null 2>&1
 expect 0 "--range passes after tampering reverted" "" --range "$base" HEAD
 
+# Rename + corrupt in one commit (git reports Rxxx; --no-renames must expose it).
+git mv docs/ships/003-s.md docs/ships/003-renamed.md
+grep -v 'Red proof' docs/ships/003-renamed.md > t && mv t docs/ships/003-renamed.md
+git add -A && git commit -qm "rename and corrupt 003 record"
+expect 1 "--range flags renamed+corrupted record" "" --range "$base" HEAD
+valid_record docs/ships/003-renamed.md 003 "imported -- prior session, PR #7"
+git add -A && git commit -qm "restore valid content under new name"
+expect 0 "--range passes an intact renamed record" "" --range "$base" HEAD
+
 echo "----"; echo "slice-audit fixtures: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

@@ -105,22 +105,30 @@ case "${1:---hook}" in
     check_record "$rec" || rc=1
     "$0" --history "$rec" || rc=1
   done
-  # Sweep 2: records touched in the range.
+  # Sweep 2: records touched in the range. --no-renames so a `git mv` decomposes
+  # into D+A and cannot smuggle a tampered record past a rename status (Rxxx).
   while IFS=$'\t' read -r status f; do
     [ -n "$f" ] || continue
     case "$(basename "$f")" in README.md) continue;; esac
     if [ "$status" = "D" ]; then
-      # Deleted record: if its slice is still Shipped at HEAD, that is evidence removal.
+      # Deleted record: if its slice is still Shipped at HEAD, a replacement
+      # record must exist and validate -- otherwise it is evidence removal.
       del_id=$(git show "$base:$f" 2>/dev/null | head -1 | grep -oE '\[[^]]+\]' | head -1 | tr -d '[]' || true)
       if [ -n "$del_id" ] && shipped_ids "$newb" | grep -qxF "$del_id"; then
-        echo "slice-audit: $f deleted in $base..$head_rev but [$del_id] is still Shipped -- ship records are permanent evidence." >&2; rc=1
+        repl=$(record_for_id "$del_id")
+        if [ -z "$repl" ]; then
+          echo "slice-audit: $f deleted in $base..$head_rev but [$del_id] is still Shipped -- ship records are permanent evidence." >&2; rc=1
+        else
+          check_record "$repl" || rc=1
+          "$0" --history "$repl" || rc=1
+        fi
       fi
     else
-      # Modified record: re-validate (re-auditing a sweep-1 record is harmless).
+      # Added or modified record: re-validate (re-auditing a sweep-1 record is harmless).
       check_record "$f" || rc=1
       "$0" --history "$f" || rc=1
     fi
-  done < <(git diff --name-status --diff-filter=MD "$base" "$head_rev" -- "$SHIPS_DIR" | grep -E '\.md$' || true)
+  done < <(git diff --name-status --no-renames --diff-filter=AMD "$base" "$head_rev" -- "$SHIPS_DIR" | grep -E '\.md$' || true)
   exit $rc
   ;;
 --hook)
