@@ -305,7 +305,7 @@ After the base substitution pass, apply these rules:
 0. **AI discipline block (B4).** If any AI feature was selected (RAG, agents, evals, streaming), render `{{AI_DISCIPLINE_BLOCK}}` in `AGENTS.md` as the block below. If no AI feature was selected, render it as an empty string.
 
    ```
-   <!-- FW-BLOCK: ai-discipline v2.0.0 -->
+   <!-- FW-BLOCK: ai-discipline v2.1.0 -->
    <ai-discipline>
    These rules apply because this project uses prompts, LLMs, or agentic flows.
 
@@ -313,7 +313,11 @@ After the base substitution pass, apply these rules:
 
    - **Prompt variants are files, not classes.** If you need multiple versions of the same prompt (zero-shot, few-shot, chain-of-thought, persona A, persona B), save them as separate files and switch by filename via a config or session-state value. No strategy pattern, no registry, no factory.
 
+   - **Prompt text is runtime behavior, never a trivial edit.** Changing a system prompt, persona, or tool description changes what the product does: it goes through the normal slice path (task note, regression check, security-trigger test), not the trivial-task bypass (`<exceptional-cases>`). LLM output a downstream step depends on is "untrusted generated output" in the canonical security trigger (`<delivery-evidence>`).
+
    - **Validate every LLM response.** Use the language's structured-output validation on every LLM response that downstream code depends on. Fail closed on schema mismatch.
+
+   - **Model cost is an engineering variable.** Pick each call's model against a measured quality check (an eval, a scored sample -- not vibes), starting from the cheapest plausible tier and escalating on evidence; record the chosen model and cost-per-call next to the probe or eval that justified it, and bound every loop or retry with a spend cap (`<token-discipline>` holds for product code too).
 
    - **AI-shaped modules each in their own file.** If this project has an LLM client, a prompt loader, a retriever, an ingestion pipeline, tools, or a safety check, each is its own file. Same ~100 / 200 line caps as the core rule.
 
@@ -441,7 +445,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.0.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.1.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
@@ -468,10 +472,11 @@ test -f AGENTS.md && test -L CLAUDE.md && test -f README.md && test -f .env.exam
 test -f .mcp.json && test -d .claude/agents && \
 test -f .claude/agents/security-reviewer.md && test -f .claude/agents/tech-debt.md && \
 test -f .claude/settings.json && test -f .claude/hooks/deps-guard.sh && \
+test -f .claude/hooks/slice-audit.sh && test -x .claude/hooks/slice-audit.sh && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
 test -d docs && test -f docs/PRODUCT_VISION.md && test -f docs/SECURITY.md && \
 test -f docs/language-standards.md && \
-test -f docs/designs/README.md && test -f docs/probes/README.md
+test -f docs/designs/README.md && test -f docs/probes/README.md && test -f docs/ships/README.md
 ```
 
 Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exists, and the green-scaffold source + test exist (Python `src/example.py`+`tests/test_example.py`; TypeScript `src/example.ts`+`tests/example.test.ts`; Go `greet.go`+`greet_test.go`).

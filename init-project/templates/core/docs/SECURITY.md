@@ -2,9 +2,13 @@
 
 This is a living document. It states what an attacker would try, the defenses in
 place, and the red-team checklist the test suite must cover. Update it whenever a
-slice adds a new external input, a new tool, or a new auth boundary. The rules
-themselves live in `AGENTS.md` `<security-discipline>`; this file is where they
-become concrete for this project.
+slice matches the canonical security trigger (quoted from `AGENTS.md`
+`<delivery-evidence>`): *external input handling, dependence on untrusted
+generated output, public publishing of content, authentication or authorization,
+a tool or automation with side effects, or persistence of untrusted content* --
+or record `Security doc delta: none, because ...` in the slice's design memo.
+The rules themselves live in `AGENTS.md` `<security-discipline>`; this file is
+where they become concrete for this project.
 
 Fill in the `TODO` and `*<...>*` slots as the project takes shape. An empty
 threat model is a red flag in review.
@@ -108,5 +112,8 @@ used, the OWASP Top 10 for LLM apps, time-boxing each category.
 
 - **Hook:** `.claude/hooks/deps-guard.sh` (PreToolUse) gates dependency installs.
 - **Tests:** the red-team checklist above lives in the test suite and runs in CI.
-- **Reviews:** `@security-reviewer` runs on the recurring cadence (`AGENTS.md`
-  `<recurring-reviews>`) and after any slice that adds an attack surface.
+- **Hook:** `.claude/hooks/slice-audit.sh` (PreToolUse) blocks ship commits whose
+  record lacks a `Security surface:` disposition; the CI ship-audit job re-checks.
+- **Reviews:** `@security-reviewer` is MANDATORY for every slice matching the
+  canonical security trigger above, and runs at least once per iteration
+  (`AGENTS.md` `<recurring-reviews>`).

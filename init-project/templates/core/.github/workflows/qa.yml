@@ -42,3 +42,27 @@ jobs:
 
       - name: Run end-to-end suite
         run: {{E2E_COMMAND}}
+
+  # Ship audit (AGENTS.md <delivery-evidence>): validates ship records changed by
+  # this push/PR -- required fields, and for `Evidence origin: native` the
+  # memo -> Red commit order. Runs independent of any agent or subagent, so a
+  # degraded orchestration cannot ship silently. Needs full history.
+  ship-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (full history for the order check)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit newly shipped slices in this range
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          fi
+          [ -z "$base" ] && { echo "no base rev (initial commit) -- nothing to audit"; exit 0; }
+          # Range-driven, not changed-file-driven: a backlog row moved to Shipped
+          # with NO record change (or a deleted record) must still fail.
+          bash .claude/hooks/slice-audit.sh --range "$base" HEAD
