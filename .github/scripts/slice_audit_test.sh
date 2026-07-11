@@ -121,5 +121,16 @@ valid_record docs/ships/003-s.md 003 "imported -- prior session, PR #7"
 git add docs/ships/003-s.md && git commit -qm "add 003 record"
 expect 0 "--range passes once record is committed" "" --range "$base" HEAD
 
+# --- --range sweep 2: tampering with an ALREADY-shipped slice's record -----
+base=$(git rev-parse HEAD)   # 003 is shipped WITH its record at base
+grep -v 'Red proof' docs/ships/003-s.md > t && mv t docs/ships/003-s.md
+git add docs/ships/003-s.md && git commit -qm "corrupt 003 record, no backlog change"
+expect 1 "--range flags corrupted record of already-shipped slice" "" --range "$base" HEAD
+git revert --no-edit HEAD >/dev/null 2>&1
+git rm -q docs/ships/003-s.md && git commit -qm "delete 003 record, no backlog change"
+expect 1 "--range flags deleted record of still-shipped slice" "" --range "$base" HEAD
+git revert --no-edit HEAD >/dev/null 2>&1
+expect 0 "--range passes after tampering reverted" "" --range "$base" HEAD
+
 echo "----"; echo "slice-audit fixtures: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

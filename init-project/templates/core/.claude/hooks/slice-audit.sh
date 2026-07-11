@@ -87,15 +87,16 @@ case "${1:---hook}" in
   exit 0
   ;;
 --range)
-  # CI mode: everything newly Shipped between $2 and $3 (default HEAD) must have
-  # a valid record AT $3 -- catches ship moves with no record change and record
-  # deletions, which a changed-files filter alone cannot see.
+  # CI mode, two sweeps over $2..$3 (default HEAD):
+  #  (1) every slice NEWLY Shipped in the backlog must have a committed, valid
+  #      record at HEAD (catches ship moves with no record change);
+  #  (2) every ship record MODIFIED or DELETED in the range is re-audited
+  #      (catches tampering with / removal of an already-shipped slice's record).
   shift; base="${1:?base rev required}"; head_rev="${2:-HEAD}"; rc=0
   oldb=$(mktemp); newb=$(mktemp); trap 'rm -f "$oldb" "$newb"' EXIT
   git show "$base:$BACKLOG"     > "$oldb" 2>/dev/null || : > "$oldb"
   git show "$head_rev:$BACKLOG" > "$newb" 2>/dev/null || : > "$newb"
   new_ids=$(comm -13 <(shipped_ids "$oldb") <(shipped_ids "$newb"))
-  [ -z "$new_ids" ] && { echo "slice-audit: no new shipped slices in $base..$head_rev"; exit 0; }
   for id in $new_ids; do
     rec=$(record_for_id "$id")
     if [ -z "$rec" ] || ! git cat-file -e "$head_rev:$rec" 2>/dev/null; then
@@ -104,6 +105,22 @@ case "${1:---hook}" in
     check_record "$rec" || rc=1
     "$0" --history "$rec" || rc=1
   done
+  # Sweep 2: records touched in the range.
+  while IFS=$'\t' read -r status f; do
+    [ -n "$f" ] || continue
+    case "$(basename "$f")" in README.md) continue;; esac
+    if [ "$status" = "D" ]; then
+      # Deleted record: if its slice is still Shipped at HEAD, that is evidence removal.
+      del_id=$(git show "$base:$f" 2>/dev/null | head -1 | grep -oE '\[[^]]+\]' | head -1 | tr -d '[]' || true)
+      if [ -n "$del_id" ] && shipped_ids "$newb" | grep -qxF "$del_id"; then
+        echo "slice-audit: $f deleted in $base..$head_rev but [$del_id] is still Shipped -- ship records are permanent evidence." >&2; rc=1
+      fi
+    else
+      # Modified record: re-validate (re-auditing a sweep-1 record is harmless).
+      check_record "$f" || rc=1
+      "$0" --history "$f" || rc=1
+    fi
+  done < <(git diff --name-status --diff-filter=MD "$base" "$head_rev" -- "$SHIPS_DIR" | grep -E '\.md$' || true)
   exit $rc
   ;;
 --hook)

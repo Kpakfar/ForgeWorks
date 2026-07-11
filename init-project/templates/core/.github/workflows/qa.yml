@@ -63,6 +63,7 @@ jobs:
             base=$(git rev-parse HEAD~1 2>/dev/null || echo "")
           fi
           [ -z "$base" ] && { echo "no base rev (initial commit) -- nothing to audit"; exit 0; }
-          # Range-driven, not changed-file-driven: a backlog row moved to Shipped
-          # with NO record change (or a deleted record) must still fail.
+          # Range-driven, two sweeps: newly-Shipped slices need a committed valid
+          # record, AND any record modified or deleted in the range is re-audited
+          # (tampering with an already-shipped slice's evidence fails here).
           bash .claude/hooks/slice-audit.sh --range "$base" HEAD
