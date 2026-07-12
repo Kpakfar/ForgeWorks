@@ -248,12 +248,12 @@ For trivial tasks as defined in `<exceptional-cases>` (no behavioral effect): sk
 </agent-roster>
 <!-- /FW-BLOCK: agent-roster -->
 
-<!-- FW-BLOCK: recurring-reviews v2.1.0 -->
+<!-- FW-BLOCK: recurring-reviews v2.1.1 -->
 <recurring-reviews>
 Two reviews recur because their problems accumulate silently between features. Both are **event-triggered first** -- tied to things the ship-record audit can see -- with wall-clock scheduling only as a backstop:
 
 - **Security red-team (`@security-reviewer`).** Trigger: every slice matching the canonical security trigger in `<delivery-evidence>` (the ship record's `Security surface:` field is the evidence it ran), and at least once per iteration regardless. Walk every external data source that can reach the system -- request bodies, uploads, web/tool/MCP results, and (if applicable) prompts -- and try to break it per the `docs/SECURITY.md` checklist. A passing test is not proof of safety; it only has to fail once.
-- **Tech-debt sweep (`@tech-debt`).** Trigger: every third shipped non-trivial slice, and before any release or milestone. Find files over the line cap, real duplication (DRY paydown), dead code, and docs that drifted from the code. Produce a ranked paydown list under a dated heading in `docs/proposals-ideas.md`; fix the cheap high-value items now, schedule the rest. The dated heading is the evidence the sweep ran.
+- **Tech-debt sweep (`@tech-debt`).** Trigger: every third shipped non-trivial slice, and before any release or milestone. Find files over the line cap, real duplication (DRY paydown), dead code, and docs that drifted from the code. Produce a ranked paydown list under a dated heading in `docs/proposals-ideas.md`; fix the cheap high-value items now, schedule the rest. The dated heading is the evidence the sweep ran, and the CI ship-audit prints a non-blocking `WARN tech-debt sweep overdue` when 3+ slices are Shipped without one.
 
 To add a wall-clock backstop, the user can wire each as a scheduled agent with `/schedule` -- offer this once the project has a stable main flow, do not assume it. A schedule supplements the event triggers; it never replaces them.
 </recurring-reviews>
