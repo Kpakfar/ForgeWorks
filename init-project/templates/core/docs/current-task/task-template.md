@@ -45,10 +45,12 @@ present and run by CI -- the reviewer checks the mapping).
 - **Riskiest assumption (de-risked by which probe/spike):**
 - **Reality probes (docs/probes/ files this slice's fixtures are authored from):**
 - **Non-goals (explicitly out of this slice):**
+- **Unhappy paths + attacker story (error states, edge inputs; the attack as a story if security-triggered):**
 - **Data shapes at each boundary:**
-- **Security surface (new input / tool / auth, and which SECURITY.md defense covers it):**
+- **Security surface (which canonical-trigger clause from <delivery-evidence>, which SECURITY.md defense, and the threat-model disposition):**
+- **Autonomy (attended, or the <loop-discipline> envelope if any part runs unattended):**
 - **Mockup (any slice that makes a visible UI/UX choice gets a mockup, approved by the user before the design memo is approved -- path/link + approval):**
-- **What might be missing (proactive pass -- error states, empty/edge inputs, auth, scale, the unhappy path):**
+- **What might be missing (proactive pass -- error states, empty/edge inputs, auth, scale, observability):**
 
 ### Test plan (name every test before code -- see <test-discipline>)
 
@@ -79,6 +81,7 @@ written -- sharpen the criterion.
 ## Outcome
 
 <!-- Once task is complete: -->
+<!-- - Ship record written at docs/ships/<slice>.md (REQUIRED before the backlog row moves -- see <delivery-evidence>): -->
 <!-- - Commit hash: -->
 <!-- - PR link: -->
 <!-- - Gotchas added to docs/gotchas.md: -->

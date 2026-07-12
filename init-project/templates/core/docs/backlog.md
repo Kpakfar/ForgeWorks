@@ -4,6 +4,10 @@ Each row is a vertical slice that ships a demoable step end-to-end. See `AGENTS.
 
 Rows move: `proposals-ideas.md` -> `backlog.md` (Active) -> `current-task/task.md` -> `backlog.md` (Shipped).
 
+A row moves to Shipped only together with its ship record at `docs/ships/<slice>.md`
+(see `AGENTS.md` `<delivery-evidence>`) -- link the record from the row. The
+`slice-audit.sh` hook blocks the commit otherwise.
+
 ## Format
 
 ```

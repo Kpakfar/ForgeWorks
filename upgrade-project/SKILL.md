@@ -53,14 +53,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.0.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.0.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.0.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.1.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.1.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.1.0 /tmp/upgrade-skill --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>) live in init-project/SKILL.md Phase 4, not in templates/ -- reconcile AI/memory-conditional content against /tmp/upgrade-skill/SKILL.md.
 
-Reconcile against this skill's own released version (`v2.0.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.1.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -72,7 +72,7 @@ Walk the template tree. For every template path, decide and act:
 - **Language/tooling placeholders you cannot resolve** (no full language profile on hand) -> do NOT half-write it. Report it as "add manually" with a pointer to the template path.
 
   *Special cases:*
-  - `.claude/settings.json` -- if the project already has one, **merge** the `PreToolUse` deps-guard hook into the existing `hooks` object; never replace the file (that would drop the project's own hooks).
+  - `.claude/settings.json` -- if the project already has one, **merge** the `PreToolUse` hooks (deps-guard AND, since v2.1.0, `slice-audit.sh --hook`) into the existing `hooks` object; never replace the file (that would drop the project's own hooks). `slice-audit.sh` itself is placeholder-free: copy verbatim + `chmod +x`.
   - **AI fences** (same rule everywhere a template file carries them): if the project uses AI, delete only the marker lines and keep the content; if not, delete the fenced blocks entirely. Current fences: `<!-- AI-SECURITY-START/END -->` + `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`, `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`, `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`, `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`.
   - **Manifest `.example` suffix** (Python): the template ships `pyproject.toml.example` so the template repo's own tooling ignores it. A generated project already has a real `pyproject.toml` -- never copy the `.example` file in as "absent"; treat it as the merge source for the existing manifest (Phase 3-C), not a new file.
   - **Profile files come from the project's OWN profile** (Phase 2 pulled `profiles/<lang>/`). Copy them verbatim where absent -- including that language's real `scripts/` (Python and Go have `scripts/e2e.sh`; TypeScript runs e2e via an `npm run e2e` script in `package.json`). Never substitute another language's runner or a stub for a complete profile; the Go profile has a real e2e runner.
@@ -95,10 +95,16 @@ Walk the template tree. For every template path, decide and act:
   | `<starting-a-slice>` | `<planning-discipline>` | v1.1.x |
 
   After grafting, flag any superseded block present in the project for the user to remove -- do not silently delete.
+
+  *Conditional blocks (`<ai-discipline>`, `<memory>`):* the fetched core `AGENTS.md` carries only the `{{AI_DISCIPLINE_BLOCK}}` / `{{MEMORY_DOC_LINE}}` placeholders, so the generic pass above cannot see these blocks' current text. When the project uses the feature (Phase 1 detection), extract the block's current text from `/tmp/upgrade-skill/SKILL.md` Phase 4's conditional-content rules and reconcile it with the SAME marker rules (absent -> insert; older marker version -> side-by-side; current -> skip). When the project does not use the feature, skip -- never insert a conditional block the project opted out of.
 - **Subagents** (`implementer.md`, `test-spec-writer.md`, `code-reviewer.md`) -- graft sections the template added (e.g. the implementer "step back / full picture" section, the test-spec-writer pyramid table, the `{{CODEX_REVIEW_STEP}}` slot) if absent. If the user customized a subagent, surface the diff rather than overwriting.
 - **Any other file present in both** (hooks, .mcp.json, workflows, docs templates) -- diff it against the fetched template version. If the project's copy is byte-identical to an OLDER template release (no hand edits), queue the template's current version as a straight update in the batch report. If the project's copy differs from every template version (hand-edited), show the diff side-by-side in the report and let the user choose -- never overwrite silently, and never assume the template is ahead: the project may carry a fix the template lacks (report that upstream).
 
-**C. Tooling delta (language-gated).** Apply the toolchain changes between the project's "from" version (Phase 1 stamp) and this release, for the project's language only. Compare the freshly-fetched profile's manifest / scripts / CI against the project's and surface the diffs; the high-value ones per language:
+**C. Tooling delta (language-gated).** Apply the toolchain changes between the project's "from" version (Phase 1 stamp) and this release, for the project's language only. Compare the freshly-fetched profile's manifest / scripts / CI against the project's and surface the diffs.
+
+*Language-independent CI delta (since v2.1.0):* the generated `.github/workflows/qa.yml` gained a `ship-audit` job (full-history checkout, validates changed `docs/ships/` records via `slice-audit.sh --check` / `--history`). It has no placeholders: if the project's `qa.yml` lacks the job, graft it verbatim from the fetched template (show the diff first, as always).
+
+The high-value deltas per language:
 - **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present.
 - **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`.
 - **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it).
@@ -120,8 +126,9 @@ zero punted files. If the user declines a question, write
    **needs your answer (the mini-interview questions)**, **superseded (flagged
    for removal)**. Collect the mini-interview answers and a single yes.
 2. Apply everything. `chmod +x` new scripts/hooks.
-3. Ensure `docs/designs/` and `docs/probes/` exist (copy their READMEs from the
-   template if absent) -- they are the v2 gate's working directories.
+3. Ensure `docs/designs/`, `docs/probes/`, and `docs/ships/` exist (copy their
+   READMEs from the template if absent) -- they are the gate's working
+   directories; `docs/ships/` is where the v2.1.0 slice-audit looks for records.
 4. Run the project's quality gate and confirm it still passes; fix any breakage
    the upgrade introduced before finishing.
 5. **Only after the gate passes,** write the new version to

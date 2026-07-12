@@ -59,6 +59,8 @@ Run the new tests using the project's test command (see `docs/language-standards
 
 Confirm they fail with a "not implemented" or "module not found" error. If they fail for the wrong reason, fix that first.
 
+Report the verified-failing run in your handoff so the orchestrator can commit the Red suite as its own commit BEFORE implementation starts -- that commit is the slice's `Red proof:` in the ship record, and it keeps `TDD audit: strong` (`AGENTS.md` `<test-discipline>`, `<delivery-evidence>`).
+
 Append to `docs/current-task/task.md`:
 
 ```markdown

@@ -62,6 +62,13 @@ jobs:
       - name: deps-guard blocks/allows the expected commands
         run: bash .github/scripts/deps_guard_test.sh
 
+  slice-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: slice-audit hook blocks/passes the expected ship commits
+        run: bash .github/scripts/slice_audit_test.sh
+
   # Each profile job renders the MERGED core+profile tree (the shape a generated
   # project actually has) and runs the language's real gate + e2e runner on it.
   # Profile-only runs miss core/profile interactions (e.g. a formatter that

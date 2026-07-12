@@ -43,7 +43,8 @@ Before handoff, stop making the change and look at the architecture as a whole. 
 
 - Does this slice fit the existing layering (`<architecture-discipline>`), or did it bolt a concept onto the wrong layer? Move it if so.
 - Did any file cross the ~100-line target or the 200 hard cap? Split by concept now, not later.
-- Did you introduce a new external input, tool, or auth boundary? If so, it needs a `docs/SECURITY.md` entry and security tests -- flag it for `@security-reviewer`.
+- Does the change match the canonical security trigger (quoted from `<delivery-evidence>`: *external input handling, dependence on untrusted generated output, public publishing of content, authentication or authorization, a tool or automation with side effects, or persistence of untrusted content*)? If so, it needs a `docs/SECURITY.md` entry (or a written no-delta rationale in the memo), security tests, AND an independent `@security-reviewer` run before ship -- say so in your handoff.
+- Did you touch any existing test, fixture, snapshot, or gate config while going Green? Each such change is a spec amendment: state it and the reason in your implementation notes so `@code-reviewer` can sign it off (`<test-discipline>`). Adding new tests needs no note.
 - Update `docs/structure.txt` if the layout changed.
 
 ## Language and tooling standards

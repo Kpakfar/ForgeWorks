@@ -3,9 +3,9 @@ name: tech-debt
 description: >-
   Use this agent to sweep the codebase for accumulated debt -- files over the
   line cap, real duplication, dead code, and docs that drifted from the code --
-  and produce a ranked paydown plan. Run on the recurring tech-debt cadence and
-  before a milestone. It proposes and fixes cheap high-value items; it does not
-  add features.
+  and produce a ranked paydown plan. Trigger: every third shipped non-trivial
+  slice, and before any release or milestone (AGENTS.md <recurring-reviews>).
+  It proposes and fixes cheap high-value items; it does not add features.
 
   <example>
   user: "End of sprint. Run a tech-debt sweep."
@@ -39,8 +39,10 @@ premature abstraction, DRY bounded by two real callers).
 1. Read `docs/structure.txt` to orient; scan the tree for the signals above.
 2. Rank every item by value-over-cost (impact if fixed / effort to fix).
 3. Fix the cheap, high-value items now under the normal TDD + quality-gate loop.
-4. Queue the rest as a ranked list in `docs/proposals-ideas.md`, each with a one-line
-   rationale and rough size. Genuinely scoped items become `docs/backlog.md` rows.
+4. Queue the rest as a ranked list under a **dated heading** in `docs/proposals-ideas.md`,
+   each with a one-line rationale and rough size -- the dated heading is the evidence this
+   sweep ran (`AGENTS.md` `<recurring-reviews>`). Genuinely scoped items become
+   `docs/backlog.md` rows.
 
 ## Output
 
