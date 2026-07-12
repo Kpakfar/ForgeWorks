@@ -136,7 +136,7 @@ Next steps:
 
 /init-project installs the supporting skills (tdd, grill-me, ... from
 mattpocock/skills), interviews you about scope and stack, then generates the full
-project for your chosen language (Python, TypeScript, or Go): AGENTS.md, a .mcp.json
+project for your chosen language (Python, TypeScript, Go, or Rust): AGENTS.md, a .mcp.json
 with Context7, CI, a PR template, and a green-on-first-run scaffold. It checks the
 language's package manager (uv / npm / go) after you pick.
 

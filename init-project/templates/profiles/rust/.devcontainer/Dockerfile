@@ -4,7 +4,10 @@
 # the EXACT toolchain is pinned by rust-toolchain.toml, which rustup resolves
 # automatically inside the container.
 
-FROM mcr.microsoft.com/devcontainers/rust:1-1-bookworm
+# Digest-pinned tag: 1-1-bookworm (Dockerfiles do not allow inline comments,
+# so the human-readable tag lives here). To update, resolve the tag's current
+# digest: `docker manifest inspect mcr.microsoft.com/devcontainers/rust:1-1-bookworm`.
+FROM mcr.microsoft.com/devcontainers/rust@sha256:fc57fb865035c5395e85246c8842b071ced6e7cde727b3c98abbcc794eaf4759
 
 # System deps commonly needed for builds and tooling. pkg-config + libssl-dev
 # cover the common native-TLS / openssl-sys crates.
