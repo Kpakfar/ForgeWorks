@@ -165,11 +165,11 @@ Save the location (URL or path) for each. If the user has nothing for the positi
   1) Python       (uv, ruff, mypy, pytest)            [complete]
   2) TypeScript   (npm, eslint, prettier, tsc, vitest) [complete]
   3) Go           (go mod, golangci-lint, go test)     [complete]
-  4) Rust         (cargo, clippy, rustfmt)             [not yet -- experimental]
+  4) Rust         (cargo, clippy, rustfmt)             [complete]
   5) Other        (manual setup)                       [not yet -- experimental]
 ```
 
-Python, TypeScript, and Go each have a **complete profile** (`templates/profiles/<lang>/`) with a working toolchain and a green-on-first-run scaffold -- pick any of them and the quality gate passes immediately. Rust and "Other" are not yet built; see "Experimental languages" below before generating one.
+Python, TypeScript, Go, and Rust each have a **complete profile** (`templates/profiles/<lang>/`) with a working toolchain and a green-on-first-run scaffold -- pick any of them and the quality gate passes immediately. "Other" is not yet built; see "Experimental languages" below before generating one.
 
 #### B2. Frontend
 
@@ -185,6 +185,7 @@ Offer the menu for the chosen language; do not improvise:
 - Python: 1) FastAPI  2) Flask  3) Streamlit/Gradio only  4) none (CLI/library)
 - TypeScript: 1) Next.js  2) Express  3) Fastify  4) none (CLI/library)
 - Go: 1) stdlib net/http  2) chi  3) gin  4) none (CLI/library)
+- Rust: 1) axum  2) actix-web  3) none (CLI/library)
 
 #### B4. AI features
 
@@ -295,7 +296,7 @@ Do NOT read or copy `templates/profiles/<other-language>/`. The manifest, script
 `{{CI_SETUP_STEPS}}` (in `.github/workflows/qa.yml`, at 6-space indent) and `{{LANGUAGE_PRECOMMIT_HOOKS}}` (in `.pre-commit-config.yaml`, at 2-space indent) are multi-line values written at column 0 in the profile YAML. A literal string-replace indents only the first line and produces invalid YAML. When substituting a multi-line value, prefix EVERY line after the first with the placeholder's own indentation (the column where `{{` sits). Verify the result parses as YAML before moving on.
 
 **Identifiers and escaping (do not skip -- raw display values break structured files):**
-- Use `{{PROJECT_SLUG}}` (not `{{PROJECT_NAME}}`) for every identifier field: the package name in `pyproject.toml`/`package.json` and the module path in `go.mod`. A display name like `My Project` is not a valid TOML package name or Go module path.
+- Use `{{PROJECT_SLUG}}` (not `{{PROJECT_NAME}}`) for every identifier field: the package name in `pyproject.toml`/`package.json`/`Cargo.toml` and the module path in `go.mod`. A display name like `My Project` is not a valid TOML package name or Go module path. (The Rust profile's `[lib] name = "app"` stays fixed regardless of the package name -- the scaffold's tests import `app::`.)
 - When you substitute a display value (`{{PROJECT_NAME}}`, `{{PROJECT_GOAL}}`, ...) into a structured file (JSON, TOML, YAML, `go.mod`), escape it for that format: in JSON escape `"`, `\`, and control characters; in TOML escape `"` or use a literal string. A goal like `A "quoted" goal` must not produce invalid JSON in `package.json`. Display values flow unescaped only into Markdown prose.
 
 **Conditional content (from interview answers):**
@@ -444,7 +445,7 @@ After all files are written:
 
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
-2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
+2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go, Rust), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
 3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.1.1" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
@@ -479,12 +480,12 @@ test -f docs/language-standards.md && \
 test -f docs/designs/README.md && test -f docs/probes/README.md && test -f docs/ships/README.md
 ```
 
-Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exists, and the green-scaffold source + test exist (Python `src/example.py`+`tests/test_example.py`; TypeScript `src/example.ts`+`tests/example.test.ts`; Go `greet.go`+`greet_test.go`).
+Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exists, and the green-scaffold source + test exist (Python `src/example.py`+`tests/test_example.py`; TypeScript `src/example.ts`+`tests/example.test.ts`; Go `greet.go`+`greet_test.go`; Rust `src/lib.rs` (with its in-file unit test) + `tests/e2e.rs` + `rust-toolchain.toml`).
 
 Then check no unresolved placeholders remain:
 
 ```bash
-! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=skills 2>/dev/null
+! grep -rn '{{[A-Z0-9_]*}}' . --include='*.md' --include='*.txt' --include='*.toml' --include='*.yml' --include='*.yaml' --include='*.json' --include='*.sh' --include='*.py' --include='*.ts' --include='*.go' --include='*.rs' --include='*.mod' --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=skills 2>/dev/null
 ```
 
 (`--exclude-dir=skills` skips only the installed skill trees under `.claude/skills/`; the generated `.claude/hooks/` and `.claude/agents/` files ARE checked -- they carry substituted values.)
@@ -689,7 +690,7 @@ notes:
     - `hypothesis` for property-based tests on pure functions.
     - `--import-mode=importlib` is set in addopts: test files may share basenames across folders without `__init__.py` shims.
   precommit_hooks: |
-    This profile ships `.pre-commit-config.yaml` with `ruff` (`--fix`) and `ruff-format`, plus the generic hooks (trailing-whitespace, yaml/toml/json validation, large-file guard). Install once with `uv run pre-commit install`. (TypeScript and Go profiles ship no pre-commit; their `qa` gate + CI are the enforcement.)
+    This profile ships `.pre-commit-config.yaml` with `ruff` (`--fix`) and `ruff-format`, plus the generic hooks (trailing-whitespace, yaml/toml/json validation, large-file guard). Install once with `uv run pre-commit install`. (TypeScript, Go, and Rust profiles ship no pre-commit; their `qa` gate + CI are the enforcement.)
 ```
 
 ### TypeScript (complete)
@@ -822,20 +823,86 @@ notes:
     - Not used. The Go profile ships no `.pre-commit-config.yaml`; `bash scripts/qa.sh` (local + CI) is the gate.
 ```
 
-### Experimental languages (Rust, Other)
+### Rust (complete)
 
-Rust and "Other" have **no profile yet** -- there is no `templates/profiles/rust/` to copy, so a generated project would be core-only with no working toolchain. Do not imply otherwise. Get explicit consent first:
+Files live in `templates/profiles/rust/`. The gate is `scripts/qa.sh` (verify-only: fmt-check, clippy with warnings-as-errors, check, test); fix mutates; e2e tests are `#[ignore]`-tagged in `tests/e2e.rs` and run via `scripts/e2e.sh`. The toolchain (compiler + clippy + rustfmt) is pinned by `rust-toolchain.toml`, which rustup honors everywhere (local, dev container, CI). The manifest ships as a plain `Cargo.toml` (no `.example` suffix needed: cargo never scans nested directories, so the template copy is inert -- unlike Python's `pyproject.toml`). Ships no pre-commit config.
 
-> "Heads up: Rust isn't a built profile yet. I can lay down the universal core (AGENTS.md, docs, security files, CI shape), but you'd have to build the toolchain yourself -- there's no validated manifest, lint/format/type setup, qa/fix scripts, or green scaffold -- so the first quality-gate run won't pass until you complete it. Proceed on that basis, switch to Python/TypeScript/Go, or have me add a Rust profile properly first?"
+```yaml
+language_version: "1.96 (edition 2024; pinned by rust-toolchain.toml)"
+file_extension: "rs"
+package_manager: "cargo"
+manifest_file: "Cargo.toml"
+install_command: "cargo fetch"
+add_dep_command: "cargo add"
+qa_command: "bash scripts/qa.sh"
+fix_command: "bash scripts/fix.sh"
+e2e_command: "bash scripts/e2e.sh"
+e2e_browser_install: ""   # Rust e2e is API/CLI-level by default (no browser)
+test_runner: "cargo test"
+test_command: "cargo test"
+lint_tool: "clippy"
+lint_command: "cargo clippy --all-targets -- -D warnings"
+format_tool: "rustfmt"
+format_command: "cargo fmt --check"   # CHECK form; fix.sh runs `cargo fmt` (write)
+type_tool: "cargo check"
+type_command: "cargo check"
+precommit_install_command: ""   # Rust profile ships no pre-commit; qa + CI are the gate
 
-If they proceed, copy `templates/core/` only, leave clearly-marked TODOs in `docs/language-standards.md` and `.github/workflows/qa.yml`, do NOT generate a manifest or scripts, and tell them the gate is not green until they finish the toolchain. The better path is to add a real profile under `templates/profiles/rust/` (see the repo `AGENTS.md` `<adding-a-language-profile>`) so the experience matches Python/TS/Go.
+ci_setup_steps: |
+  - name: Set up Rust
+    # Installs the toolchain pinned in rust-toolchain.toml (channel + the
+    # clippy/rustfmt components) and enables cargo caching. rustflags is
+    # cleared so the scripts alone define strictness (qa runs clippy with
+    # -D warnings); the action would otherwise export RUSTFLAGS="-D warnings"
+    # and make plain builds stricter in CI than locally.
+    uses: actions-rust-lang/setup-rust-toolchain@v1
+    with:
+      rustflags: ""
+  - name: Fetch dependencies
+    run: cargo fetch
+
+library_docs_urls: |
+  ### Core stack
+  - **The Rust Book**: https://doc.rust-lang.org/book/
+  - **Standard library**: https://doc.rust-lang.org/std/
+  - **The Cargo Book**: https://doc.rust-lang.org/cargo/
+  - **Clippy lint list**: https://rust-lang.github.io/rust-clippy/master/
+  - **rustfmt**: https://github.com/rust-lang/rustfmt
+
+notes:
+  type_annotations: |
+    - Statically typed; the compiler is the type checker (`cargo check`). Explicit types on public signatures; let inference handle locals. Prefer borrowed views (`&str`, `&[T]`) for parameters and owned types for returns.
+  imports: |
+    - `use` statements at the top, grouped stdlib / third-party / crate-local, blank-line separated (rustfmt keeps each group sorted). No wildcard imports outside preludes and test modules.
+  async: |
+    - Add async (tokio) only when the project is genuinely concurrent (server, many parallel I/O calls); a CLI, batch job, or library stays synchronous -- do not add an async runtime for its own sake. When async, keep the whole I/O path async and never block the executor (no `std::thread::sleep` or sync file I/O inside it).
+  errors: |
+    - Return `Result<T, E>` with a domain error enum (`thiserror` in libraries; `anyhow` acceptable at the application boundary). No `unwrap()`/`expect()` outside tests and provably-infallible spots; `?` for propagation; `panic!` only for unrecoverable invariants. Fail closed on safety/security.
+  config: |
+    - Read env at one boundary into a typed config struct; never hardcode keys/URLs/models. Secrets in `.env` (gitignored), never in source or Cargo.toml.
+  logging: |
+    - `tracing` (structured, with spans) for application logs -- not `println!`.
+  test_layout: |
+    - Unit tests live beside the code in `#[cfg(test)] mod tests` blocks; integration tests in `tests/`; both run in the fast gate via `cargo test`. `tests/e2e.rs` is `#[ignore]`-tagged, excluded from the fast gate, run via `scripts/e2e.sh` (`cargo test --test e2e -- --ignored`).
+    - Table-style cases via loops over input/expected pairs; inject fakes via traits you own; avoid mocking frameworks.
+  precommit_hooks: |
+    - Not used. The Rust profile ships no `.pre-commit-config.yaml`; `bash scripts/qa.sh` (local + CI) is the gate.
+```
+
+### Experimental languages (Other)
+
+"Other" has **no profile** -- there is no profile folder to copy, so a generated project would be core-only with no working toolchain. Do not imply otherwise. Get explicit consent first:
+
+> "Heads up: that language isn't a built profile yet. I can lay down the universal core (AGENTS.md, docs, security files, CI shape), but you'd have to build the toolchain yourself -- there's no validated manifest, lint/format/type setup, qa/fix scripts, or green scaffold -- so the first quality-gate run won't pass until you complete it. Proceed on that basis, switch to Python/TypeScript/Go/Rust, or have me add a profile for it properly first?"
+
+If they proceed, copy `templates/core/` only, leave clearly-marked TODOs in `docs/language-standards.md` and `.github/workflows/qa.yml`, do NOT generate a manifest or scripts, and tell them the gate is not green until they finish the toolchain. The better path is to add a real profile under `templates/profiles/<lang>/` (see the repo `AGENTS.md` `<adding-a-language-profile>`) so the experience matches the complete profiles.
 
 ---
 
 ## Failure modes and how to handle them
 
 **The user can't decide on a language.**
-Python, TypeScript, and Go are all complete profiles; default to Python if there is no other signal. Don't let analysis paralysis block progress.
+Python, TypeScript, Go, and Rust are all complete profiles; default to Python if there is no other signal. Don't let analysis paralysis block progress.
 
 **The user wants to skip the interview.**
 OK for Part B (stack): require only language + dev container and default the
