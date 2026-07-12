@@ -53,14 +53,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.1.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.1.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.1.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.1.1 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.1.1 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.1.1 /tmp/upgrade-skill --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, or `go`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>) live in init-project/SKILL.md Phase 4, not in templates/ -- reconcile AI/memory-conditional content against /tmp/upgrade-skill/SKILL.md.
 
-Reconcile against this skill's own released version (`v2.1.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.1.1`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -104,10 +104,12 @@ Walk the template tree. For every template path, decide and act:
 
 *Language-independent CI delta (since v2.1.0):* the generated `.github/workflows/qa.yml` gained a `ship-audit` job (full-history checkout, validates changed `docs/ships/` records via `slice-audit.sh --check` / `--history`). It has no placeholders: if the project's `qa.yml` lacks the job, graft it verbatim from the fetched template (show the diff first, as always).
 
+*Language-independent CI delta (since v2.1.1) -- pinned actions:* every `uses:` in the fetched template's `qa.yml` and in the profile's `ci_setup_steps` is pinned to a full commit SHA (`owner/repo@<40-hex> # vX`), and the Go golangci-lint install step downloads a pinned `install.sh` and verifies its sha256 instead of piping curl to sh. If the project's `qa.yml` still has tag-only `uses:` pins or a pipe-to-shell install step, propose the fetched template's pinned versions of those lines (show the diff first, as always).
+
 The high-value deltas per language:
-- **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present.
-- **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`.
-- **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it).
+- **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present. *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
+- **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`. *(since v2.1.1)* ensure `eslint.config.js` carries the `max-lines` rule (`['error', { max: 200, skipBlankLines: false, skipComments: false }]`) -- graft the rule object from the fetched profile config if absent.
+- **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it). *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
 Show each proposed change against the project's current file before applying; don't overwrite hand-edits. For an experimental language with no profile, leave clearly-marked TODOs and report them.
 
 **D. Mini-interview (discovery placeholders).** Collect every queued

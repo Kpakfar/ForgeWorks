@@ -13,6 +13,12 @@
 #   --range BASE [HEAD]  CI mode: every slice newly Shipped in the backlog
 #                   between the two revs must have a committed, valid record at
 #                   HEAD (catches no-record ship moves and record deletions).
+#                   Also emits a NON-FAILING tech-debt cadence warning: if 3+
+#                   slices are Shipped at HEAD and docs/proposals-ideas.md has
+#                   no dated heading mentioning tech-debt, it prints
+#                   'WARN tech-debt sweep overdue' to stderr. The warning never
+#                   changes the exit code (cadence is reviewer-owned, the audit
+#                   only surfaces it).
 #
 # Deterministic and grep-based on purpose: it proves presence and order, not
 # truthfulness -- reviewers judge content. False positive on a legitimate commit?
@@ -129,6 +135,18 @@ case "${1:---hook}" in
       "$0" --history "$f" || rc=1
     fi
   done < <(git diff --name-status --no-renames --diff-filter=AMD "$base" "$head_rev" -- "$SHIPS_DIR" | grep -E '\.md$' || true)
+  # Tech-debt cadence check -- WARNING ONLY, deliberately never touches $rc.
+  # <recurring-reviews> asks for a @tech-debt sweep every 3rd shipped slice,
+  # evidenced by a dated heading in docs/proposals-ideas.md. Deterministic
+  # floor: 3+ Shipped slices at HEAD and NO heading line that carries both a
+  # YYYY-MM-DD date and the word tech-debt (case-insensitive) -> warn.
+  shipped_total=$(shipped_ids "$newb" | grep -c . || true)
+  if [ "$shipped_total" -ge 3 ]; then
+    if ! git show "$head_rev:docs/proposals-ideas.md" 2>/dev/null \
+        | grep -Ei '^#{2,} ' | grep -Ei 'tech-?debt' | grep -Eq '[0-9]{4}-[0-9]{2}-[0-9]{2}'; then
+      echo "slice-audit: WARN tech-debt sweep overdue ($shipped_total slices Shipped, no dated tech-debt heading in docs/proposals-ideas.md -- run @tech-debt, see AGENTS.md <recurring-reviews>). Not blocking." >&2
+    fi
+  fi
   exit $rc
   ;;
 --hook)
