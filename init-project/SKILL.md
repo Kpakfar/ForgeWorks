@@ -446,7 +446,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go, Rust), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.1.1" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.2.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
