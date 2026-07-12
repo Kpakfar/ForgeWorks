@@ -15,7 +15,7 @@ Three pieces, each with a single responsibility:
 - `bootstrap/AGENTS.md` -- the bootstrap-mode constitution that lands in target projects. Tells the agent "this project is uninitialized; run `/init-project`."
 - `init-project/SKILL.md` -- the interview + generation skill. Runs in the target project after install. Asks A1-A10 (product discovery) + B1-B12 (stack and opt-ins), substitutes placeholders into the template files, applies conditional rules (AI block, mem0, gotchas seed, explanations, security profile, Codex reviewer), installs deps, and symlinks `CLAUDE.md` -> `AGENTS.md` in the target.
 - `init-project/templates/core/` -- the language-free files every project gets (AGENTS.md, docs/, security files, `.mcp.json`, CI shape, README, .env.example). Uses `{{PLACEHOLDER}}` substitution.
-- `init-project/templates/profiles/<lang>/` -- one folder per language with its manifest, toolchain, `scripts/` (or package scripts), green scaffold, dev container, `.gitignore`, and (Python only) pre-commit config. A generated project = `core/` + exactly one profile, so no other language's files ever leak in. Python, TypeScript, and Go are complete; Rust/Other are not built yet.
+- `init-project/templates/profiles/<lang>/` -- one folder per language with its manifest, toolchain, `scripts/` (or package scripts), green scaffold, dev container, `.gitignore`, and (Python only) pre-commit config. A generated project = `core/` + exactly one profile, so no other language's files ever leak in. Python, TypeScript, Go, and Rust are complete; "Other" is not built yet.
 - `upgrade-project/SKILL.md` -- the brownfield counterpart to `init-project`. Runs in an EXISTING generated project and reconciles it to the current template (copies missing always-on files, grafts new `AGENTS.md` rule blocks and subagent sections without overwriting, applies the tooling delta, reports the rest). `bootstrap/install.sh` installs this skill instead of `init-project` when it detects an already-generated project.
 - `VERSION` -- the template's version (e.g. `2.0.0`). `init-project` stamps it into a generated project at `.claude/.template-version`; `upgrade-project` reads it for the from->to report.
 
@@ -41,7 +41,7 @@ When editing files in `init-project/templates/`:
 
 - **Interview questions.** Numbered A1-A10 (product discovery) + B1-B12 (stack and opt-ins) today; B8 security profile, B12 Codex reviewer. Adding a question means adding it to (a) Phase 2 interview, (b) Phase 3 summary, (c) the placeholder table, and (d) Phase 4 emission logic if it affects the generated tree.
 - **Conditional emission.** Every conditional rule lives in Phase 4 with a clear `if {{PLACEHOLDER}} is yes/no` line and concrete instructions. No hidden conditionals.
-- **Language profiles.** A profile is a YAML block in `<language-profiles>` (command strings) PLUS a `templates/profiles/<lang>/` folder (the actual files). B1 picks one. Python, TypeScript, and Go are complete; Rust/Other are not built. See `<adding-a-language-profile>`.
+- **Language profiles.** A profile is a YAML block in `<language-profiles>` (command strings) PLUS a `templates/profiles/<lang>/` folder (the actual files). B1 picks one. Python, TypeScript, Go, and Rust are complete; "Other" is not built. See `<adding-a-language-profile>`.
 - **Verification.** Phase 5 checks core files with `test -f`, then confirms the profile landed, then runs `{{QA_COMMAND}}` green. If you add a new always-on file under `templates/core/`, add it to the core check.
 </editing-the-skill>
 
@@ -78,7 +78,7 @@ Smoke output directories (e.g. `/tmp/forgeworks-smoke`) are scratch space and ca
 </testing-changes>
 
 <adding-a-language-profile>
-A complete profile is a YAML block PLUS a folder, both meeting the same readiness contract as Python/TypeScript/Go:
+A complete profile is a YAML block PLUS a folder, both meeting the same readiness contract as Python/TypeScript/Go/Rust:
 
 1. Create `init-project/templates/profiles/<lang>/` with: the manifest, toolchain config, a **verify-only** `qa` runner + a separate `fix` runner + a separate `e2e` runner (as shell scripts or package scripts), a **green-on-first-run scaffold** (a typed example module + a passing test), `.gitignore`, a dev container (hardened like the others), and -- only if the language idiomatically uses it -- a pre-commit config.
 2. Add a YAML block to `init-project/SKILL.md` `<language-profiles>` with the same keys as Python's (qa_command, fix_command, e2e_command, ci_setup_steps, notes, ...).

@@ -39,7 +39,7 @@ Full procedure: `AGENTS.md` `<testing-changes>`.
 
 ## Adding a language profile
 
-A new profile must meet the same readiness contract as Python/TypeScript/Go: a
+A new profile must meet the same readiness contract as Python/TypeScript/Go/Rust: a
 manifest, a verify-only `qa` runner plus separate `fix` and `e2e` runners, a
 **green-on-first-run scaffold**, `.gitignore`, a hardened dev container, a YAML
 block in `SKILL.md` `<language-profiles>`, and a Q3 menu entry marked `[complete]`

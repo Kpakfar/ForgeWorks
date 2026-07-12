@@ -61,12 +61,12 @@ Backporting lessons from a real project: read that project's `docs/gotchas.md` (
 
 The shared `init-project/templates/core/` serves every language; each language is a **profile folder** plus a YAML block. A generated project is `core/` + one profile, so nothing language-specific leaks across languages. To add one:
 
-1. Create `init-project/templates/profiles/<lang>/` with: the manifest, toolchain config, a verify-only `qa` runner + a separate `fix` runner + a separate `e2e` runner, a **green-on-first-run scaffold** (a typed example + a passing test), `.gitignore`, a hardened dev container, and (only if idiomatic) a pre-commit config. Mirror the shape of `templates/profiles/python/` (or `typescript/` / `go/`).
+1. Create `init-project/templates/profiles/<lang>/` with: the manifest, toolchain config, a verify-only `qa` runner + a separate `fix` runner + a separate `e2e` runner, a **green-on-first-run scaffold** (a typed example + a passing test), `.gitignore`, a hardened dev container, and (only if idiomatic) a pre-commit config. Mirror the shape of `templates/profiles/python/` (or `typescript/` / `go/` / `rust/`).
 2. Add a YAML block to `init-project/SKILL.md` `<language-profiles>` with the same keys as Python (`language_version`, `package_manager`, `manifest_file`, `qa_command`, `fix_command`, `e2e_command`, `ci_setup_steps`, `notes`, ...).
 3. Add the language to B1's menu (mark `[complete]` only once it passes).
 4. Bootstrap a throwaway project in that language and confirm `qa` is **green on the first run**.
 
-**Python, TypeScript, and Go** are complete profiles — all three are verified green in CI on the merged core+profile tree (quality gate + e2e runner). Rust and "Other" are not built yet.
+**Python, TypeScript, Go, and Rust** are complete profiles — all four are verified green in CI on the merged core+profile tree (quality gate + e2e runner). "Other" is not built yet.
 
 ## Troubleshooting
 

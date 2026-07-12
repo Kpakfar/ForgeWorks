@@ -140,3 +140,26 @@ jobs:
           cd /tmp/go
           bash scripts/qa.sh
           bash scripts/e2e.sh
+
+  rust-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
+        with:
+          # Keep in lockstep with the profile's rust-toolchain.toml (the rendered
+          # tree pins the same version; installing it up front avoids an
+          # on-the-fly rustup download mid-gate). Cache is off (the cargo
+          # workspace lives in /tmp/rust, not the repo root) and rustflags is
+          # cleared so the profile's scripts alone define strictness.
+          toolchain: "1.96"
+          components: clippy,rustfmt
+          cache: false
+          rustflags: ""
+      - name: Render merged core+profile and run QA + e2e
+        run: |
+          python3 .github/scripts/render_smoke.py --emit rust /tmp/rust
+          mkdir -p /tmp/rust/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/rust/.claude/skills/init-project
+          cd /tmp/rust
+          bash scripts/qa.sh
+          bash scripts/e2e.sh

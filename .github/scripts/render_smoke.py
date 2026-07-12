@@ -32,6 +32,10 @@ PROFILE = {
                E2E_COMMAND="bash scripts/e2e.sh", MANIFEST_FILE="go.mod",
                INSTALL_COMMAND="go mod download", E2E_BROWSER_INSTALL="",
                PRECOMMIT_INSTALL_COMMAND="", LANGUAGE_PRECOMMIT_HOOKS=""),
+    "rust": dict(QA_COMMAND="bash scripts/qa.sh", FIX_COMMAND="bash scripts/fix.sh",
+                 E2E_COMMAND="bash scripts/e2e.sh", MANIFEST_FILE="Cargo.toml",
+                 INSTALL_COMMAND="cargo fetch", E2E_BROWSER_INSTALL="",
+                 PRECOMMIT_INSTALL_COMMAND="", LANGUAGE_PRECOMMIT_HOOKS=""),
 }
 
 COMMON = dict(
@@ -124,7 +128,7 @@ def main() -> int:
         print(f"ok   [{lang}] merged core+profile rendered to {out}")
         return 0
     rc = 0
-    for lang in ("python", "typescript", "go"):
+    for lang in ("python", "typescript", "go", "rust"):
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, "proj")
             left = render(lang, out)

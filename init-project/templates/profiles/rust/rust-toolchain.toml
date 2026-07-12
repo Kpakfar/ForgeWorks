@@ -1,0 +1,10 @@
+# Pins the toolchain so local runs, the dev container, and CI all use the same
+# compiler, clippy, and rustfmt (lint/format behavior drifts between versions,
+# and the qa gate treats clippy warnings as errors). rustup picks this file up
+# automatically. Bump the channel deliberately, run `bash scripts/qa.sh` green,
+# then commit. Keep in lockstep with .devcontainer/Dockerfile and the CI
+# toolchain step in .github/workflows/qa.yml.
+
+[toolchain]
+channel = "1.96"
+components = ["clippy", "rustfmt"]
