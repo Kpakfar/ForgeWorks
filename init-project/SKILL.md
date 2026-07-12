@@ -825,7 +825,7 @@ notes:
 
 ### Rust (complete)
 
-Files live in `templates/profiles/rust/`. The gate is `scripts/qa.sh` (verify-only: fmt-check, clippy with warnings-as-errors, check, test); fix mutates; e2e tests are `#[ignore]`-tagged in `tests/e2e.rs` and run via `scripts/e2e.sh`. The toolchain (compiler + clippy + rustfmt) is pinned by `rust-toolchain.toml`, which rustup honors everywhere (local, dev container, CI). The manifest ships as a plain `Cargo.toml` (no `.example` suffix needed: cargo never scans nested directories, so the template copy is inert -- unlike Python's `pyproject.toml`). Ships no pre-commit config.
+Files live in `templates/profiles/rust/`. The gate is `scripts/qa.sh` (verify-only: line cap, fmt-check, clippy with warnings-as-errors, check, test); fix mutates; e2e tests are `#[ignore]`-tagged in `tests/e2e.rs` and run via `scripts/e2e.sh`. The toolchain (compiler + clippy + rustfmt) is pinned by `rust-toolchain.toml`, which rustup honors everywhere (local, dev container, CI). The manifest ships as a plain `Cargo.toml` (no `.example` suffix needed: cargo never scans nested directories, so the template copy is inert -- unlike Python's `pyproject.toml`). Ships no pre-commit config.
 
 ```yaml
 language_version: "1.96 (edition 2024; pinned by rust-toolchain.toml)"

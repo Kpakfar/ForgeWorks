@@ -2,7 +2,7 @@
 # scripts/qa.sh
 #
 # The FAST gate (inner loop) -- VERIFY ONLY, never mutates files. Runs in order:
-#   1. scripts/linecap.sh (mechanical 200-line hard cap per file)
+#   1. line cap           (no file over 200 lines; see scripts/linecap.sh)
 #   2. cargo fmt --check  (formatting is correct, but do not rewrite)
 #   3. cargo clippy       (lint, all targets; warnings are errors)
 #   4. cargo check        (compile/borrow check without codegen)
@@ -22,7 +22,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-echo "==> [1/5] line cap (hard 200 per file)"
+echo "==> [1/5] line cap (hard cap 200 lines per file)"
 bash scripts/linecap.sh
 
 echo
