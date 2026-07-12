@@ -2,10 +2,11 @@
 # scripts/qa.sh
 #
 # The FAST gate (inner loop) -- VERIFY ONLY, never mutates files. Runs in order:
-#   1. cargo fmt --check  (formatting is correct, but do not rewrite)
-#   2. cargo clippy       (lint, all targets; warnings are errors)
-#   3. cargo check        (compile/borrow check without codegen)
-#   4. cargo test         (unit + functional; e2e excluded -- e2e tests are
+#   1. scripts/linecap.sh (mechanical 200-line hard cap per file)
+#   2. cargo fmt --check  (formatting is correct, but do not rewrite)
+#   3. cargo clippy       (lint, all targets; warnings are errors)
+#   4. cargo check        (compile/borrow check without codegen)
+#   5. cargo test         (unit + functional; e2e excluded -- e2e tests are
 #                          `#[ignore]`-tagged in tests/e2e.rs, and cargo test
 #                          skips ignored tests by default)
 #
@@ -21,19 +22,23 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-echo "==> [1/4] cargo fmt (check only)"
+echo "==> [1/5] line cap (hard 200 per file)"
+bash scripts/linecap.sh
+
+echo
+echo "==> [2/5] cargo fmt (check only)"
 cargo fmt --check
 
 echo
-echo "==> [2/4] cargo clippy (warnings are errors)"
+echo "==> [3/5] cargo clippy (warnings are errors)"
 cargo clippy --all-targets -- -D warnings
 
 echo
-echo "==> [3/4] cargo check"
+echo "==> [4/5] cargo check"
 cargo check
 
 echo
-echo "==> [4/4] cargo test (unit + functional; e2e excluded via #[ignore])"
+echo "==> [5/5] cargo test (unit + functional; e2e excluded via #[ignore])"
 cargo test
 
 echo

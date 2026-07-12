@@ -855,7 +855,7 @@ ci_setup_steps: |
     # cleared so the scripts alone define strictness (qa runs clippy with
     # -D warnings); the action would otherwise export RUSTFLAGS="-D warnings"
     # and make plain builds stricter in CI than locally.
-    uses: actions-rust-lang/setup-rust-toolchain@v1
+    uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
     with:
       rustflags: ""
   - name: Fetch dependencies
