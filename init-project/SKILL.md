@@ -445,7 +445,7 @@ After all files are written:
 1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
    - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
 2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.1.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
+3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.1.1" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
 4. Delete the temp file: `rm docs/_init-answers.md`
 
 ### Phase 4.5: Install dependencies
@@ -622,7 +622,7 @@ precommit_install_command: "uv run pre-commit install"
 
 ci_setup_steps: |
   - name: Set up uv
-    uses: astral-sh/setup-uv@v5
+    uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
     with:
       enable-cache: true
   - name: Set up Python
@@ -719,7 +719,7 @@ precommit_install_command: ""   # TypeScript profile ships no pre-commit; qa + C
 
 ci_setup_steps: |
   - name: Set up Node
-    uses: actions/setup-node@v4
+    uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
     with:
       node-version: "22"
       cache: "npm"
@@ -782,15 +782,17 @@ precommit_install_command: ""   # Go profile ships no pre-commit; qa + CI are th
 
 ci_setup_steps: |
   - name: Set up Go
-    uses: actions/setup-go@v5
+    uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
     with:
       go-version: "1.25"
       cache: true
   - name: Download modules
     run: go mod download
-  - name: Install golangci-lint
+  - name: Install golangci-lint (pinned + checksum-verified)
     run: |
-      curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.12.2
+      curl -sSfL -o /tmp/golangci-install.sh https://raw.githubusercontent.com/golangci/golangci-lint/v2.12.2/install.sh
+      echo "d32d3534af96cfd59546a084d22b213e8a47541cada5013aa8a84c4fa2589905  /tmp/golangci-install.sh" | sha256sum -c -
+      sh /tmp/golangci-install.sh -b "$(go env GOPATH)/bin" v2.12.2
       echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
 library_docs_urls: |

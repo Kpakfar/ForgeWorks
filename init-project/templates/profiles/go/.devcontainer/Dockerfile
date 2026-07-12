@@ -2,7 +2,10 @@
 # Base: official Go dev container image (Go 1.25 on Debian bookworm), which ships
 # the toolchain and a non-root `vscode` user.
 
-FROM mcr.microsoft.com/devcontainers/go:2-1.25-bookworm
+# Digest-pinned tag: 2-1.25-bookworm (Dockerfiles do not allow inline comments,
+# so the human-readable tag lives here). To update, resolve the tag's current
+# digest: `docker manifest inspect mcr.microsoft.com/devcontainers/go:2-1.25-bookworm`.
+FROM mcr.microsoft.com/devcontainers/go@sha256:f8f841c474489d6cd5b67cb30ee0e56ae5f1379f0bdf2679191573c41b5e11f8
 
 # System deps commonly needed for builds and tooling.
 RUN apt-get update && apt-get install -y --no-install-recommends \
