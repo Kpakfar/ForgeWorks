@@ -141,5 +141,31 @@ valid_record docs/ships/003-renamed.md 003 "imported -- prior session, PR #7"
 git add -A && git commit -qm "restore valid content under new name"
 expect 0 "--range passes an intact renamed record" "" --range "$base" HEAD
 
+# --- --history: spec-amendment gate (verification surface changed Red->Green) --
+printf 'memo\nApproved: x\n' > docs/designs/004-m.md && git add docs/designs/004-m.md && git commit -qm 'memo 004'
+mkdir -p tests && printf 'test_a' > tests/test_004.txt && git add tests/test_004.txt && git commit -qm 'red 004'
+red4=$(git rev-parse --short HEAD)
+printf 'test_a CHANGED' > tests/test_004.txt && printf 'impl' > impl4.txt && git add -A && git commit -qm 'green 004 (amends the red test)'
+green4=$(git rev-parse --short HEAD)
+rec4() { # $1 non-empty = include the Spec amendments line
+  {
+    echo "# Ship record: [004] Y"
+    echo "- Task class: standard"
+    echo "- Memo: docs/designs/004-m.md (Approved: x)"
+    echo "- Red proof: $red4"
+    echo "- Green proof: $green4"
+    echo "- TDD audit: strong"
+    echo "- Evidence origin: native"
+    echo "- Reviewers: code-reviewer APPROVE; security-reviewer not-triggered"
+    echo "- Security surface: none"
+    echo "- Review rounds: 1; fix rounds: 0"
+    [ -n "${1:-}" ] && echo "- Spec amendments: red assertion updated to match approved wording change (reviewer signed off)"
+    echo "- Live smoke: n/a"
+  } > docs/ships/004-y.md
+}
+rec4 "";   expect 1 "--history requires Spec amendments when surface changed" "" --history docs/ships/004-y.md
+rec4 yes;  expect 0 "--history passes amended surface WITH the field" "" --history docs/ships/004-y.md
+rm -f docs/ships/004-y.md
+
 echo "----"; echo "slice-audit fixtures: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

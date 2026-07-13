@@ -22,6 +22,7 @@ changed records. Field names below are literal -- the validators grep for them.
 - Reviewers: code-reviewer <verdict>; security-reviewer <verdict | not-triggered>
 - Security surface: none | <matching canonical-trigger clause> -- <SECURITY.md delta, or "none, because ...">
 - Review rounds: <N>; fix rounds: <M>
+- Spec amendments: <none | what existing tests/fixtures/gate config changed Red->Green, and why>
 - Live smoke: <link to output | n/a>
 ```
 
@@ -40,3 +41,7 @@ changed records. Field names below are literal -- the validators grep for them.
   provenance.
 - **TDD audit: weak** is an exception flag, not a synonym for "we wrote tests". Two
   weak slices in a row are a process smell -- raise it with the user.
+- **Spec amendments** is optional prose UNLESS the native Red->Green diff touched the
+  verification surface (existing tests, fixtures, gate scripts, workflows modified or
+  deleted) -- then the CI history check requires the line. It is the written half of
+  the reviewer sign-off from `<test-discipline>`.

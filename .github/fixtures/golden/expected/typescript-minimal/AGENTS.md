@@ -146,7 +146,7 @@ Anything off-scope that comes up during a slice goes to `docs/proposals-ideas.md
 </backlog-discipline>
 <!-- /FW-BLOCK: backlog-discipline -->
 
-<!-- FW-BLOCK: delivery-evidence v2.1.0 -->
+<!-- FW-BLOCK: delivery-evidence v2.4.0 -->
 <delivery-evidence>
 Delivery leaves evidence a later reader can audit without transcript archaeology. Two definitions live here and are quoted verbatim wherever they are needed:
 
@@ -163,6 +163,7 @@ Delivery leaves evidence a later reader can audit without transcript archaeology
 - `Reviewers:` which reviewers ran and their verdicts; security-reviewer says `not-triggered` only if the canonical trigger does not match
 - `Security surface:` none | the matching trigger clause + its disposition (the `docs/SECURITY.md` delta, or `none, because ...`)
 - `Review rounds: N; fix rounds: M`
+- `Spec amendments:` what existing tests/fixtures/gate config changed between Red and Green, and why -- required whenever the verification surface was modified or deleted while going Green (`<test-discipline>`); the CI history check fails a native record that changed the surface without this line. Adding new tests never requires it.
 - `Live smoke:` link or n/a (required when the suite is fake-only, per `<investigation-discipline>`)
 
 **Enforcement is mechanical, not prose.** The `slice-audit.sh` hook blocks a ship commit whose staged backlog change lacks a valid ship record (see `<quality-gate>`); CI re-validates changed ship records and, for native evidence, the memo -> Red -> Green commit order. The audit runs even when no subagent was dispatched -- degraded orchestration must fail loudly, not silently.
@@ -270,7 +271,7 @@ The human is a gate, not the engine: approvals batch at slice boundaries, and ev
 </loop-discipline>
 <!-- /FW-BLOCK: loop-discipline -->
 
-<!-- FW-BLOCK: planning-discipline v2.1.0 -->
+<!-- FW-BLOCK: planning-discipline v2.4.0 -->
 <planning-discipline>
 Planning is where most quality is won or lost. Do not be lazy here, and do not just transcribe what the user says -- interrogate it. Start from the heart of the project: the one flow that, if it works, makes the project worth building. Plan that first; everything else is a slice around it. The output of this pass is the design memo at `docs/designs/<slice>.md` (see `<investigation-discipline>`). Planning is done when the user approves the memo -- not when a test list exists.
 
@@ -290,6 +291,8 @@ This pass is **recurring, not once-per-project**: it runs at the start of EVERY 
 **Be proactive, not stenographic.** Before locking the plan, run one "what's missing?" pass: name the aspects the user has not mentioned (error states, empty/edge inputs, auth, scale, observability, the unhappy path) and surface them. Tell the user what you think they have not thought about. Then write the design memo and get the user's explicit approval on it before any code.
 
 **Then scan for parallelizable work.** If the slice has two or more independent sub-tasks (different layers, different files, no shared state), propose running them as parallel background subagents. The default is sequential; parallelism is opt-in. Parallel subagents that write files share one `.git/index`: give each its own files (or a git worktree), and have each stage only its own paths and retry on `index.lock`, or commits will collide.
+
+**One writer per branch (handoff freeze).** A branch has exactly one writer at a time. When a subagent reports its work complete, that report IS the handoff: the subagent stops pushing to the branch, and the orchestrator owns it from that moment -- late force-pushes after a completion report get lost in merges (a field-proven failure). The same rule in reverse: the orchestrator never rewrites a branch a subagent is still working on; message the agent to stop first, then take over.
 </planning-discipline>
 <!-- /FW-BLOCK: planning-discipline -->
 
