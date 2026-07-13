@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Feedgate",
+    "slug": "feedgate",
+    "goal": "An internal HTTP service that validates and normalizes partner RSS feeds before ingestion.",
+    "primary_user": "A data engineer who babysits broken partner feeds every Monday.",
+    "core_problem": "Partner feeds break silently (bad encodings, missing fields, wrong dates) and corrupt the downstream pipeline; validation happens too late, after ingestion.",
+    "core_journey": "1. A partner feed URL is registered with the service.\n2. The service fetches the feed, validates it against a strict schema, and normalizes encodings and dates.\n3. Clean feeds pass through to the pipeline; broken ones are quarantined with a precise error report.",
+    "success_measure": "A malformed feed is quarantined with an actionable error report instead of reaching the pipeline, and a clean feed passes through unchanged.",
+    "success_metrics": "- pipeline incidents caused by bad feeds -- zero after rollout\n- validation latency per feed -- p95 under 500ms",
+    "riskiest_assumption": "The set of real-world feed defects can be covered by a strict schema plus a small set of normalizers, without per-partner special cases.",
+    "req_ac_list": "- [ ] **REQ-AC1:** A well-formed feed passes validation and is forwarded byte-identical.\n- [ ] **REQ-AC2:** A feed with a wrong date format is quarantined with the offending field and line in the report.\n- [ ] **REQ-AC3:** A feed with a non-UTF-8 encoding is normalized to UTF-8 and passed through.\n- [ ] **REQ-AC4:** Quarantine events are visible via a status endpoint.",
+    "non_goals": "- No feed content transformation beyond encoding/date normalization.\n- No partner-facing UI; engineers query the status endpoint.",
+    "other_users": "- Partner-support staff reading quarantine reports (deferred).",
+    "constraint_time": "One sprint (two weeks) to a deployable internal service.",
+    "constraint_cost": "Runs on existing internal infrastructure; no new paid services.",
+    "constraint_data": "Feeds are partner-owned content; quarantined copies are retained for 30 days then deleted.",
+    "first_milestone": "2026-07-26",
+    "deployment_target": "Internal service in the company Kubernetes cluster.",
+    "scale_expectations": "About 200 partner feeds polled every 15 minutes; single instance is enough for the first iteration.",
+    "integrations": "- Partner RSS/Atom feed endpoints (fetch).\n- The internal ingestion pipeline's intake queue (forward).",
+    "in_scope_list": "- Feed registration, fetching, and strict-schema validation.\n- Encoding and date normalization.\n- Quarantine with actionable error reports and a status endpoint.",
+    "pain_point": "babysits broken partner feeds every Monday",
+    "product_category": "feed validation gateway",
+    "current_alternative": "letting feeds into the pipeline and cleaning up after incidents",
+    "key_benefit": "stops broken feeds before they corrupt the pipeline",
+    "key_differentiator": "validates and quarantines at the front door instead of repairing downstream",
+    "positive_reference": {
+      "ref": "the small-service shape of oklog/ulid's codebase",
+      "location": "https://github.com/oklog/ulid"
+    },
+    "negative_reference": null
+  },
+  "stack": {
+    "language": "go",
+    "has_frontend": "no",
+    "backend_framework": "stdlib net/http",
+    "ai_features": [],
+    "vector_db": "none",
+    "llm_provider": "none",
+    "embeddings_model": "none",
+    "database": "Postgres",
+    "uses_devcontainer": "yes"
+  },
+  "security": {
+    "reads_untrusted": "yes",
+    "holds_private_data": "no",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "no",
+    "seed_gotchas": "yes",
+    "mem0": "no",
+    "codex_reviewer": "no"
+  }
+}

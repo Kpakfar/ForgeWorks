@@ -1,0 +1,48 @@
+{
+  "name": "Feedgate",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    // docker-in-docker is intentionally NOT enabled by default: it widens the
+    // attack surface and grants the container Docker control. Add it back only
+    // if this project genuinely needs to build/run containers from inside.
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "editor.formatOnSave": true,
+        "[go]": {
+          "editor.defaultFormatter": "golang.go",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        }
+      }
+    }
+  },
+  // Fail visibly if setup breaks (no '|| true' swallowing errors).
+  "postCreateCommand": "go mod download",
+  "remoteUser": "vscode",
+  "forwardPorts": [],
+  "mounts": [
+    // Default: mount ONLY your global skills, read-only. This keeps host
+    // credentials out of the container — the whole point of running the agent
+    // in an isolated environment. The project's own .claude/ (agents, hooks,
+    // settings) already travels with the workspace.
+    // NOTE: Docker fails container creation if the source dir does not exist --
+    // run `mkdir -p ~/.claude/skills` once on the host, or remove this mount.
+    "source=${localEnv:HOME}/.claude/skills,target=/home/vscode/.claude/skills,type=bind,readonly"
+    // Opt-in ONLY if you knowingly accept the risk: mounting all of ~/.claude
+    // exposes settings.local.json (which may hold API keys) to anything running
+    // in the container, including a prompt-injected agent. Prefer the line above.
+    // "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,readonly"
+  ]
+}

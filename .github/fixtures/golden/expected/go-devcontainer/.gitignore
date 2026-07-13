@@ -1,0 +1,45 @@
+# Go
+# Compiled binaries and shared objects
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test binary built with `go test -c`
+*.test
+
+# Profiling / tool output
+*.out
+
+# Coverage
+coverage.txt
+coverage.html
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# IDE
+.vscode/*
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude / agent state
+.claude/cache/
+.claude/state/
+.claude/skills/_user-data/
+
+# Logs
+*.log
+logs/
+
+# Project-specific
+docs/_log/             # archived task logs (move to git history instead)
+docs/_init-answers.md  # temp file from init-project skill

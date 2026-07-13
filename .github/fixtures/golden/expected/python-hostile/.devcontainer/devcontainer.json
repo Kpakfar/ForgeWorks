@@ -1,0 +1,56 @@
+{
+  "name": "Hostile \"Fixture\" & <Sons>, Ltd. `v0`",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+    // docker-in-docker is intentionally NOT enabled by default: it widens the
+    // attack surface and grants the container Docker control. Add it back only
+    // if this project genuinely needs to build/run containers from inside.
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll.ruff": "explicit"
+          }
+        }
+      }
+    }
+  },
+  // Fail visibly if setup breaks (no '|| true' swallowing errors). Run pre-commit
+  // through uv so it uses the project's managed environment.
+  "postCreateCommand": "uv sync && uv run pre-commit install",
+  "remoteUser": "vscode",
+  "forwardPorts": [],
+  "mounts": [
+    // Default: mount ONLY your global skills, read-only. This keeps host
+    // credentials out of the container — the whole point of running the agent
+    // in an isolated environment. The project's own .claude/ (agents, hooks,
+    // settings) already travels with the workspace.
+    // NOTE: Docker fails container creation if the source dir does not exist --
+    // run `mkdir -p ~/.claude/skills` once on the host, or remove this mount.
+    "source=${localEnv:HOME}/.claude/skills,target=/home/vscode/.claude/skills,type=bind,readonly"
+    // Opt-in ONLY if you knowingly accept the risk: mounting all of ~/.claude
+    // exposes settings.local.json (which may hold API keys) to anything running
+    // in the container, including a prompt-injected agent. Prefer the line above.
+    // "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind,readonly"
+  ]
+}

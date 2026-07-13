@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# IDE
+.vscode/*
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude / agent state
+.claude/cache/
+.claude/state/
+.claude/skills/_user-data/
+
+# Logs
+*.log
+logs/
+
+# Project-specific
+docs/_log/           # archived task logs (move to git history instead)
+docs/_init-answers.md  # temp file from init-project skill

@@ -1,0 +1,24 @@
+{
+  "$comment": "Project hooks. The deps-guard PreToolUse hook enforces supply-chain checks deterministically; the slice-audit hook blocks ship commits without a valid docs/ships/ record (enforcement belongs in hooks, not prompts). The static+test quality gate is enforced by the code-reviewer subagent's own Stop hook (see .claude/agents/code-reviewer.md) and by CI.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/deps-guard.sh",
+            "timeout": 30,
+            "statusMessage": "Supply-chain guard: checking dependency commands..."
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/slice-audit.sh --hook",
+            "timeout": 30,
+            "statusMessage": "Ship audit: checking backlog moves against docs/ships/ records..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Briefly",
+    "slug": "briefly",
+    "goal": "A web app that turns a team's weekly activity into a two-paragraph stakeholder brief.",
+    "primary_user": "An engineering manager who writes the same status update every Friday.",
+    "core_problem": "Weekly stakeholder updates are assembled by hand from tickets, PRs, and chat; the writing is repetitive and the gathering is worse.",
+    "core_journey": "1. The manager connects the team's issue tracker export.\n2. The app drafts a two-paragraph brief with linked evidence for every claim.\n3. The manager edits inline and copies the approved brief out.",
+    "success_measure": "A manager produces an approved, evidence-linked brief in under five minutes, down from thirty.",
+    "success_metrics": "- time to approved brief -- under 5 minutes\n- claims with a working evidence link -- 100%",
+    "riskiest_assumption": "An LLM can draft claims that are faithful to the underlying tickets often enough that editing beats writing from scratch.",
+    "req_ac_list": "- [ ] **REQ-AC1:** Importing a week's export yields a draft brief with every claim linked to at least one source item.\n- [ ] **REQ-AC2:** Editing a paragraph and approving produces a copyable final brief.\n- [ ] **REQ-AC3:** A claim with no supporting source is visually flagged, never silently kept.",
+    "non_goals": "- No live integrations in the first iteration; file export import only.\n- No scheduling or sending; the manager copies the brief out.",
+    "other_users": "- Product managers assembling roadmap updates (deferred).",
+    "constraint_time": "Six weeks to an internal pilot with two teams.",
+    "constraint_cost": "LLM budget USD 50/month for the pilot; one draft must cost under USD 0.10.",
+    "constraint_data": "Ticket exports may contain internal names; data stays in the company tenancy and drafts are deleted after 30 days.",
+    "first_milestone": "2026-08-23",
+    "deployment_target": "Internal web app on the company PaaS.",
+    "scale_expectations": "Two pilot teams, about 20 briefs per week.",
+    "integrations": "- Issue-tracker CSV/JSON export (file import).\n- Anthropic API (drafting and faithfulness evals).",
+    "in_scope_list": "- Export import and per-claim evidence linking.\n- LLM-drafted two-paragraph brief with inline editing.\n- Faithfulness flagging for unsupported claims.",
+    "pain_point": "writes the same status update every Friday",
+    "product_category": "evidence-linked status brief generator",
+    "current_alternative": "hand-assembling updates from tickets, PRs, and chat",
+    "key_benefit": "drafts the brief with receipts, so editing replaces writing",
+    "key_differentiator": "every claim carries a link to its evidence, and unsupported claims are flagged",
+    "positive_reference": {
+      "ref": "the clean SPA structure of excalidraw/excalidraw",
+      "location": "https://github.com/excalidraw/excalidraw"
+    },
+    "negative_reference": null
+  },
+  "stack": {
+    "language": "typescript",
+    "has_frontend": "yes-spa",
+    "backend_framework": "Next.js",
+    "ai_features": ["agents", "evals"],
+    "vector_db": "none",
+    "llm_provider": "Anthropic",
+    "embeddings_model": "none",
+    "database": "Postgres",
+    "uses_devcontainer": "no"
+  },
+  "security": {
+    "reads_untrusted": "yes",
+    "holds_private_data": "yes",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "yes",
+    "seed_gotchas": "no",
+    "mem0": "yes",
+    "codex_reviewer": "no"
+  }
+}
