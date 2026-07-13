@@ -1,0 +1,72 @@
+{
+  "_comment": "Machine-readable language profile consumed by init-project/render.py. Keep in sync with the matching YAML block in init-project/SKILL.md <language-profiles>. Multi-line values are arrays of lines (joined with newlines at render time). This file is renderer input only -- it is never copied into a generated project.",
+  "display_name": "Go",
+  "language_version": "1.25+",
+  "package_manager": "go mod",
+  "manifest_file": "go.mod",
+  "install_command": "go mod download",
+  "add_dep_command": "go get",
+  "qa_command": "bash scripts/qa.sh",
+  "fix_command": "bash scripts/fix.sh",
+  "e2e_command": "bash scripts/e2e.sh",
+  "e2e_browser_install": "",
+  "test_runner": "go test",
+  "test_command": "go test ./...",
+  "lint_tool": "golangci-lint",
+  "lint_command": "golangci-lint run",
+  "format_tool": "gofmt",
+  "format_command": "gofmt -l .",
+  "type_tool": "go build",
+  "type_command": "go build ./...",
+  "precommit_install_command": "",
+  "ci_setup_steps": [
+    "- name: Set up Go",
+    "  uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5",
+    "  with:",
+    "    go-version: \"1.25\"",
+    "    cache: true",
+    "- name: Download modules",
+    "  run: go mod download",
+    "- name: Install golangci-lint (pinned + checksum-verified)",
+    "  run: |",
+    "    curl -sSfL -o /tmp/golangci-install.sh https://raw.githubusercontent.com/golangci/golangci-lint/v2.12.2/install.sh",
+    "    echo \"d32d3534af96cfd59546a084d22b213e8a47541cada5013aa8a84c4fa2589905  /tmp/golangci-install.sh\" | sha256sum -c -",
+    "    sh /tmp/golangci-install.sh -b \"$(go env GOPATH)/bin\" v2.12.2",
+    "    echo \"$(go env GOPATH)/bin\" >> \"$GITHUB_PATH\""
+  ],
+  "precommit_hooks": [],
+  "library_docs_urls": [
+    "### Core stack",
+    "- **Effective Go (idioms)**: https://go.dev/doc/effective_go",
+    "- **Managing dependencies**: https://go.dev/doc/modules/managing-dependencies",
+    "- **testing package**: https://pkg.go.dev/testing",
+    "- **golangci-lint**: https://golangci-lint.run/"
+  ],
+  "notes": {
+    "type_annotations": [
+      "- Statically typed; the compiler is the type checker (`go build ./...`). Explicit types on exported signatures; `:=` for obvious locals. Keep zero values meaningful."
+    ],
+    "imports": [
+      "- Group stdlib / third-party / local, blank-line separated. `goimports` (fix.sh) sorts and prunes. Unused imports fail compilation."
+    ],
+    "async": [
+      "- Concurrency is goroutines + channels, only where it earns its keep; CLI/script/library stays sequential. Use `context.Context` on I/O paths; never leak goroutines."
+    ],
+    "errors": [
+      "- Return `error` last; check it immediately. Wrap with `fmt.Errorf(\"...: %w\", err)`; inspect with `errors.Is`/`As`. Reserve `panic` for unrecoverable state. Fail closed."
+    ],
+    "config": [
+      "- Config from env (`os.Getenv`) or flags; never hardcode keys/URLs/models. Secrets out of source and `go.mod`."
+    ],
+    "logging": [
+      "- `log/slog` (structured), not `fmt.Println`, for application logs."
+    ],
+    "test_layout": [
+      "- `_test.go` files beside the code (`package app`) run in the fast gate via `go test ./...`. `tests/e2e/` is `//go:build e2e`-gated, excluded from the fast gate, run via `scripts/e2e.sh`.",
+      "- Table-driven tests + `t.Run` subtests. Inject fakes via interfaces you own; avoid mocking frameworks."
+    ],
+    "precommit_hooks": [
+      "- Not used. The Go profile ships no `.pre-commit-config.yaml`; `bash scripts/qa.sh` (local + CI) is the gate."
+    ]
+  }
+}

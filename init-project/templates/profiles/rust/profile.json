@@ -1,0 +1,71 @@
+{
+  "_comment": "Machine-readable language profile consumed by init-project/render.py. Keep in sync with the matching YAML block in init-project/SKILL.md <language-profiles>. Multi-line values are arrays of lines (joined with newlines at render time). This file is renderer input only -- it is never copied into a generated project.",
+  "display_name": "Rust",
+  "language_version": "1.96 (edition 2024; pinned by rust-toolchain.toml)",
+  "package_manager": "cargo",
+  "manifest_file": "Cargo.toml",
+  "install_command": "cargo fetch",
+  "add_dep_command": "cargo add",
+  "qa_command": "bash scripts/qa.sh",
+  "fix_command": "bash scripts/fix.sh",
+  "e2e_command": "bash scripts/e2e.sh",
+  "e2e_browser_install": "",
+  "test_runner": "cargo test",
+  "test_command": "cargo test",
+  "lint_tool": "clippy",
+  "lint_command": "cargo clippy --all-targets -- -D warnings",
+  "format_tool": "rustfmt",
+  "format_command": "cargo fmt --check",
+  "type_tool": "cargo check",
+  "type_command": "cargo check",
+  "precommit_install_command": "",
+  "ci_setup_steps": [
+    "- name: Set up Rust",
+    "  # Installs the toolchain pinned in rust-toolchain.toml (channel + the",
+    "  # clippy/rustfmt components) and enables cargo caching. rustflags is",
+    "  # cleared so the scripts alone define strictness (qa runs clippy with",
+    "  # -D warnings); the action would otherwise export RUSTFLAGS=\"-D warnings\"",
+    "  # and make plain builds stricter in CI than locally.",
+    "  uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1",
+    "  with:",
+    "    rustflags: \"\"",
+    "- name: Fetch dependencies",
+    "  run: cargo fetch"
+  ],
+  "precommit_hooks": [],
+  "library_docs_urls": [
+    "### Core stack",
+    "- **The Rust Book**: https://doc.rust-lang.org/book/",
+    "- **Standard library**: https://doc.rust-lang.org/std/",
+    "- **The Cargo Book**: https://doc.rust-lang.org/cargo/",
+    "- **Clippy lint list**: https://rust-lang.github.io/rust-clippy/master/",
+    "- **rustfmt**: https://github.com/rust-lang/rustfmt"
+  ],
+  "notes": {
+    "type_annotations": [
+      "- Statically typed; the compiler is the type checker (`cargo check`). Explicit types on public signatures; let inference handle locals. Prefer borrowed views (`&str`, `&[T]`) for parameters and owned types for returns."
+    ],
+    "imports": [
+      "- `use` statements at the top, grouped stdlib / third-party / crate-local, blank-line separated (rustfmt keeps each group sorted). No wildcard imports outside preludes and test modules."
+    ],
+    "async": [
+      "- Add async (tokio) only when the project is genuinely concurrent (server, many parallel I/O calls); a CLI, batch job, or library stays synchronous -- do not add an async runtime for its own sake. When async, keep the whole I/O path async and never block the executor (no `std::thread::sleep` or sync file I/O inside it)."
+    ],
+    "errors": [
+      "- Return `Result<T, E>` with a domain error enum (`thiserror` in libraries; `anyhow` acceptable at the application boundary). No `unwrap()`/`expect()` outside tests and provably-infallible spots; `?` for propagation; `panic!` only for unrecoverable invariants. Fail closed on safety/security."
+    ],
+    "config": [
+      "- Read env at one boundary into a typed config struct; never hardcode keys/URLs/models. Secrets in `.env` (gitignored), never in source or Cargo.toml."
+    ],
+    "logging": [
+      "- `tracing` (structured, with spans) for application logs -- not `println!`."
+    ],
+    "test_layout": [
+      "- Unit tests live beside the code in `#[cfg(test)] mod tests` blocks; integration tests in `tests/`; both run in the fast gate via `cargo test`. `tests/e2e.rs` is `#[ignore]`-tagged, excluded from the fast gate, run via `scripts/e2e.sh` (`cargo test --test e2e -- --ignored`).",
+      "- Table-style cases via loops over input/expected pairs; inject fakes via traits you own; avoid mocking frameworks."
+    ],
+    "precommit_hooks": [
+      "- Not used. The Rust profile ships no `.pre-commit-config.yaml`; `bash scripts/qa.sh` (local + CI) is the gate."
+    ]
+  }
+}
