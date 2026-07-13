@@ -1,14 +1,18 @@
 name: CI
 
-# Tests the ForgeWorks template itself. These are SMOKE TESTS, not full-generation
-# proof: generation is performed by an agent following init-project/SKILL.md (no
-# deterministic renderer yet -- see docs/ROADMAP.md). What CI proves:
-#   - sources       : shell/JSON syntax + the CLAUDE.md symlink.
-#   - render-smoke  : core + each profile substitutes with NO leftover placeholders.
-#   - deps-guard    : the supply-chain hook blocks/allows the expected commands.
-#   - <lang>-profile: each profile's own quality gate is GREEN on a fresh install.
-# It does NOT exercise the interview, the conditional matrix (AI/devcontainer/...),
-# or hostile display-value escaping (that escaping is agent-executed).
+# Tests the ForgeWorks template itself. Generation is deterministic (the
+# interview writes an answers file; init-project/render.py renders it). What
+# CI proves:
+#   - sources        : shell/JSON syntax + the CLAUDE.md symlink + supply-chain pins.
+#   - render-smoke   : core + each profile substitutes with NO leftover placeholders.
+#   - golden-fixtures: render.py output is byte-for-byte identical to the committed
+#                      expected trees across the answer matrix (AI/devcontainer/
+#                      opt-ins/hostile values). Toolchains do NOT run here -- the
+#                      profile jobs own "green on first run".
+#   - deps-guard     : the supply-chain hook blocks/allows the expected commands.
+#   - <lang>-profile : each profile's real gate + e2e is GREEN on the merged tree.
+# It does NOT exercise the interview itself (the agent's questioning is judgment;
+# everything after the answers file is render.py and is tested here).
 
 on:
   push:
@@ -48,14 +52,27 @@ jobs:
         run: bash .github/scripts/pin_check.sh
 
   render-smoke:
-    # Deterministically render core + each profile with safe values and assert NO
-    # leftover {{PLACEHOLDER}} remains (template completeness). Does NOT test the
-    # interview, conditional matrix, or hostile-value escaping (agent-executed).
+    # Render core + each profile with safe values and assert NO leftover
+    # {{PLACEHOLDER}} remains (template completeness). The conditional matrix
+    # and hostile-value escaping are covered by golden-fixtures below.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Render core+profile, assert no leftover placeholders
         run: python3 .github/scripts/render_smoke.py
+
+  golden-fixtures:
+    # Deterministic-generation proof: render.py output for each committed
+    # answers fixture must match the committed expected tree byte-for-byte
+    # (file set, contents, symlink targets, executable bits). On drift: if the
+    # change is intentional, regenerate with
+    #   python3 .github/scripts/golden_test.py --update
+    # and commit the expected trees with the template change.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Render every golden fixture and compare byte-for-byte
+        run: python3 .github/scripts/golden_test.py
 
   deps-guard:
     runs-on: ubuntu-latest

@@ -2,9 +2,10 @@
 # pin_check.sh -- supply-chain pin check for the template's CI surfaces.
 #
 # Fails if:
-#   1. any workflow-shaped source (root workflows, the template's qa.yml, or the
-#      ci_setup_steps YAML inside init-project/SKILL.md) has a `uses:` that is
-#      not pinned to a full 40-hex commit SHA (tag-only pins are mutable), or
+#   1. any workflow-shaped source (root workflows, the template's qa.yml, the
+#      ci_setup_steps YAML inside init-project/SKILL.md, or the ci_setup_steps
+#      lines in each profile's profile.json) has a `uses:` that is not pinned
+#      to a full 40-hex commit SHA (tag-only pins are mutable), or
 #   2. any of those sources -- plus the profile Dockerfiles -- pipes a download
 #      straight into a shell (`curl ... | sh` and friends). Downloads must land
 #      in a file and be checksum-verified before execution.
@@ -18,7 +19,8 @@ cd "$(dirname "$0")/../.."
 
 WORKFLOW_SOURCES=$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml' \
   'init-project/templates/core/.github/workflows/*.yml' \
-  'init-project/templates/core/.github/workflows/*.yaml'; echo init-project/SKILL.md)
+  'init-project/templates/core/.github/workflows/*.yaml' \
+  'init-project/templates/profiles/*/profile.json'; echo init-project/SKILL.md)
 DOCKERFILES=$(git ls-files '*Dockerfile')
 
 rc=0
