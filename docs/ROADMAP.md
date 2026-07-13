@@ -16,17 +16,21 @@ tool does mechanically versus what is still future work.
   project has — and runs the real quality gate and e2e runner on it.
   "Other" is not built — the interview says so and asks for consent
   before continuing.
-- **Generation.** The interview and file substitution are driven by an AI agent
-  following `init-project/SKILL.md`, in Claude Code today.
+- **Generation is deterministic (since v2.3.0).** The agent runs the interview
+  and writes `docs/_init-answers.json`; `init-project/render.py` (stdlib
+  Python, plain string substitution) renders the tree — every placeholder,
+  conditional rule, structured-file escape, symlink, chmod, and version stamp.
+  Same answers, same bytes. A golden-fixture CI job
+  (`.github/scripts/golden_test.py`) compares six rendered answer sets —
+  including a hostile-values fixture — byte-for-byte against committed
+  expected trees. Only the interview itself and the package-manager dependency
+  steps remain agent-executed.
 - **Portability.** The rules and docs (`AGENTS.md`, symlinked to `CLAUDE.md`) are
   the cross-tool standard and travel to any agent. The deep orchestration and
   local gates (subagents, hooks, MCP) run in Claude Code.
 
 ## Known limitations / roadmap
 
-- **Generation is agent-driven, not a deterministic engine.** A deterministic
-  renderer plus golden-fixture CI (assert the generated tree byte-for-byte) is
-  future work. Today the agent is the engine.
 - **Supply-chain pinning is partial.** The `deps-guard` hook is a best-effort
   guard, not a sandbox. Full SHA-pinning of GitHub Actions, container images, and
   installers (e.g. the `uv` installer by checksum) is future work. (The Context7

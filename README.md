@@ -8,7 +8,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.3.0/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -40,7 +40,7 @@ The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/ski
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.3.0/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
@@ -58,13 +58,13 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v2.2.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v2.3.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 
-ForgeWorks is an opinionated, agent-driven harness — a capable v1 with a clear roadmap, not a finished deterministic product. Be aware of what is and isn't mechanically true today:
+ForgeWorks is an opinionated harness — a capable product with a clear roadmap. Be aware of what is and isn't mechanically true today:
 
-- **Generation is executed by an AI agent following a skill, not a deterministic engine.** The interview and file substitution are driven by an agent, not a renderer with golden-fixture tests (that's roadmap — see `docs/ROADMAP.md`).
+- **Generation is deterministic.** The agent interviews you and writes an answers file; a stdlib-Python renderer (`init-project/render.py`) turns it into the project tree — same answers, same bytes, locked by golden-fixture CI (six answer sets, byte-for-byte against committed expected trees, hostile values included). Only the interview itself and dependency installs remain agent work.
 - **The supply-chain guard is best-effort.** The `deps-guard` hook reduces risk; it is not a sandbox. The real controls are lockfile review and CI scanning.
 - **Profiles:** Python, TypeScript, Go, and Rust are each verified green in CI on the merged core+profile tree, quality gate and e2e runner included.
 
