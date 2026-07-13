@@ -69,7 +69,7 @@ Start from the **heart of the project**: the one flow that, if it works, makes t
 
 **Be proactive about what's missing.** The complaint that drove this design is interviews that record what the user says and stop there. After the core questions, run one explicit "what haven't we talked about?" pass and name the gaps yourself: error and empty states, the unhappy path, auth and who can see what, scale, observability, the riskiest assumption. Tell the user what you think they have not considered. A good interview leaves the user thinking "I hadn't thought of that."
 
-Save answers to a temporary file `docs/_init-answers.md` as you go (this will be deleted after generation).
+Collect answers as you go directly into `docs/_init-answers.json` -- the renderer input whose schema is defined in Phase 4 (it is deleted after Phase 5 verification).
 
 The interview has two parts, in this order: **Part A -- product discovery** (the
 project itself; this is where surprises are killed) and **Part B -- stack and
@@ -273,185 +273,152 @@ Read the assembled positioning sentence aloud; if it does not survive being spok
 
 Wait for confirmation and apply corrections before Phase 4.
 
-### Phase 4: Generate the scaffold
+### Phase 4: Generate the scaffold (deterministic render)
 
-A generated project is **the universal core plus exactly one language profile** -- nothing from any other language is ever copied in. Two source folders:
+Generation is executed by the bundled renderer, **`render.py`**, never by hand.
+Your whole job in this phase is to produce a correct answers file; the renderer
+guarantees that the same answers always produce the same bytes (the template
+repo's CI proves this against committed golden fixtures).
+
+A generated project is **the universal core plus exactly one language profile**
+-- nothing from any other language is ever copied in. Three source folders feed
+the renderer:
 
 - `templates/core/` -- language-free files every project gets (AGENTS.md, docs/, `.mcp.json`, the CI workflow shape, PR template, README, .env.example, `.claude/`).
-- `templates/profiles/<language>/` -- the chosen language's files (manifest, toolchain config, `scripts/` or package scripts, the green scaffold, `.gitignore`, dev container, and -- only where the language uses it -- a pre-commit config).
+- `templates/profiles/<language>/` -- the chosen language's files (manifest, toolchain config, `scripts/` or package scripts, the green scaffold, `.gitignore`, dev container, and -- Python only -- a pre-commit config), plus `profile.json`: the machine-readable toolchain values the renderer substitutes. `profile.json` is renderer input only and never lands in the generated project. Keep it in sync with the YAML block in `<language-profiles>` below (CI cross-checks the load-bearing values).
+- `templates/conditional/` -- the canonical texts of the conditional blocks: `ai-discipline.md`, `memory-block.md`, `memory-doc-line.md`, `codex-review-step.md`, `codex-roster-note.md`, `gotchas-seed.md`. Edit them THERE; this file only points at them.
 
-For each file in `templates/core/` AND in `templates/profiles/{{LANGUAGE}}/`:
+**Step 1 -- write the answers file** at `docs/_init-answers.json`, exactly in
+this schema. All four sections and every key are required; yes/no fields are the
+literal strings `"yes"`/`"no"`; multi-line values use `\n`. Example (values
+abbreviated -- yours carry the real interview content):
 
-1. Read the template file.
-2. Substitute placeholders (see "Placeholder substitution" + the chosen language profile below).
-3. Write it to the project root at the corresponding path, applying these **explicit source -> target renames** (a few profile files carry a suffix so the template repo does not treat them as live config):
-   - Python: `pyproject.toml.example` -> `pyproject.toml`.
-   - Any other `*.example` manifest a profile ships -> drop the `.example` suffix.
-   Do not rely on inference: a literal copy that leaves `pyproject.toml.example` makes `{{INSTALL_COMMAND}}` and Phase 5 fail.
-4. **Skip any `.devcontainer/` if `{{USES_DEVCONTAINER}}` is `no`.**
+```json
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Recipe Radar",
+    "slug": "recipe-radar",
+    "goal": "Turn a photo of a fridge into three cookable dinner suggestions.",
+    "primary_user": "A busy home cook ...",
+    "core_problem": "...",
+    "core_journey": "1. ...\n2. ...\n3. ...",
+    "success_measure": "...",
+    "success_metrics": "- metric -- target",
+    "riskiest_assumption": "...",
+    "req_ac_list": "- [ ] **REQ-AC1:** ...\n- [ ] **REQ-AC2:** ...",
+    "non_goals": "- ...",
+    "other_users": "- none identified yet",
+    "constraint_time": "...",
+    "constraint_cost": "...",
+    "constraint_data": "...",
+    "first_milestone": "2026-08-09 (or: none set)",
+    "deployment_target": "...",
+    "scale_expectations": "...",
+    "integrations": "- none",
+    "in_scope_list": "- ...",
+    "pain_point": "...",
+    "product_category": "...",
+    "current_alternative": "...",
+    "key_benefit": "...",
+    "key_differentiator": "...",
+    "positive_reference": {"ref": "simonw/datasette", "location": "https://github.com/simonw/datasette"},
+    "negative_reference": null
+  },
+  "stack": {
+    "language": "python",
+    "has_frontend": "yes-minimal",
+    "backend_framework": "FastAPI",
+    "ai_features": ["rag", "agents"],
+    "vector_db": "Chroma",
+    "llm_provider": "OpenAI",
+    "embeddings_model": "text-embedding-3-small",
+    "database": "SQLite",
+    "uses_devcontainer": "yes"
+  },
+  "security": {
+    "reads_untrusted": "yes",
+    "holds_private_data": "yes",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "no",
+    "seed_gotchas": "yes",
+    "mem0": "no",
+    "codex_reviewer": "no"
+  }
+}
+```
 
-Do NOT read or copy `templates/profiles/<other-language>/`. The manifest, scripts, scaffold, dev container, `.gitignore`, and (Python-only) pre-commit config all come from the chosen profile, so the project carries only its own language's tooling and libraries. The core files reference the toolchain through placeholders (`{{QA_COMMAND}}`, `{{CI_SETUP_STEPS}}`, ...) filled from the profile's YAML.
+Field rules the renderer enforces (it fails closed with a precise message):
 
-**Multi-line placeholders must be re-indented (do not skip -- plain replace breaks YAML):**
-`{{CI_SETUP_STEPS}}` (in `.github/workflows/qa.yml`, at 6-space indent) and `{{LANGUAGE_PRECOMMIT_HOOKS}}` (in `.pre-commit-config.yaml`, at 2-space indent) are multi-line values written at column 0 in the profile YAML. A literal string-replace indents only the first line and produces invalid YAML. When substituting a multi-line value, prefix EVERY line after the first with the placeholder's own indentation (the column where `{{` sits). Verify the result parses as YAML before moving on.
+- `slug`: lowercase ASCII words joined by hyphens (`my-project`) -- it becomes the package/module identifier.
+- `language`: one of `python` / `typescript` / `go` / `rust`. `has_frontend`: `yes-spa` / `yes-minimal` / `no`. `ai_features`: any subset of `["rag", "agents", "evals", "streaming"]`; `[]` means no AI features.
+- Free-text answers land verbatim in prose files (and escaped in JSON/TOML), so any characters are fine EXCEPT HTML comment markers (`<!--`/`-->`) and `{{UPPER_SNAKE}}`-shaped text, which the renderer rejects.
+- Rule zero still holds: no bare `TODO` in any answer. The only allowed form is `TODO(interview-skipped)` when the user explicitly refused a question. `date` is today, ISO format.
+- `vector_db`, `llm_provider`, `embeddings_model`, `database`, `backend_framework`: write `none` (or `none (CLI/library)` for the framework) when not applicable.
 
-**Identifiers and escaping (do not skip -- raw display values break structured files):**
-- Use `{{PROJECT_SLUG}}` (not `{{PROJECT_NAME}}`) for every identifier field: the package name in `pyproject.toml`/`package.json`/`Cargo.toml` and the module path in `go.mod`. A display name like `My Project` is not a valid TOML package name or Go module path. (The Rust profile's `[lib] name = "app"` stays fixed regardless of the package name -- the scaffold's tests import `app::`.)
-- When you substitute a display value (`{{PROJECT_NAME}}`, `{{PROJECT_GOAL}}`, ...) into a structured file (JSON, TOML, YAML, `go.mod`), escape it for that format: in JSON escape `"`, `\`, and control characters; in TOML escape `"` or use a literal string. A goal like `A "quoted" goal` must not produce invalid JSON in `package.json`. Display values flow unescaped only into Markdown prose.
+**Step 2 -- run the renderer** from the project root:
 
-**Conditional content (from interview answers):**
+```bash
+python3 .claude/skills/init-project/render.py \
+  --answers docs/_init-answers.json \
+  --core .claude/skills/init-project/templates/core \
+  --profile .claude/skills/init-project/templates/profiles/<language> \
+  --out .
+```
 
-After the base substitution pass, apply these rules:
+If it fails, fix the answers file (or report the template bug) and re-run. Do
+NOT hand-patch the generated tree around a renderer error and do NOT perform
+any substitution manually -- that reintroduces exactly the nondeterminism this
+renderer removed.
 
-0. **AI discipline block (B4).** If any AI feature was selected (RAG, agents, evals, streaming), render `{{AI_DISCIPLINE_BLOCK}}` in `AGENTS.md` as the block below. If no AI feature was selected, render it as an empty string.
+**What the renderer does.** Documentation of behavior, not manual steps -- the
+canonical implementation is `render.py`, locked byte-for-byte by the golden
+fixtures in the template repo CI:
 
-   ```
-   <!-- FW-BLOCK: ai-discipline v2.1.0 -->
-   <ai-discipline>
-   These rules apply because this project uses prompts, LLMs, or agentic flows.
+| # | Rule (from the answers) |
+|---|---|
+| 1 | Substitutes every placeholder in the tables below (core + the chosen profile only), re-indenting multi-line values to the placeholder's own column so YAML stays valid. |
+| 2 | Escapes free-text answers per target format: JSON-escaped in `.json`, TOML-escaped in `.toml`, verbatim in Markdown/text -- hostile quotes/newlines/braces land as text, never as structure. Free text in any other file type is a hard error. |
+| 3 | AI features selected -> renders `{{AI_DISCIPLINE_BLOCK}}` from `templates/conditional/ai-discipline.md`; none -> empty. |
+| 4 | AI fences: AI on -> strips only the marker lines and keeps the content; AI off -> deletes the whole fenced blocks in `docs/SECURITY.md`, `docs/requirements.md`, `.claude/agents/implementer.md`, `.claude/agents/code-reviewer.md`. |
+| 5 | Style references (A10): renders the positive/negative reference lines, or the "no positive reference yet" comment / empty string. |
+| 6 | B9 `explanations: no` -> `docs/explanations/` is not generated. |
+| 7 | B10 `seed_gotchas: yes` -> inserts the three starter entries from `templates/conditional/gotchas-seed.md` into `docs/gotchas.md`. |
+| 8 | B11 `mem0: yes` -> keeps `docs/memory.md`, renders the memory doc line, inserts the `<memory>` block (from `templates/conditional/memory-block.md`) between `<library-docs>` and `<tools>`; `no` -> none of those. The `mem0ai` dependency itself is added in Phase 4.5. |
+| 9 | B12 `codex_reviewer: yes` -> renders `{{CODEX_REVIEW_STEP}}` and `{{CODEX_ROSTER_NOTE}}` from `templates/conditional/codex-*.md`; `no` -> both empty. |
+| 10 | B8: seeds the security-profile line into `docs/SECURITY.md`; if all three answers are `yes` AND AI features are on, writes the lethal-trifecta-PRESENT note into `docs/SECURITY.md` and `docs/requirements.md`. |
+| 11 | B7 `uses_devcontainer: no` -> `.devcontainer/` is not generated. |
+| 12 | B2 + profile: renders `{{E2E_BROWSER_INSTALL_STEP}}` as the browser-install step (UI project with a profile `e2e_browser_install`) or the "no browser needed" comment. |
+| 13 | Renames profile manifests shipped with an `.example` suffix (`pyproject.toml.example` -> `pyproject.toml`). Core files are never renamed (`.env.example` stays). |
+| 14 | Creates the `CLAUDE.md` -> `AGENTS.md` symlink (a one-line pointer file where symlinks are unavailable), `chmod +x` on `.claude/hooks/*.sh` and `scripts/*.sh`, and stamps `.claude/.template-version` (with this release's version) if the bootstrap `install.sh` did not already write it. |
+| 15 | Fails closed if any `{{...}}` placeholder survives anywhere in the output. |
 
-   - **Prompts as plain text files.** Store every system prompt as a `.md` (or `.txt`) file under a `prompts/` directory. Load them with short helpers. Substitute variables with plain string `.replace("{{placeholder}}", value)` (or the language's equivalent). Do NOT build template-engine-style, ORM-style, or class-based prompt builders. The loader module should be small.
-
-   - **Prompt variants are files, not classes.** If you need multiple versions of the same prompt (zero-shot, few-shot, chain-of-thought, persona A, persona B), save them as separate files and switch by filename via a config or session-state value. No strategy pattern, no registry, no factory.
-
-   - **Prompt text is runtime behavior, never a trivial edit.** Changing a system prompt, persona, or tool description changes what the product does: it goes through the normal slice path (task note, regression check, security-trigger test), not the trivial-task bypass (`<exceptional-cases>`). LLM output a downstream step depends on is "untrusted generated output" in the canonical security trigger (`<delivery-evidence>`).
-
-   - **Validate every LLM response.** Use the language's structured-output validation on every LLM response that downstream code depends on. Fail closed on schema mismatch.
-
-   - **Model cost is an engineering variable.** Pick each call's model against a measured quality check (an eval, a scored sample -- not vibes), starting from the cheapest plausible tier and escalating on evidence; record the chosen model and cost-per-call next to the probe or eval that justified it, and bound every loop or retry with a spend cap (`<token-discipline>` holds for product code too).
-
-   - **AI-shaped modules each in their own file.** If this project has an LLM client, a prompt loader, a retriever, an ingestion pipeline, tools, or a safety check, each is its own file. Same ~100 / 200 line caps as the core rule.
-
-   - **Security (LLM/agent).** This project can be prompt-injected. Never let one agent read untrusted content, hold private data, AND act on the outside world (the lethal trifecta) -- break one leg: split the agent, drop a capability, or gate the action behind a human. Treat every ingested input and every model response as untrusted: sanitize at ingest, fence untrusted text as data (never as instructions), validate each response against a schema and fail closed, and filter output before it is shown or stored. No tool may act on an attacker-chosen id; bind tools to the session owner. Full threat model and red-team checklist: `docs/SECURITY.md`.
-   </ai-discipline>
-   <!-- /FW-BLOCK: ai-discipline -->
-   ```
-
-1. **Style references (A10).** Render `{{POSITIVE_REFERENCE_TEXT}}` and `{{NEGATIVE_REFERENCE_TEXT}}` in `AGENTS.md`:
-   - Positive reference provided: `Pattern-match every file you write or modify to <ref>. Reference material: <location>.`
-   - Positive is TBD: `<!-- No positive reference yet. Add one to this block when you choose one. -->`
-   - Negative reference provided: `Explicitly avoid the shape of <ref>. Anti-pattern material: <location>.`
-   - No negative reference: empty string.
-
-2. **Per-slice explanation memos (B9).** If `{{GENERATE_EXPLANATIONS}}` is `no`: delete `docs/explanations/` from the generated tree. If `yes`: leave the README in place (it ships in the template).
-
-3. **Gotchas seed (B10).** If `{{SEED_GOTCHAS}}` is `yes`: append the three starter entries below to `docs/gotchas.md`, inserted between the `## Entries` heading and the `## Generic lessons` section.
-
-   ```
-   ### [General] Patch the cause, not the symptom
-   **Symptom:** a failure was fixed but the same bug recurs with a different shape.
-   **Cause:** the fix patched the surface (special case, magic string, swallowed exception) instead of the underlying category (bad input, wrong config, dependency version, race, missing edge case).
-   **Fix:** identify which category the cause is in first; fix at that level.
-   **Date / Task:** seeded by `/init-project`.
-
-   ### [General] Trust artifacts, not summaries
-   **Symptom:** a subagent reported success; the actual artifact (test run, metric, file change) told a different story.
-   **Cause:** subagent summaries describe intent, not reality.
-   **Fix:** open the artifact on disk, run the test yourself, or grep the file before trusting any "done" claim.
-   **Date / Task:** seeded by `/init-project`.
-
-   ### [General] Handle external I/O at one boundary, not everywhere
-   **Symptom:** a single transient failure (a DNS blip, a momentary 5xx, a dropped connection) aborted a whole multi-step run.
-   **Cause:** the error propagated raw from deep inside the flow; nothing between the call site and the top retried or degraded it, and the framework did not absorb it either.
-   **Fix:** wrap each external call (network, third-party API, tool) at a single boundary that retries transient errors with backoff and then degrades gracefully (empty result + a logged warning). One dead call then costs a call, not the run; a real outage still ends loudly after the retry budget.
-   **Date / Task:** seeded by `/init-project`.
-   ```
-
-4. **mem0 (B11).** If `{{USE_MEM0}}` is `yes`:
-   - Keep `docs/memory.md` in the generated tree.
-   - Render `{{MEMORY_DOC_LINE}}` in `AGENTS.md` as: `- \`docs/memory.md\` : memory scopes (User, Session, Agent), what is stored, what is not.`
-   - Insert this block into `AGENTS.md` between `<library-docs>` and `<tools>`:
-
-     ```
-     <!-- FW-BLOCK: memory v2.0.0 -->
-     <memory>
-     This project uses **mem0** for persistent memory across sessions.
-
-     **Scopes:**
-     - User: facts about the human (preferences, profile, history).
-     - Session: facts about the current interaction.
-     - Agent: facts the agent itself has confirmed during work.
-
-     **Before writing memory code:**
-     - Decide which scope a piece of data belongs in. If you cannot say, do not store it.
-     - Update `docs/memory.md` with the new schema entry.
-     - Verify the API against Context7 for the pinned `mem0ai` version.
-
-     **Library docs:** https://docs.mem0.ai/
-     </memory>
-     <!-- /FW-BLOCK: memory -->
-     ```
-
-   - Add `mem0ai` to the chosen language's manifest (for Python: `DEPS_VETTED=1 uv add mem0ai` -- the `DEPS_VETTED=1` prefix is how the deps-guard hook lets a vetted install through). For language profiles not implemented, leave a TODO note in `requirements.md`.
-
-   If `{{USE_MEM0}}` is `no`: delete `docs/memory.md`, render `{{MEMORY_DOC_LINE}}` as an empty string, do not insert the `<memory>` block, do not add the dep.
-
-5. **Security profile (B8).** `docs/SECURITY.md`, `.claude/settings.json` (deps-guard hook), `.claude/hooks/deps-guard.sh`, and `.claude/agents/security-reviewer.md` always ship -- the universal risks (access control, secrets, supply chain) apply to every project. Then adjust for the AI answer:
-   - If **any AI feature** was selected (B4): remove only the fence comment lines (`<!-- AI-SECURITY-START/END -->`, `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`; `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`; `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`; `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`) and keep the content.
-   - If **no AI feature** was selected: delete the whole fenced blocks (markers and everything between) in all four files -- the AI sections of `docs/SECURITY.md`, the `## AI features in scope` block of `docs/requirements.md`, and the AI-specific rules in the implementer and code-reviewer subagents. A non-AI project ships no AI/RAG rules or TODOs anywhere.
-   - Seed the `## Attack surface` table and the trifecta line from the B8 answers (reads untrusted / holds private / acts outward). If all three are `yes` for a single LLM agent, write an explicit note in `docs/SECURITY.md` and `docs/requirements.md` that the lethal trifecta is present and must be broken (split the agent, drop a capability, or gate the action behind a human).
-
-6. **Codex reviewer (B12).** Two separate placeholders (one value each, so plain string-replace stays correct): `{{CODEX_REVIEW_STEP}}` in `.claude/agents/code-reviewer.md`, and `{{CODEX_ROSTER_NOTE}}` in the `<agent-roster>` of `AGENTS.md`.
-   - If `yes`, render `{{CODEX_REVIEW_STEP}}` (the code-reviewer block) as:
-
-     ```
-     ### Second opinion (Codex)
-
-     For non-trivial or security-sensitive changes, run an independent review with the Codex CLI and reconcile its findings with your own:
-
-     ```bash
-     codex exec "Review the staged diff for correctness, security, and architecture. List concrete issues with file:line."
-     ```
-
-     Treat Codex as a peer, not an oracle: verify each finding against the code before acting on it, and note in the review where you and Codex disagreed and why. Do not block APPROVE on Codex alone; the quality gate is still the gate.
-     ```
-
-     and render `{{CODEX_ROSTER_NOTE}}` (the one-line roster note, which sits right after the `@code-reviewer` line) as: ` Runs an independent Codex second-opinion pass on important changes.`
-   - If `no`, render BOTH `{{CODEX_REVIEW_STEP}}` and `{{CODEX_ROSTER_NOTE}}` as empty strings.
-
-7. **Discovery answers (Part A).** Render EVERY Part A answer as real content --
-   a generated project must not ship a TODO for anything the interview asked:
-   `{{CORE_JOURNEY}}` (numbered steps), `{{SUCCESS_MEASURE}}`, `{{SUCCESS_METRICS}}`,
-   `{{RISKIEST_ASSUMPTION}}`, `{{REQ_AC_LIST}}`, `{{NON_GOALS}}`, `{{OTHER_USERS}}`,
-   `{{CONSTRAINT_TIME}}`, `{{CONSTRAINT_COST}}`, `{{CONSTRAINT_DATA}}`,
-   `{{FIRST_MILESTONE}}`, `{{DEPLOYMENT_TARGET}}`, `{{SCALE_EXPECTATIONS}}`,
-   `{{INTEGRATIONS}}`, `{{IN_SCOPE_LIST}}`, and the five positioning values
-   (`{{PAIN_POINT}}`, `{{PRODUCT_CATEGORY}}`, `{{CURRENT_ALTERNATIVE}}`,
-   `{{KEY_BENEFIT}}`, `{{KEY_DIFFERENTIATOR}}`). None of these may render as
-   `TODO` -- if one is unknown, the interview was not finished; go back and ask.
-   The only allowed TODO form is `TODO(interview-skipped)` when the user
-   explicitly refused a question.
-
-8. **Capability dependencies (B3-B6).** The manifest ships a minimal core only; append ONLY the dependencies the answers call for, using the chosen profile's `add_dep_command` (prefix Python's `uv add` with `DEPS_VETTED=1` so the deps-guard hook allows it). Map intent to packages, per language:
-   - **Python** -- FastAPI: `fastapi`, `uvicorn[standard]`; Flask: `flask`; Streamlit/Gradio: `streamlit`/`gradio`; Postgres: `sqlalchemy`, `alembic`, `psycopg[binary]`; SQLite/DuckDB: `sqlalchemy`/`duckdb`; vectors: `pgvector`/`chromadb`/`pinecone-client`/`qdrant-client`; LLM: `openai` (also OpenRouter)/`anthropic`/`google-genai`; `httpx` for outbound HTTP.
-   - **TypeScript** -- API: `express` or `fastify` (+ `@types/*`); Postgres: `pg`+`@types/pg` or `drizzle-orm`; vectors: `chromadb`/`@pinecone-database/pinecone`/`@qdrant/js-client-rest`; LLM: `openai`/`@anthropic-ai/sdk`/`@google/genai`; config validation: `zod`. Frontend frameworks (React/Next/Vue) per the user's choice.
-   - **Go** -- HTTP: stdlib `net/http` (no dep) or `chi`/`gin`; Postgres: `github.com/jackc/pgx/v5`; LLM: the provider's official Go SDK or `net/http`. Add via `go get`.
-   Choose the smallest set that covers the answers; do not add a database/vector/LLM dep the project did not ask for.
-
-9. **End-to-end browser install (B2).** `.github/workflows/qa.yml` carries
-   `{{E2E_BROWSER_INSTALL_STEP}}` at 6-space indent inside the e2e job. Render it:
-   - UI project (B2 `yes-spa`/`yes-minimal`) AND the profile defines
-     `e2e_browser_install`:
-     ```
-     - name: Install browsers
-       run: <e2e_browser_install value>
-     ```
-     (multi-line: re-indent per the multi-line rule above).
-   - Otherwise (API-only, or no browser install for the profile): render exactly
-     `# no browser needed for this project's e2e suite`.
-   Never leave the placeholder or a commented stub behind.
-
-After all files are written:
-
-1. Create the `CLAUDE.md` symlink: `ln -s AGENTS.md CLAUDE.md`
-   - On Windows without WSL, instead create `CLAUDE.md` as a one-line pointer: `# See @AGENTS.md`
-2. Make scripts executable: `chmod +x .claude/hooks/*.sh` and, if the profile ships shell runners (Python, Go, Rust), `chmod +x scripts/*.sh`. (TypeScript runs the gate via npm scripts, so it has no `scripts/*.sh`.)
-3. Confirm the template version stamp exists at `.claude/.template-version` (the bootstrap `install.sh` writes the pinned ref there). If it is missing -- e.g. the project was set up by hand rather than via `install.sh` -- create it: `printf '%s\n' "v2.2.0" > .claude/.template-version`, using the version this skill copy was installed from. The upgrade skill treats a missing stamp as "unknown, reconcile fully."
-4. Delete the temp file: `rm docs/_init-answers.md`
+Keep `docs/_init-answers.json` until Phase 5 verification passes, then delete it
+(`rm docs/_init-answers.json`) -- its content lives on in the rendered docs.
 
 ### Phase 4.5: Install dependencies
 
-If `{{USES_DEVCONTAINER}}` is `no`:
+Dependency work is the one part of generation that stays with the agent: it
+runs environment-dependent package-manager commands, so it cannot be a
+deterministic file render. Two steps.
+
+**First, capability dependencies (B3-B6).** The rendered manifest ships a
+minimal core only; append ONLY the dependencies the answers call for, using the
+chosen profile's `add_dep_command` (prefix Python's `uv add` with
+`DEPS_VETTED=1` so the deps-guard hook lets a vetted install through). Map
+intent to packages, per language:
+
+- **Python** -- FastAPI: `fastapi`, `uvicorn[standard]`; Flask: `flask`; Streamlit/Gradio: `streamlit`/`gradio`; Postgres: `sqlalchemy`, `alembic`, `psycopg[binary]`; SQLite/DuckDB: `sqlalchemy`/`duckdb`; vectors: `pgvector`/`chromadb`/`pinecone-client`/`qdrant-client`; LLM: `openai` (also OpenRouter)/`anthropic`/`google-genai`; `httpx` for outbound HTTP.
+- **TypeScript** -- API: `express` or `fastify` (+ `@types/*`); Postgres: `pg`+`@types/pg` or `drizzle-orm`; vectors: `chromadb`/`@pinecone-database/pinecone`/`@qdrant/js-client-rest`; LLM: `openai`/`@anthropic-ai/sdk`/`@google/genai`; config validation: `zod`. Frontend frameworks (React/Next/Vue) per the user's choice.
+- **Go** -- HTTP: stdlib `net/http` (no dep) or `chi`/`gin`; Postgres: `github.com/jackc/pgx/v5`; LLM: the provider's official Go SDK or `net/http`. Add via `go get`.
+- **Rust** -- HTTP server: `axum` or `actix-web` (+ `tokio`); Postgres: `sqlx`; LLM: the provider's official Rust SDK or `reqwest`. Add via `cargo add`.
+
+Choose the smallest set that covers the answers; do not add a database/vector/LLM dep the project did not ask for. If B11 chose mem0, also add `mem0ai` (Python: `DEPS_VETTED=1 uv add mem0ai`; for other languages, add the equivalent client or leave a clearly-marked note in `docs/requirements.md` if none is established).
+
+**Then install.** If `{{USES_DEVCONTAINER}}` is `no`:
 
 1. Verify the chosen package manager is available (the bootstrap should have caught this for known languages; verify again here for safety).
 2. Run `{{INSTALL_COMMAND}}` to install deps from the manifest file.
@@ -462,7 +429,7 @@ If `{{USES_DEVCONTAINER}}` is `no`:
    - Go: `go version`
 4. If install fails, leave the scaffold in place (do not roll back). Report the failing dep and ask the user to fix the manifest then re-run install.
 
-If `{{USES_DEVCONTAINER}}` is `yes`: **skip** this phase. Deps will install inside the container.
+If `{{USES_DEVCONTAINER}}` is `yes`: append the capability deps to the manifest, but **skip the install**. Deps will install inside the container.
 
 ### Phase 5: Verify and report
 
@@ -492,6 +459,8 @@ Then check no unresolved placeholders remain:
 
 Finally, **run the quality gate** (inside the dev container if one is used): `{{QA_COMMAND}}`. Every complete profile ships a green-on-first-run scaffold, so the gate must pass on the first run. If it is not green, fix the scaffold before handing off -- a project that starts red is a bug.
 
+Once verification passes, delete the renderer input: `rm docs/_init-answers.json` (its content lives on in the rendered docs).
+
 Report what was generated, then hand off:
 
 > "Bootstrap complete. Your project is ready. Next steps:
@@ -504,7 +473,11 @@ Report what was generated, then hand off:
 
 ## Placeholder substitution
 
-Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
+Templates use `{{PLACEHOLDER}}` syntax. **`render.py` performs every
+substitution** -- these tables are the reference map of what each placeholder
+means and which answer (or profile value) feeds it. Do not substitute by hand.
+Any new placeholder must be added here, to the answers schema (or
+`profile.json`), and to `render.py`'s mapping, together.
 
 ### Universal placeholders (asked or derived)
 
@@ -538,7 +511,7 @@ Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
 | `{{READS_UNTRUSTED}}` | B8 (`yes`/`no`) |
 | `{{HOLDS_PRIVATE_DATA}}` | B8 (`yes`/`no`) |
 | `{{ACTS_OUTWARD}}` | B8 (`yes`/`no`) |
-| `{{E2E_BROWSER_INSTALL_STEP}}` | Derived from B2 + profile (see Phase 4 rule 9) |
+| `{{E2E_BROWSER_INSTALL_STEP}}` | Derived from B2 + profile `e2e_browser_install` (renderer rule 12) |
 | `{{LANGUAGE}}` | B1 |
 | `{{HAS_FRONTEND}}` | B2 |
 | `{{BACKEND_FRAMEWORK}}` | B3 |
@@ -548,20 +521,21 @@ Templates use `{{PLACEHOLDER}}` syntax. Substitute these before writing.
 | `{{EMBEDDINGS_MODEL}}` | B5 |
 | `{{DATABASE}}` | B6 |
 | `{{USES_DEVCONTAINER}}` | B7 (`yes`/`no`) |
-| `{{POSITIVE_REFERENCE_TEXT}}` | A10 -- rendered line (see Phase 4) |
+| `{{POSITIVE_REFERENCE_TEXT}}` | A10 -- rendered line (Phase 4 renderer table, rule 5) |
 | `{{NEGATIVE_REFERENCE_TEXT}}` | A10 -- rendered line, may be empty |
-| `{{GENERATE_EXPLANATIONS}}` | B9 (`yes`/`no`) |
-| `{{SEED_GOTCHAS}}` | B10 (`yes`/`no`) |
-| `{{USE_MEM0}}` | B11 (`yes`/`no`) |
-| `{{MEMORY_DOC_LINE}}` | Derived from B11 (see Phase 4) |
-| `{{AI_DISCIPLINE_BLOCK}}` | Derived from B4 (see Phase 4) |
-| `{{CODEX_REVIEW_STEP}}` | Derived from B12 -- the review-step block in `code-reviewer.md` (see Phase 4) |
-| `{{CODEX_ROSTER_NOTE}}` | Derived from B12 -- the one-line roster note in `AGENTS.md` (see Phase 4) |
-| `{{DATE}}` | today, ISO format |
+| `{{MEMORY_DOC_LINE}}` | Derived from B11 (`templates/conditional/memory-doc-line.md`, or empty) |
+| `{{AI_DISCIPLINE_BLOCK}}` | Derived from B4 (`templates/conditional/ai-discipline.md`, or empty) |
+| `{{CODEX_REVIEW_STEP}}` | Derived from B12 -- `templates/conditional/codex-review-step.md`, or empty |
+| `{{CODEX_ROSTER_NOTE}}` | Derived from B12 -- `templates/conditional/codex-roster-note.md`, or empty |
+| `{{DATE}}` | today, ISO format (`date` in the answers file) |
 
-B8 (security profile) has no placeholder: it conditionally prunes the AI sections of `docs/SECURITY.md` and seeds the threat model (Phase 4 rule 5).
+B9 (`explanations`), B10 (`seed_gotchas`), and B11 (`mem0`) have no placeholder of their own: they are switches in the answers file's `opt_ins` section that turn renderer rules 6-8 on or off. B8 (security profile) renders its three `yes`/`no` placeholders above and additionally seeds the threat model (renderer rule 10).
 
 ### Language-derived placeholders (from the profile)
+
+The renderer reads these from `templates/profiles/<lang>/profile.json` (the
+machine-readable copy of the YAML blocks below -- keep the two in sync; the
+golden-fixture CI cross-checks the load-bearing values).
 
 | Placeholder | Filled from language profile |
 |---|---|
@@ -597,6 +571,11 @@ B8 (security profile) has no placeholder: it conditionally prunes the AI section
 ---
 
 ## Language profiles
+
+The YAML blocks below are the human-readable profile reference (commands for
+Phase 4.5, CI notes, conventions). The renderer consumes the machine-readable
+copy at `templates/profiles/<lang>/profile.json` -- when you change a value
+here, change it there too (CI cross-checks the load-bearing scalars).
 
 ### Python (fully supported)
 
@@ -895,7 +874,7 @@ notes:
 
 > "Heads up: that language isn't a built profile yet. I can lay down the universal core (AGENTS.md, docs, security files, CI shape), but you'd have to build the toolchain yourself -- there's no validated manifest, lint/format/type setup, qa/fix scripts, or green scaffold -- so the first quality-gate run won't pass until you complete it. Proceed on that basis, switch to Python/TypeScript/Go/Rust, or have me add a profile for it properly first?"
 
-If they proceed, copy `templates/core/` only, leave clearly-marked TODOs in `docs/language-standards.md` and `.github/workflows/qa.yml`, do NOT generate a manifest or scripts, and tell them the gate is not green until they finish the toolchain. The better path is to add a real profile under `templates/profiles/<lang>/` (see the repo `AGENTS.md` `<adding-a-language-profile>`) so the experience matches the complete profiles.
+If they proceed: `render.py` cannot run without a `profile.json`, so this is the ONE path where generation is manual -- copy `templates/core/` only, substitute the discovery placeholders from the answers file by hand, leave clearly-marked TODOs for the toolchain placeholders in `docs/language-standards.md` and `.github/workflows/qa.yml`, do NOT generate a manifest or scripts, and tell them the gate is not green until they finish the toolchain. The better path is to add a real profile under `templates/profiles/<lang>/` (see the repo `AGENTS.md` `<adding-a-language-profile>`) so the experience matches the complete profiles.
 
 ---
 

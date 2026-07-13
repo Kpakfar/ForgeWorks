@@ -1,0 +1,1 @@
+- `docs/memory.md` : memory scopes (User, Session, Agent), what is stored, what is not.

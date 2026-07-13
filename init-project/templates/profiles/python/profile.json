@@ -1,0 +1,101 @@
+{
+  "_comment": "Machine-readable language profile consumed by init-project/render.py. Keep in sync with the matching YAML block in init-project/SKILL.md <language-profiles>. Multi-line values are arrays of lines (joined with newlines at render time). This file is renderer input only -- it is never copied into a generated project.",
+  "display_name": "Python",
+  "language_version": "3.12+",
+  "package_manager": "uv",
+  "manifest_file": "pyproject.toml",
+  "install_command": "uv sync",
+  "add_dep_command": "uv add",
+  "qa_command": "uv run qa",
+  "fix_command": "uv run fix",
+  "e2e_command": "bash scripts/e2e.sh",
+  "e2e_browser_install": "uv run playwright install --with-deps chromium",
+  "test_runner": "pytest",
+  "test_command": "uv run pytest -m 'not e2e'",
+  "lint_tool": "ruff",
+  "lint_command": "uv run ruff check .",
+  "format_tool": "ruff format",
+  "format_command": "uv run ruff format --check .",
+  "type_tool": "mypy",
+  "type_command": "uv run mypy src/",
+  "precommit_install_command": "uv run pre-commit install",
+  "ci_setup_steps": [
+    "- name: Set up uv",
+    "  uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5",
+    "  with:",
+    "    enable-cache: true",
+    "- name: Set up Python",
+    "  run: uv python install 3.12",
+    "- name: Install deps",
+    "  run: uv sync"
+  ],
+  "precommit_hooks": [
+    "- repo: https://github.com/astral-sh/ruff-pre-commit",
+    "  rev: v0.15.8",
+    "  hooks:",
+    "    - id: ruff",
+    "      args: [--fix]",
+    "    - id: ruff-format"
+  ],
+  "library_docs_urls": [
+    "### Core stack",
+    "- **uv**: https://docs.astral.sh/uv/",
+    "- **ruff**: https://docs.astral.sh/ruff/",
+    "- **mypy**: https://mypy.readthedocs.io/",
+    "- **pytest**: https://docs.pytest.org/",
+    "- **Pydantic v2**: https://docs.pydantic.dev/latest/",
+    "- **pydantic-settings**: https://docs.pydantic.dev/latest/concepts/pydantic_settings/",
+    "",
+    "### AI / RAG (use Context7 first)",
+    "- **OpenAI SDK**: https://github.com/openai/openai-python",
+    "- **Anthropic SDK**: https://github.com/anthropics/anthropic-sdk-python",
+    "- **LangChain**: https://python.langchain.com/docs/introduction/",
+    "- **Chroma**: https://docs.trychroma.com/",
+    "- **pgvector**: https://github.com/pgvector/pgvector",
+    "",
+    "### Frontend (if applicable)",
+    "- **Streamlit**: https://docs.streamlit.io/",
+    "- **Gradio**: https://www.gradio.app/docs"
+  ],
+  "notes": {
+    "type_annotations": [
+      "- Python 3.12+ syntax: `list[int]` not `List[int]`. `dict[str, X]` not `Dict[str, X]`.",
+      "- Every function signature fully typed, including return types.",
+      "- `from __future__ import annotations` at the top of every module."
+    ],
+    "imports": [
+      "- Order: stdlib -> third-party -> local. Sorted by ruff (`I` rule set).",
+      "- One module per import line for stdlib and third-party.",
+      "- If a name is used ONLY in annotations, ruff's TC rules will move it under `if TYPE_CHECKING:` -- but a name a framework resolves at RUNTIME from the annotation (e.g. FastAPI's `Request`/`Response`/`UploadFile` in route signatures) must stay a real import. Keep those imports at runtime and mark them `# noqa: TC002` if flagged."
+    ],
+    "async": [
+      "- Match the project shape: in a server or any concurrent context, I/O (HTTP, DB, LLM) should be `async`. In a CLI, script, batch job, or library with no concurrency, plain sync is simpler and fine -- do not add async for its own sake.",
+      "- When you do go async, use `asyncio.TaskGroup` (Python 3.11+) for concurrent work, and keep the whole I/O path async (no sync calls blocking the loop)."
+    ],
+    "errors": [
+      "- Specific exception classes per domain. Never bare `Exception`.",
+      "- Fail-closed on safety/security: if uncertain, refuse rather than proceed.",
+      "- Framework dependency-injection defaults (e.g. FastAPI `Depends(...)`) are called markers, not values: never replace `Depends(get_settings)` with a bare `get_settings()` call at import time -- the first form resolves per-request, the second freezes one instance at import and 500s under test overrides."
+    ],
+    "config": [
+      "- `pydantic-settings` for all configuration.",
+      "- Never hardcode API keys, URLs, or model names. Pull from env or settings."
+    ],
+    "logging": [
+      "- `logging` module, not `print`.",
+      "- Structured log lines (JSON if going to ingest, key=value otherwise)."
+    ],
+    "test_layout": [
+      "- `tests/` mirrors `src/` structure. Unit + functional tests run in the fast gate.",
+      "- `tests/e2e/` holds end-to-end tests marked `@pytest.mark.e2e`; they are excluded from the fast gate and run via `scripts/e2e.sh` in CI. For a UI use `pytest-playwright` (headless browser); for API-only assert the full request -> response -> persisted-state path.",
+      "- Security/red-team tests are marked `@pytest.mark.security` and follow the `docs/SECURITY.md` checklist.",
+      "- Use `pytest-asyncio` for async tests. Inject fakes via fixtures/dependency objects; no mocks for code you own.",
+      "- `factory-boy` or hand-rolled fixtures in `tests/fixtures/` for data.",
+      "- `hypothesis` for property-based tests on pure functions.",
+      "- `--import-mode=importlib` is set in addopts: test files may share basenames across folders without `__init__.py` shims."
+    ],
+    "precommit_hooks": [
+      "This profile ships `.pre-commit-config.yaml` with `ruff` (`--fix`) and `ruff-format`, plus the generic hooks (trailing-whitespace, yaml/toml/json validation, large-file guard). Install once with `uv run pre-commit install`. (TypeScript, Go, and Rust profiles ship no pre-commit; their `qa` gate + CI are the enforcement.)"
+    ]
+  }
+}

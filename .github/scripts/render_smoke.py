@@ -2,9 +2,10 @@
 """Render smoke test: substitute core + each complete profile with safe values
 and assert NO leftover {{PLACEHOLDER}} remains, and the manifest landed.
 
-This proves template *completeness* (every placeholder used is fillable). It does
-NOT exercise the interview, the conditional matrix, or hostile-value escaping --
-generation is agent-executed (see docs/ROADMAP.md). Run from the repo root.
+This proves template *completeness* (every placeholder used is fillable) and
+feeds the per-profile CI gate runs via --emit. The real generation path is
+init-project/render.py; its conditional matrix and hostile-value escaping are
+locked byte-for-byte by .github/scripts/golden_test.py. Run from the repo root.
 """
 
 from __future__ import annotations
@@ -84,6 +85,8 @@ def render(lang: str, out: str) -> list[str]:
     for root, _, files in os.walk(f"{T}/profiles/{lang}"):
         rel = os.path.relpath(root, f"{T}/profiles/{lang}")
         for fn in files:
+            if rel == "." and fn == "profile.json":
+                continue  # renderer input, never part of a generated project
             d = os.path.join(out, rel)
             os.makedirs(d, exist_ok=True)
             shutil.copy2(os.path.join(root, fn), os.path.join(d, fn))

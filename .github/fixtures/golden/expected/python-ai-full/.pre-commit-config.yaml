@@ -1,0 +1,28 @@
+# Pre-commit configuration.
+# Install with `uv run pre-commit install` after running /init-project.
+# Hooks are populated by /init-project from the chosen language profile.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        # .devcontainer/*.json is JSONC (comments allowed by the devcontainer
+        # spec) and would fail strict check-json.
+        exclude: ^\.devcontainer/
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # Language-specific hooks, substituted by /init-project from the language
+  # profile. (This file ships with the Python profile only.)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format

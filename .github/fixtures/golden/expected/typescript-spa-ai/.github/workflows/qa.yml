@@ -1,0 +1,82 @@
+name: QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Language and toolchain setup. Substituted by /init-project from the
+      # chosen language profile's ci_setup_steps: the right `uses: ...` /
+      # `run: ...` steps for this project's toolchain.
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install deps
+        run: npm ci
+
+      - name: Run quality gate (lint, format, types, unit + functional)
+        run: npm run qa
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Same language/toolchain setup as the qa job.
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install deps
+        run: npm ci
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end suite
+        run: npm run e2e
+
+  # Ship audit (AGENTS.md <delivery-evidence>): validates ship records changed by
+  # this push/PR -- required fields, and for `Evidence origin: native` the
+  # memo -> Red commit order. Runs independent of any agent or subagent, so a
+  # degraded orchestration cannot ship silently. Needs full history.
+  ship-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (full history for the order check)
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit newly shipped slices in this range
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          fi
+          [ -z "$base" ] && { echo "no base rev (initial commit) -- nothing to audit"; exit 0; }
+          # Range-driven, two sweeps: newly-Shipped slices need a committed valid
+          # record, AND any record modified or deleted in the range is re-audited
+          # (tampering with an already-shipped slice's evidence fails here).
+          bash .claude/hooks/slice-audit.sh --range "$base" HEAD

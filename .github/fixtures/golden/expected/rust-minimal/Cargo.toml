@@ -1,0 +1,18 @@
+[package]
+name = "chunkline"
+version = "0.1.0"
+edition = "2024"
+description = "A Rust library that splits large text files into stable, overlap-aware chunks for indexing pipelines."
+publish = false
+
+[lib]
+# Fixed target name so the scaffold's tests (`use app::...`) never depend on the
+# package name (hyphens in a package name change the crate identifier). Rename
+# it together with the test imports when you build your first slice, if you like.
+name = "app"
+path = "src/lib.rs"
+
+[dependencies]
+# Minimal core. /init-project appends capability dependencies (web framework,
+# database, LLM SDK, ...) based on your interview answers, so a generated
+# project ships only what it actually uses. Add deps with `cargo add`.

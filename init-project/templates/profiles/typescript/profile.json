@@ -1,0 +1,68 @@
+{
+  "_comment": "Machine-readable language profile consumed by init-project/render.py. Keep in sync with the matching YAML block in init-project/SKILL.md <language-profiles>. Multi-line values are arrays of lines (joined with newlines at render time). This file is renderer input only -- it is never copied into a generated project.",
+  "display_name": "TypeScript",
+  "language_version": "Node 22 (LTS) / TypeScript 5.7+",
+  "package_manager": "npm",
+  "manifest_file": "package.json",
+  "install_command": "npm install",
+  "add_dep_command": "npm install",
+  "qa_command": "npm run qa",
+  "fix_command": "npm run fix",
+  "e2e_command": "npm run e2e",
+  "e2e_browser_install": "npx playwright install --with-deps chromium",
+  "test_runner": "vitest",
+  "test_command": "npx vitest run",
+  "lint_tool": "eslint",
+  "lint_command": "npx eslint .",
+  "format_tool": "prettier",
+  "format_command": "npx prettier --check .",
+  "type_tool": "tsc",
+  "type_command": "npx tsc --noEmit",
+  "precommit_install_command": "",
+  "ci_setup_steps": [
+    "- name: Set up Node",
+    "  uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4",
+    "  with:",
+    "    node-version: \"22\"",
+    "    cache: \"npm\"",
+    "- name: Install deps",
+    "  run: npm ci"
+  ],
+  "precommit_hooks": [],
+  "library_docs_urls": [
+    "### Core stack",
+    "- **TypeScript**: https://www.typescriptlang.org/docs/",
+    "- **Vitest**: https://vitest.dev/",
+    "- **ESLint (flat config)**: https://eslint.org/docs/latest/",
+    "- **typescript-eslint**: https://typescript-eslint.io/",
+    "- **Prettier**: https://prettier.io/docs/",
+    "- **Playwright**: https://playwright.dev/docs/intro"
+  ],
+  "notes": {
+    "type_annotations": [
+      "- `strict: true`. Annotate every exported function's params and return type; let inference handle locals. Prefer `unknown` over `any`; never `as any` or `// @ts-ignore`."
+    ],
+    "imports": [
+      "- ES modules only (`\"type\": \"module\"`). `import`/`export`, never `require`. Use `import type { X }` for type-only imports."
+    ],
+    "async": [
+      "- Server/concurrent context: I/O is `async`/`await`. CLI/library with no concurrency: plain sync is fine -- do not add async for its own sake. Never leave a floating promise."
+    ],
+    "errors": [
+      "- Throw `Error` subclasses per domain; never throw strings. Fail closed on safety/security."
+    ],
+    "config": [
+      "- Read `process.env` at one boundary; validate it (e.g. zod) into a typed config. Secrets in `.env` (gitignored), never hardcoded."
+    ],
+    "logging": [
+      "- Structured logger (`pino`) or `console` with structured fields; no scattered `console.log` in committed code."
+    ],
+    "test_layout": [
+      "- `tests/` mirrors `src/`; unit + functional (`*.test.ts`) run in the fast gate via `vitest run`. `tests/e2e/` holds Playwright specs, excluded from the fast gate, run via `npm run e2e`.",
+      "- Inject fakes via params/factories; avoid mocking modules you own."
+    ],
+    "precommit_hooks": [
+      "- Not used. The TypeScript profile ships no `.pre-commit-config.yaml`; `npm run qa` (local + CI) is the gate."
+    ]
+  }
+}

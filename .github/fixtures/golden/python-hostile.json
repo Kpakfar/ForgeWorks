@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Hostile \"Fixture\" & <Sons>, Ltd. `v0`",
+    "slug": "hostile-fixture",
+    "goal": "A \"goal\" with 'single quotes',\nan escaped newline, {{lowercase braces}}, `backticks`, & ampersands — plus a trailing backslash \\ and a $dollar.",
+    "primary_user": "A user who types \"quotes\" & <angle brackets> into every form field they meet.",
+    "core_problem": "Systems break when text contains {{curly}} braces, `ticks`, \"quotes\",\nor newlines; this fixture proves the renderer does not.",
+    "core_journey": "1. Feed the renderer text full of \"quotes\" & braces.\n2. Render.\n3. Every structured file still parses; every prose file carries the text verbatim.",
+    "success_measure": "All rendered JSON/TOML files parse; the hostile strings land verbatim in Markdown, escaped in structured files.",
+    "success_metrics": "- structured-file parse failures -- zero\n- hostile characters altered in prose -- zero",
+    "riskiest_assumption": "Plain per-format escaping ({{braces}} included) is enough — no template engine needed.",
+    "req_ac_list": "- [ ] **REQ-AC1:** `pyproject.toml` parses with the hostile description \"as-is\" (escaped).\n- [ ] **REQ-AC2:** `.devcontainer/devcontainer.json` parses with the hostile name & ampersand.\n- [ ] **REQ-AC3:** Markdown docs carry quotes, `backticks`, {{braces}} and newlines verbatim.",
+    "non_goals": "- No attempt to sanitize or prettify hostile text; it must land verbatim.\n- No support for text containing HTML comment markers (validated out).",
+    "other_users": "- none identified yet",
+    "constraint_time": "none — this is a CI fixture.",
+    "constraint_cost": "none & nothing.",
+    "constraint_data": "Only synthetic hostile strings; nothing real.",
+    "first_milestone": "none set",
+    "deployment_target": "CI only — never deployed.",
+    "scale_expectations": "One render per CI run.",
+    "integrations": "- none",
+    "in_scope_list": "- Hostile values in every free-text answer field.\n- Structured-file escaping (TOML & JSON) and prose passthrough.",
+    "pain_point": "watches renderers choke on \"ordinary\" punctuation & symbols",
+    "product_category": "renderer stress fixture",
+    "current_alternative": "hoping users never type quotes",
+    "key_benefit": "proves hostile text lands verbatim as text, never as structure",
+    "key_differentiator": "it is the test, not the product",
+    "positive_reference": {
+      "ref": "a repo with `ticks` & \"quotes\" in its tagline",
+      "location": "https://example.com/hostile?a=1&b=2"
+    },
+    "negative_reference": {
+      "ref": "anything that switches on 'clever' escaping modes",
+      "location": "https://example.com/anti&pattern"
+    }
+  },
+  "stack": {
+    "language": "python",
+    "has_frontend": "yes-minimal",
+    "backend_framework": "Streamlit/Gradio only",
+    "ai_features": [],
+    "vector_db": "none",
+    "llm_provider": "none",
+    "embeddings_model": "none",
+    "database": "none",
+    "uses_devcontainer": "yes"
+  },
+  "security": {
+    "reads_untrusted": "yes",
+    "holds_private_data": "yes",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "no",
+    "seed_gotchas": "yes",
+    "mem0": "no",
+    "codex_reviewer": "yes"
+  }
+}

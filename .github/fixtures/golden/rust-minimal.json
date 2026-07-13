@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Chunkline",
+    "slug": "chunkline",
+    "goal": "A Rust library that splits large text files into stable, overlap-aware chunks for indexing pipelines.",
+    "primary_user": "A backend developer building document indexing who needs deterministic chunk boundaries.",
+    "core_problem": "Ad-hoc chunkers produce different boundaries across runs and platforms, which invalidates cached embeddings and makes diffs noisy.",
+    "core_journey": "1. The developer adds the library and configures chunk size and overlap.\n2. They feed it a text stream.\n3. They receive deterministic chunks with stable ids that survive re-runs on unchanged input.",
+    "success_measure": "Chunking the same 100MB corpus twice yields byte-identical chunk sets and ids on two different machines.",
+    "success_metrics": "- determinism -- byte-identical chunk ids across two runs and two platforms\n- throughput -- at least 50MB/s on the reference corpus",
+    "riskiest_assumption": "Deterministic boundary selection can stay fast enough (50MB/s) without unsafe code.",
+    "req_ac_list": "- [ ] **REQ-AC1:** Chunking identical input twice yields identical chunk ids and boundaries.\n- [ ] **REQ-AC2:** Overlap configuration is honored exactly at every boundary.\n- [ ] **REQ-AC3:** A file smaller than one chunk yields exactly one chunk with a stable id.",
+    "non_goals": "- No tokenizer-aware chunking in the first iteration; bytes and characters only.\n- No async API; the library is synchronous.",
+    "other_users": "- none identified yet",
+    "constraint_time": "Side project, one evening a week.",
+    "constraint_cost": "None; pure open-source library.",
+    "constraint_data": "Test corpora from public-domain texts only.",
+    "first_milestone": "none set",
+    "deployment_target": "Published as a crate on crates.io; consumed as a library.",
+    "scale_expectations": "Library consumers processing files up to a few GB.",
+    "integrations": "- none",
+    "in_scope_list": "- Deterministic size/overlap chunking over byte and char boundaries.\n- Stable chunk ids derived from content.\n- A benchmark harness for the throughput target.",
+    "pain_point": "needs deterministic chunk boundaries",
+    "product_category": "text chunking library",
+    "current_alternative": "hand-rolled splitters that drift between runs",
+    "key_benefit": "chunks that never move unless the text does",
+    "key_differentiator": "determinism is the contract, verified by cross-platform tests",
+    "positive_reference": null,
+    "negative_reference": null
+  },
+  "stack": {
+    "language": "rust",
+    "has_frontend": "no",
+    "backend_framework": "none (CLI/library)",
+    "ai_features": [],
+    "vector_db": "none",
+    "llm_provider": "none",
+    "embeddings_model": "none",
+    "database": "none",
+    "uses_devcontainer": "no"
+  },
+  "security": {
+    "reads_untrusted": "no",
+    "holds_private_data": "no",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "yes",
+    "seed_gotchas": "yes",
+    "mem0": "no",
+    "codex_reviewer": "no"
+  }
+}

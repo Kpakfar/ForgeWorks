@@ -1,0 +1,89 @@
+name: QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Language and toolchain setup. Substituted by /init-project from the
+      # chosen language profile's ci_setup_steps: the right `uses: ...` /
+      # `run: ...` steps for this project's toolchain.
+      - name: Set up Rust
+        # Installs the toolchain pinned in rust-toolchain.toml (channel + the
+        # clippy/rustfmt components) and enables cargo caching. rustflags is
+        # cleared so the scripts alone define strictness (qa runs clippy with
+        # -D warnings); the action would otherwise export RUSTFLAGS="-D warnings"
+        # and make plain builds stricter in CI than locally.
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
+        with:
+          rustflags: ""
+      - name: Fetch dependencies
+        run: cargo fetch
+
+      - name: Run quality gate (lint, format, types, unit + functional)
+        run: bash scripts/qa.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Same language/toolchain setup as the qa job.
+      - name: Set up Rust
+        # Installs the toolchain pinned in rust-toolchain.toml (channel + the
+        # clippy/rustfmt components) and enables cargo caching. rustflags is
+        # cleared so the scripts alone define strictness (qa runs clippy with
+        # -D warnings); the action would otherwise export RUSTFLAGS="-D warnings"
+        # and make plain builds stricter in CI than locally.
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
+        with:
+          rustflags: ""
+      - name: Fetch dependencies
+        run: cargo fetch
+
+      # no browser needed for this project's e2e suite
+
+      - name: Run end-to-end suite
+        run: bash scripts/e2e.sh
+
+  # Ship audit (AGENTS.md <delivery-evidence>): validates ship records changed by
+  # this push/PR -- required fields, and for `Evidence origin: native` the
+  # memo -> Red commit order. Runs independent of any agent or subagent, so a
+  # degraded orchestration cannot ship silently. Needs full history.
+  ship-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (full history for the order check)
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit newly shipped slices in this range
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          fi
+          [ -z "$base" ] && { echo "no base rev (initial commit) -- nothing to audit"; exit 0; }
+          # Range-driven, two sweeps: newly-Shipped slices need a committed valid
+          # record, AND any record modified or deleted in the range is re-audited
+          # (tampering with an already-shipped slice's evidence fails here).
+          bash .claude/hooks/slice-audit.sh --range "$base" HEAD

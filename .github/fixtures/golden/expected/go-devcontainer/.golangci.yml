@@ -1,0 +1,28 @@
+# golangci-lint configuration (v2 schema) -- a small, high-signal default set.
+# Run with `golangci-lint run` (the qa gate requires it). Requires golangci-lint
+# v2.x; keep this version in lockstep with the Dockerfile and CI install step.
+
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # Start from nothing and enable only the checks we want.
+  default: none
+  enable:
+    - govet        # suspicious constructs (same checks as `go vet`)
+    - staticcheck  # broad correctness and simplification analysis
+    - errcheck     # unchecked error returns
+    - ineffassign  # assignments that are never used
+    - unused       # unused constants, variables, functions, and types
+  exclusions:
+    rules:
+      # Test files often ignore errors deliberately.
+      - path: _test\.go
+        linters:
+          - errcheck
+
+# Note: formatting (gofmt) is a `formatters:` concern in v2, not a linter. It is
+# enforced standalone by scripts/qa.sh (check-only) and scripts/fix.sh (rewrite),
+# so it is intentionally not configured here.

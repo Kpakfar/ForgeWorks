@@ -53,14 +53,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.2.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.2.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.2.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.3.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.3.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.3.0 /tmp/upgrade-skill --force
 ```
 
-Use the detected language for `<lang>` (`python`, `typescript`, `go`, or `rust`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>) live in init-project/SKILL.md Phase 4, not in templates/ -- reconcile AI/memory-conditional content against /tmp/upgrade-skill/SKILL.md.
+Use the detected language for `<lang>` (`python`, `typescript`, `go`, or `rust`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>, the Codex sections, the gotchas seed) live in `init-project/templates/conditional/` (since v2.3.0; older releases embedded them in SKILL.md Phase 4) -- reconcile AI/memory-conditional content against `/tmp/upgrade-skill/templates/conditional/`.
 
-Reconcile against this skill's own released version (`v2.2.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.3.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -96,7 +96,7 @@ Walk the template tree. For every template path, decide and act:
 
   After grafting, flag any superseded block present in the project for the user to remove -- do not silently delete.
 
-  *Conditional blocks (`<ai-discipline>`, `<memory>`):* the fetched core `AGENTS.md` carries only the `{{AI_DISCIPLINE_BLOCK}}` / `{{MEMORY_DOC_LINE}}` placeholders, so the generic pass above cannot see these blocks' current text. When the project uses the feature (Phase 1 detection), extract the block's current text from `/tmp/upgrade-skill/SKILL.md` Phase 4's conditional-content rules and reconcile it with the SAME marker rules (absent -> insert; older marker version -> side-by-side; current -> skip). When the project does not use the feature, skip -- never insert a conditional block the project opted out of.
+  *Conditional blocks (`<ai-discipline>`, `<memory>`):* the fetched core `AGENTS.md` carries only the `{{AI_DISCIPLINE_BLOCK}}` / `{{MEMORY_DOC_LINE}}` placeholders, so the generic pass above cannot see these blocks' current text. When the project uses the feature (Phase 1 detection), take the block's canonical text from `/tmp/upgrade-skill/templates/conditional/` (`ai-discipline.md` / `memory-block.md`; since v2.3.0 that folder -- not SKILL.md Phase 4 -- holds the conditional texts) and reconcile it with the SAME marker rules (absent -> insert; older marker version -> side-by-side; current -> skip). When the project does not use the feature, skip -- never insert a conditional block the project opted out of.
 - **Subagents** (`implementer.md`, `test-spec-writer.md`, `code-reviewer.md`) -- graft sections the template added (e.g. the implementer "step back / full picture" section, the test-spec-writer pyramid table, the `{{CODEX_REVIEW_STEP}}` slot) if absent. If the user customized a subagent, surface the diff rather than overwriting.
 - **Any other file present in both** (hooks, .mcp.json, workflows, docs templates) -- diff it against the fetched template version. If the project's copy is byte-identical to an OLDER template release (no hand edits), queue the template's current version as a straight update in the batch report. If the project's copy differs from every template version (hand-edited), show the diff side-by-side in the report and let the user choose -- never overwrite silently, and never assume the template is ahead: the project may carry a fix the template lacks (report that upstream).
 

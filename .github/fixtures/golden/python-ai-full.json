@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "project": {
+    "name": "Recipe Radar",
+    "slug": "recipe-radar",
+    "goal": "Turn a photo of a fridge into three cookable dinner suggestions for busy home cooks.",
+    "primary_user": "A busy home cook who stares at a full fridge with no dinner idea.",
+    "core_problem": "Recipe sites answer 'what can I cook in general', not 'what can I cook right now with what I have'; the gap between inventory and inspiration stays manual.",
+    "core_journey": "1. The cook photographs the open fridge.\n2. The app extracts an ingredient list and shows it for one-tap correction.\n3. The app retrieves three matching recipes and adapts each to the confirmed inventory.\n4. The cook picks one and gets a step-by-step cooking view.",
+    "success_measure": "A first-time user goes from photo to a chosen, cookable recipe in under two minutes without editing more than two ingredients.",
+    "success_metrics": "- photo-to-recipe time -- p95 under 2 minutes\n- ingredient extraction accuracy -- fewer than 2 manual corrections per photo\n- suggestion acceptance -- at least 1 of 3 suggestions chosen in 60% of sessions",
+    "riskiest_assumption": "Vision-model ingredient extraction is accurate enough on real, messy fridge photos to need at most two corrections.",
+    "req_ac_list": "- [ ] **REQ-AC1:** Uploading a clear fridge photo yields an editable ingredient list within 15 seconds.\n- [ ] **REQ-AC2:** Confirming the list yields exactly three recipe suggestions, each cookable with the confirmed ingredients plus pantry staples.\n- [ ] **REQ-AC3:** Choosing a suggestion opens a step-by-step cooking view with servings scaled to the household size.\n- [ ] **REQ-AC4:** A photo with no recognizable food produces a helpful empty state, not a crash or a hallucinated list.",
+    "non_goals": "- No meal planning across multiple days; one dinner at a time.\n- No grocery ordering or shopping-list integration in the first iteration.\n- No user accounts beyond a device-local profile.",
+    "other_users": "- Meal-prep enthusiasts planning several dinners at once (deferred).\n- Dietitians reviewing a client's typical inventory (deferred).",
+    "constraint_time": "8-week side project; first demo at week 4.",
+    "constraint_cost": "LLM/API budget capped at USD 30/month during development; each photo-to-recipes flow must cost under USD 0.05.",
+    "constraint_data": "Recipes from a licensed open dataset (Recipe1M subset); user photos never leave the pipeline and are deleted after extraction.",
+    "first_milestone": "2026-08-09",
+    "deployment_target": "Public web app (mobile-first), hosted on a single VPS first.",
+    "scale_expectations": "Tens of users, low hundreds of photos per week in the first iteration; p95 photo-to-suggestions under 15 seconds.",
+    "integrations": "- OpenAI vision + embeddings API (extraction, retrieval).\n- Chroma vector store (local, embedded).",
+    "in_scope_list": "- Fridge-photo upload and ingredient extraction with one-tap correction.\n- Three recipe suggestions adapted to the confirmed inventory.\n- Step-by-step cooking view with serving scaling.\n- Helpful empty/error states for unusable photos.",
+    "pain_point": "stares at a full fridge with no dinner idea",
+    "product_category": "inventory-to-recipe assistant",
+    "current_alternative": "scrolling recipe sites and guessing what matches the fridge",
+    "key_benefit": "turns what you have into what you can cook tonight",
+    "key_differentiator": "start from a photo of the actual fridge, not from a search box",
+    "positive_reference": {
+      "ref": "the maintainers' style of simonw/datasette",
+      "location": "https://github.com/simonw/datasette"
+    },
+    "negative_reference": {
+      "ref": "sprawling enterprise-layered recipe platforms",
+      "location": "https://github.com/example/overengineered-recipes"
+    }
+  },
+  "stack": {
+    "language": "python",
+    "has_frontend": "yes-minimal",
+    "backend_framework": "FastAPI",
+    "ai_features": ["rag", "agents", "evals", "streaming"],
+    "vector_db": "Chroma",
+    "llm_provider": "OpenAI",
+    "embeddings_model": "text-embedding-3-small",
+    "database": "SQLite",
+    "uses_devcontainer": "yes"
+  },
+  "security": {
+    "reads_untrusted": "yes",
+    "holds_private_data": "yes",
+    "acts_outward": "yes"
+  },
+  "opt_ins": {
+    "explanations": "yes",
+    "seed_gotchas": "yes",
+    "mem0": "yes",
+    "codex_reviewer": "yes"
+  }
+}

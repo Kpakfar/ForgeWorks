@@ -1,0 +1,51 @@
+Quick reference. Go project bootstrapped from ForgeWorks.
+Update this file whenever the layout changes.
+
+Living docs:
+docs/structure.txt                 # this file
+docs/PRODUCT_VISION.md             # north star -- what we're building and why (stable)
+docs/requirements.md               # what we're building, for whom, why
+docs/language-standards.md         # language- and tooling-specific conventions
+docs/documentation.md              # links to library docs the agent should consult
+docs/backlog.md                    # scoped, queued tasks
+docs/proposals-ideas.md            # out-of-scope ideas, reviewed periodically
+docs/gotchas.md                    # known pitfalls, anti-patterns, lessons (living)
+docs/SECURITY.md                   # threat model, defenses, red-team checklist (living)
+docs/current-task/task.md          # active task brief, shared between agents
+docs/current-task/task-template.md # template; copy over task.md when starting a new task
+docs/designs/                      # one design memo per non-trivial slice (the pre-code gate)
+docs/probes/                       # recorded real observations of external collaborators
+docs/ships/                        # one ship record per shipped slice (durable delivery evidence)
+
+Source code (use your language's idiomatic layout; see AGENTS.md <architecture-discipline>
+and docs/language-standards.md). A placeholder module + passing test ship so the gate is
+green on first run -- replace them with your first slice. Two-layer split (backend / frontend
+or app) when the project has a UI; a single layer otherwise.
+
+Tests (unit + functional run in the fast gate; e2e is separate -- see docs/language-standards.md):
+   placeholder smoke test ships green; e2e tests live apart (tests/e2e/ or build-tag gated)
+
+Configuration:
+go.mod                  # dependencies + tool config + bundled scripts
+.env.example                       # template for environment variables (never commit .env)
+.gitignore
+README.md
+(some language profiles add more here -- e.g. a pre-commit config; see docs/language-standards.md)
+
+Agent infrastructure:
+.claude/agents/                    # subagents: test-spec-writer, implementer, code-reviewer, security-reviewer, tech-debt
+.claude/hooks/quality-gate.sh      # deterministic static+test gate (code-reviewer Stop event)
+.claude/hooks/deps-guard.sh        # supply-chain guard (PreToolUse): blocks unvetted dependency installs
+.claude/settings.json              # wires the deps-guard PreToolUse hook
+.mcp.json                          # MCP server config (Context7 for live library docs)
+AGENTS.md                          # the constitution (read first, every conversation)
+CLAUDE.md                          # symlink to AGENTS.md (for Claude Code compatibility)
+
+CI:
+.github/workflows/qa.yml           # fast quality gate + separate e2e job, on PRs and pushes to main
+.github/pull_request_template.md   # short PR checklist
+
+Dev environment:
+.devcontainer/                     # dev container config (if yes = yes)
+(the qa / fix / e2e runners are shell scripts under scripts/ OR package scripts in
+go.mod, per the language profile -- the commands are in docs/language-standards.md)
