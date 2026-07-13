@@ -90,6 +90,23 @@ case "${1:---hook}" in
     || { echo "slice-audit: $f memo commit is not a strict ancestor of Red commit $red" >&2; exit 1; }
   [ "$(git rev-parse "$red")" != "$(git rev-parse "$green")" ] && git merge-base --is-ancestor "$red" "$green" \
     || { echo "slice-audit: $f Red commit $red is not a strict ancestor of Green commit $green" >&2; exit 1; }
+  # Verification-surface control (<test-discipline>): existing tests/fixtures/gate
+  # config modified or deleted between Red and Green is a spec amendment -- the
+  # record must carry a '- Spec amendments:' line saying what changed and why.
+  # ADDED files are normal TDD and never require the field.
+  amended=$(git diff --name-status --no-renames --diff-filter=MD "$red" "$green" -- \
+      tests/ .github/workflows/ 2>/dev/null | awk '{print $2}'; \
+    git diff --name-status --no-renames --diff-filter=MD "$red" "$green" 2>/dev/null \
+      | awk '{print $2}' | grep -E '(^|/)(scripts/(qa|e2e|fix|linecap)[^/]*|eslint\.config\.[a-z]+|[^/]*\.(test|spec)\.[a-z]+|conftest\.py|test_[^/]+|[^/]+_test\.[a-z]+)$' || true)
+  amended=$(printf '%s\n' "$amended" | sort -u | grep -v '^$' || true)
+  if [ -n "$amended" ] && ! grep -Eq '^- Spec amendments:' "$f"; then
+    {
+      echo "slice-audit: $f (native) verification surface changed between Red $red and Green $green with no '- Spec amendments:' line:"
+      printf '%s\n' "$amended" | sed 's/^/    /'
+      echo "  Modifying or deleting existing tests/fixtures/gate config while going Green is a spec amendment (<test-discipline>): add '- Spec amendments: <what and why>' to the ship record and get reviewer sign-off."
+    } >&2
+    exit 1
+  fi
   exit 0
   ;;
 --range)

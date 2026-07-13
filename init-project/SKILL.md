@@ -469,6 +469,19 @@ Report what was generated, then hand off:
 > 3. Restart Claude Code so `.mcp.json` (Context7) registers.
 > 4. Start your first task -- replace `src/example.py` and `tests/test_example.py` with your first slice."
 
+Then, if the repo has a GitHub remote and `gh` is available, offer (do not run unasked) to enable branch protection -- the generated CI is merge-blocking only once the repo requires its checks:
+
+```bash
+gh api -X PUT "repos/{owner}/{repo}/branches/main/protection" \
+  -F 'required_status_checks[strict]=true' \
+  -F 'required_status_checks[contexts][]=qa' \
+  -F 'required_status_checks[contexts][]=e2e' \
+  -F 'required_status_checks[contexts][]=ship-audit' \
+  -F 'enforce_admins=false' -F 'required_pull_request_reviews=null' -F 'restrictions=null'
+```
+
+Explain the trade-off in one line: without this, a red build can still be merged by pushing directly.
+
 ---
 
 ## Placeholder substitution

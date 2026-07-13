@@ -2,7 +2,7 @@
 # install.sh - Bootstrap a new project from this template.
 #
 # Usage (pinned to a versioned release tag -- recommended):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.3.0/bootstrap/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bootstrap/install.sh)
 #
 # The template files this script fetches are pinned to one ref (default: the
 # release tag below), so they do not change under you when `main` moves. (Runtime
@@ -30,7 +30,7 @@ main() {
 
 REPO="${REPO:-Kpakfar/ForgeWorks}"
 # Pinned, versioned release ref. Overridable for development (BRANCH=main, etc.).
-REF="${REF:-${BRANCH:-v2.3.0}}"
+REF="${REF:-${BRANCH:-v2.4.0}}"
 RAW="https://raw.githubusercontent.com/${REPO}/${REF}"
 # The tool that fetches the skill folders. Pinned so the installer's own supply
 # chain does not float on npm's `latest`.

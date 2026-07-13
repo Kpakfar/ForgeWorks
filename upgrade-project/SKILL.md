@@ -28,10 +28,13 @@ If the directory is empty or only has a bootstrap-mode `AGENTS.md`, **stop** and
 ### Phase 0: Confirm and make it safe
 
 1. Confirm this is a generated project (look for `.claude/agents/` and a non-bootstrap `AGENTS.md`). If not, stop -- this is `init-project`'s job.
-2. Tell the user the upgrade edits tracked files, and recommend they commit or stash first and work on a branch:
+2. **Work in a dedicated git worktree, never by switching branches in the shared working tree.** Another agent session (or the user) may be working in this checkout right now: switching its branch mid-flight lands their commits on your branch and yours on theirs -- a field-proven failure. Instead:
    ```bash
-   git switch -c chore/upgrade-template
+   git worktree add ../<project>-upgrade -b chore/upgrade-template
+   cd ../<project>-upgrade
    ```
+   Run the entire upgrade there; the user's working tree never changes branch. When done (Phase 4), the user merges the branch and removes the worktree (`git worktree remove ../<project>-upgrade`). Fall back to the in-place `git switch -c chore/upgrade-template` ONLY when worktrees are unavailable AND the working tree is clean AND the user confirms no other session is active in this checkout.
+3. If `git status` shows uncommitted changes you did not make, say so and stop until the user confirms whose they are -- concurrent edits are the one thing this skill cannot reconcile.
    Wait for confirmation before making changes.
 
 ### Phase 1: Recover context
@@ -53,14 +56,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.3.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.3.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.3.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.4.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.4.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.4.0 /tmp/upgrade-skill --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, `go`, or `rust`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>, the Codex sections, the gotchas seed) live in `init-project/templates/conditional/` (since v2.3.0; older releases embedded them in SKILL.md Phase 4) -- reconcile AI/memory-conditional content against `/tmp/upgrade-skill/templates/conditional/`.
 
-Reconcile against this skill's own released version (`v2.3.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.4.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
