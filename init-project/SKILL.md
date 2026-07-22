@@ -764,7 +764,7 @@ fix_command: "bash scripts/fix.sh"
 e2e_command: "bash scripts/e2e.sh"
 e2e_browser_install: ""   # Go e2e is API/CLI-level by default (no browser)
 test_runner: "go test"
-test_command: "go test ./..."
+test_command: "go test -race ./..."
 lint_tool: "golangci-lint"
 lint_command: "golangci-lint run"
 format_tool: "gofmt"

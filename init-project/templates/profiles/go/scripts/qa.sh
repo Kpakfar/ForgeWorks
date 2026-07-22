@@ -6,7 +6,8 @@
 #   2. gofmt -l           (formatting is correct, but do not rewrite)
 #   3. go vet ./...       (suspicious-construct check)
 #   4. golangci-lint run  (lint; REQUIRED -- fails the gate if not installed)
-#   5. go test ./...      (unit + functional; e2e excluded -- needs the `e2e` tag)
+#   5. go test -race ./...  (unit + functional with the race detector; e2e
+#                            excluded -- needs the `e2e` tag)
 #
 # Each step must pass for the script to succeed. Because qa makes NO changes, it
 # is safe to run in CI: a formatting or lint problem fails the build instead of
@@ -44,8 +45,8 @@ fi
 golangci-lint run
 
 echo
-echo "==> [5/5] go test (unit + functional; e2e excluded)"
-go test ./...
+echo "==> [5/5] go test -race (unit + functional; e2e excluded)"
+go test -race ./...
 
 echo
 echo "==> QA passed (no files changed)."
