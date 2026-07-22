@@ -255,7 +255,8 @@ roster; the numbering is historical).
 
 First PROBE, do not guess: check which agent CLIs are installed
 (`command -v codex`, `command -v cursor`, `command -v agy || command -v antigravity`,
-plus any the user names). Claude Code counts as installed when this interview
+`command -v gemini`, plus any the user names -- matches the probe list in the
+`/select-agents` skill). Claude Code counts as installed when this interview
 runs inside it. Then ask:
 
 > "Which agentic coders will drive this project? (multi-select)
@@ -315,7 +316,7 @@ the renderer:
 
 - `templates/core/` -- language-free files every project gets (AGENTS.md, docs/, `.mcp.json`, the CI workflow shape, PR template, README, .env.example, `.claude/`).
 - `templates/profiles/<language>/` -- the chosen language's files (manifest, toolchain config, `scripts/` or package scripts, the green scaffold, `.gitignore`, dev container, and -- Python only -- a pre-commit config), plus `profile.json`: the machine-readable toolchain values the renderer substitutes. `profile.json` is renderer input only and never lands in the generated project. Keep it in sync with the YAML block in `<language-profiles>` below (CI cross-checks the load-bearing values).
-- `templates/conditional/` -- the canonical texts of the conditional blocks: `ai-discipline.md`, `memory-block.md`, `memory-doc-line.md`, `codex-review-step.md`, `codex-roster-note.md`, `gotchas-seed.md`, and the per-agent roster snippets under `agents/`. Edit them THERE; this file only points at them.
+- `templates/conditional/` -- the canonical texts of the conditional blocks: `ai-discipline.md`, `memory-block.md`, `memory-doc-line.md`, `codex-review-step.md`, `codex-roster-note.md`, `gotchas-seed.md`, the per-agent roster snippets under `agents/`, and the roster-wide `agents/no-claude-note.md` (rendered when `claude-code` is absent). Edit them THERE; this file only points at them.
 
 **Step 1 -- write the answers file** at `docs/_init-answers.json`, exactly in
 this schema. All four sections and every key are required; yes/no fields are the
@@ -426,8 +427,9 @@ fixtures in the template repo CI:
 | 13 | Renames profile manifests shipped with an `.example` suffix (`pyproject.toml.example` -> `pyproject.toml`). Core files are never renamed (`.env.example` stays). |
 | 14 | Creates the `CLAUDE.md` -> `AGENTS.md` symlink (a one-line pointer file where symlinks are unavailable), `chmod +x` on `.claude/hooks/*.sh` and `scripts/*.sh`, and stamps `.claude/.template-version` (with this release's version) if the bootstrap `install.sh` did not already write it. |
 | 15 | Fails closed if any `{{...}}` placeholder survives anywhere in the output. |
-| 16 | B13: when `claude-code` is NOT in `agents`, the entire `.claude/` tree (agents, hooks, settings, skills) and the `CLAUDE.md` symlink are not generated; the `.claude/.template-version` stamp is always written. |
-| 17 | B13: renders `{{AGENT_MATRIX}}` in `docs/agents.md` from `templates/conditional/agents/<name>.md` (planned agents get a status note) and writes the machine-readable roster `docs/agents.json` (name, status, offload roles). |
+| 16 | B13: when `claude-code` is NOT in `agents`, the `.claude/` tree (agents, hooks, settings, skills) and the `CLAUDE.md` symlink are not generated -- EXCEPT `.claude/hooks/slice-audit.sh`, which ships for every roster (it is agent-neutral; the generated CI workflow invokes it as a plain script) and is `chmod +x`'d regardless. The `.claude/.template-version` stamp is always written. A `claude-code` entry with `"status": "planned"` still counts as selected for this rule -- the full tree is still generated; `status` only affects `docs/agents.json` and the matrix status note (rule 17). |
+| 17 | B13: renders `{{AGENT_MATRIX}}` in `docs/agents.md` from `templates/conditional/agents/<name>.md` (planned agents get a status note) and writes the machine-readable roster `docs/agents.json` (name, status, offload roles). When `claude-code` is NOT in `agents`, an honest-omission note (`templates/conditional/agents/no-claude-note.md`) is appended as the final section of `docs/agents.md`, spelling out what was skipped and that `docs/SECURITY.md` / `docs/language-standards.md` / `docs/structure.txt` mandates fall to the driving agent manually. |
+| 18 | CC fences (same mechanic as AI fences, rule 4, keyed on "claude-code in `agents`" instead of `ai_features`): claude-code present -> strips only the marker lines; absent -> deletes the whole fenced block. Current fence: `<!-- CC-TREE-START/END -->` around the roster-dependent `.claude/` entries in `docs/structure.txt` (`.claude/hooks/slice-audit.sh` is listed outside the fence since it ships for every roster). |
 
 Keep `docs/_init-answers.json` until Phase 5 verification passes, then delete it
 (`rm docs/_init-answers.json`) -- its content lives on in the rendered docs.
