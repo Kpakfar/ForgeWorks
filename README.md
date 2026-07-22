@@ -33,7 +33,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bo
 
 The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/skills`) drive the methodology and planning. Two mandatory reviewers (code review always, security red-team on a canonical trigger) pair with the per-slice **Red → Green → Refactor → Review** loop; three optional workers isolate the heavier phases, and every shipped slice leaves a durable, hook-audited ship record. Tasks with no behavioral effect (typos, doc wording, formatting) skip the ceremony — anything that changes what the product does, however small, does not. The same gate runs locally (`Stop` + `PreToolUse` hooks that block a red build or an evidence-free ship) and in CI.
 
-![The ForgeWorks multi-agent TDD loop: a one-time bootstrap session, then a repeating seven-step cycle driven by an orchestration layer that dispatches five specialist subagents](docs/forgeworks-loop.png)
+![The ForgeWorks multi-agent TDD loop: a one-time bootstrap session, then a repeating seven-step cycle driven by an orchestration layer that dispatches six specialist subagents](docs/forgeworks-loop.png)
 
 ## Upgrade an existing project
 
