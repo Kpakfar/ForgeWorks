@@ -21,6 +21,8 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 LANGUAGES = ("python", "typescript", "go", "rust")
 FRONTEND_CHOICES = ("yes-spa", "yes-minimal", "no")
 AI_FEATURE_CHOICES = ("rag", "agents", "evals", "streaming")
+AGENT_CHOICES = ("claude-code", "codex", "antigravity", "cursor", "other")
+AGENT_STATUSES = ("installed", "planned")
 
 # Answers-file layout: section -> required keys. All free-text unless
 # validate_answers() handles the key specially (enums, yes/no, references).
@@ -146,6 +148,21 @@ def validate_answers(ans: object) -> dict:
         _check_yes_no(errors, f"security.{key}", ans["security"][key])
     for key in OPT_IN_KEYS:
         _check_yes_no(errors, f"opt_ins.{key}", ans["opt_ins"][key])
+    agents = ans.get("agents")
+    if (not isinstance(agents, list) or not agents
+            or any(not isinstance(a, dict) or set(a) != {"name", "status"}
+                   or a.get("name") not in AGENT_CHOICES
+                   or a.get("status") not in AGENT_STATUSES
+                   for a in agents)):
+        errors.append(
+            "agents: must be a non-empty list of "
+            f'{{"name": one of {AGENT_CHOICES}, "status": one of {AGENT_STATUSES}}}')
+    else:
+        names = [a["name"] for a in agents]
+        if len(set(names)) != len(names):
+            errors.append("agents: duplicate agent names")
+        if ans["opt_ins"]["codex_reviewer"] == "yes" and "codex" not in names:
+            errors.append('opt_ins.codex_reviewer: "yes" requires "codex" in agents')
     date = ans.get("date")
     if not isinstance(date, str) or not DATE_RE.match(date):
         errors.append("date: must be an ISO date string (YYYY-MM-DD)")
