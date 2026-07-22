@@ -56,14 +56,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.4.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.4.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.4.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.5.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.5.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.5.0 /tmp/upgrade-skill --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, `go`, or `rust`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>, the Codex sections, the gotchas seed) live in `init-project/templates/conditional/` (since v2.3.0; older releases embedded them in SKILL.md Phase 4) -- reconcile AI/memory-conditional content against `/tmp/upgrade-skill/templates/conditional/`.
 
-Reconcile against this skill's own released version (`v2.4.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.5.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 

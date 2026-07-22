@@ -80,7 +80,7 @@ Prose gets a gate too: code has TDD, decisions have this block. No feature code 
 </investigation-discipline>
 <!-- /FW-BLOCK: investigation-discipline -->
 
-<!-- FW-BLOCK: token-discipline v2.1.0 -->
+<!-- FW-BLOCK: token-discipline v2.5.0 -->
 <token-discipline>
 Tokens are budget. Analysis is meticulous; everything else is lean. (The code-minimization ladder is adapted from Ponytail -- github.com/DietrichGebert/ponytail.)
 
@@ -91,6 +91,8 @@ Tokens are budget. Analysis is meticulous; everything else is lean. (The code-mi
 - **One review round by default.** `@code-reviewer` runs once per slice. Re-review only the specific findings from that round; a full re-review happens only after the circuit breaker sent the slice back to design.
 - **Scoped reads.** The main-context driver reads the doc set once per session; every subagent dispatch brief names exactly the docs and sections that task needs, and the subagent reads only those. Briefs live in `docs/current-task/task.md`, not re-narrated per hop.
 - **Model economics -- cheapest model that clears the quality bar.** Every subagent dispatch AND every external-model call the workflow makes (a second-opinion reviewer, an evaluator, a one-off analysis) states its model -- and reasoning tier, where the tool has one -- explicitly, chosen by the job, not by habit: cheapest tier for mechanical work (doc formatting, log filtering, boilerplate, status summaries); default tier for normal implementation, tests, and review; strongest tier ONLY for work where a wrong answer is expensive -- auth, payments, data deletion, concurrency, genuinely hard architecture -- or where two cheaper attempts already failed. Escalate on evidence, not anxiety; downgrade experiments are cheap, so try the cheaper tier first when unsure. Cap external second-opinion calls at two rounds per slice. (If this project's own code calls model APIs, the product-side version of this rule lives in `<ai-discipline>`.)
+- **Mechanical work goes to `@utility`.** Multi-step judgment-free chores -- git housekeeping, log mining/filtering, bulk renames, doc formatting, status summaries -- are dispatched to `@utility` (haiku default), never done in the main context and never sent to a default-or-stronger tier. One-off short commands stay inline; the threshold is "would this chore take more than a couple of tool calls."
+- **Session-limit workload shifting.** The roster in `docs/agents.json` says where heavy work can go. When the harness shows usage-limit warnings, or a task is heavy batch work (broad audits, big migrations, long test-fix loops), dispatch it to an installed `heavy_batch` agent from the roster (e.g. `codex exec "<brief>"`) and keep the primary agent as orchestrator/reviewer -- shifting progressively more work over as limit pressure grows. There is no quota API: the triggers are the harness's own warnings and the user's judgment. Roster changes happen via `/select-agents` or by editing `docs/agents.json` (see `docs/agents.md`).
 </token-discipline>
 <!-- /FW-BLOCK: token-discipline -->
 
@@ -263,7 +265,7 @@ Do not skip these. The system gets better only if these living docs stay current
 </self-improvement>
 <!-- /FW-BLOCK: self-improvement -->
 
-<!-- FW-BLOCK: agent-roster v2.1.0 -->
+<!-- FW-BLOCK: agent-roster v2.5.0 -->
 <agent-roster>
 The main-context driver (you, in Claude Code) is the orchestrator. The upstream `tdd` and `grill-me` skills (from `mattpocock/skills`) provide the methodology; do not substitute other skill packs for them. Subagents split into a mandatory tier the orchestrator may not skip and an optional tier used when isolation pays.
 
@@ -279,6 +281,7 @@ The main-context driver (you, in Claude Code) is the orchestrator. The upstream 
 - `@test-spec-writer` : writes the failing test suite (unit + functional + e2e + security) for a requirement.
 - `@implementer` : makes failing tests pass, refactors, and checks the change against the full-picture architecture before handoff.
 - `@tech-debt` : sweeps for accumulated debt (oversized files, duplication, dead code, stale docs) and proposes a paydown plan. Run on the cadence in `<recurring-reviews>`.
+- `@utility` : haiku-pinned mechanical-chore worker (git housekeeping, log mining, bulk renames, formatting). Dispatch per the mechanical-work rule in `<token-discipline>`; it never writes product code.
 
 **Picking a model per call**: each subagent file has a default `model:` in its frontmatter. **Always pass an explicit `model`** when dispatching a subagent -- one that inherits an unavailable model can die mid-task after many tool calls, leaving partial file changes behind. Choose the tier by the model-economics rule in `<token-discipline>`: cheapest that clears the job's quality bar; strongest only for security-sensitive or architecturally hard work.
 
