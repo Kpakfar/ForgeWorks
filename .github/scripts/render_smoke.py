@@ -49,6 +49,7 @@ COMMON = dict(
     TEST_COMMAND="t", LINT_TOOL="l", LINT_COMMAND="l", FORMAT_TOOL="f", FORMAT_COMMAND="f",
     TYPE_TOOL="ty", TYPE_COMMAND="ty", CI_SETUP_STEPS="# ci", LIBRARY_DOCS_URLS="- d",
     AI_DISCIPLINE_BLOCK="", CODEX_REVIEW_STEP="", CODEX_ROSTER_NOTE="", MEMORY_DOC_LINE="",
+    AGENT_MATRIX="### Claude Code\n\nx",
     POSITIVE_REFERENCE_TEXT="x", NEGATIVE_REFERENCE_TEXT="",
     REQ_AC_LIST="- [ ] **REQ-AC1:** x", OTHER_USERS="- x", CONSTRAINT_TIME="x",
     CONSTRAINT_COST="x", CONSTRAINT_DATA="x", FIRST_MILESTONE="x",
@@ -62,11 +63,12 @@ COMMON = dict(
                         "TEST_LAYOUT_NOTES", "PRECOMMIT_HOOKS_NOTES")},
 )
 
-# The rendered tree simulates a NO-AI project (AI_DISCIPLINE_BLOCK=""), so every
-# AI fence is stripped the same way /init-project Phase 4 rule 5 strips them on a
-# no-AI answer -- in EVERY file that carries one (SECURITY.md, requirements.md,
-# implementer.md, code-reviewer.md, and any future fenced file).
-FENCE = re.compile(r"<!-- AI-[A-Z]+-START -->.*?<!-- AI-[A-Z]+-END -->\n?", re.S)
+# The rendered tree simulates a NO-AI, no-Claude-Code project, so every AI and
+# CC fence is deleted wholesale (smoke only asserts placeholder completeness,
+# not the keep-vs-drop distinction render.py applies per real answers) -- in
+# EVERY file that carries one (SECURITY.md, requirements.md, implementer.md,
+# code-reviewer.md, structure.txt, and any future fenced file).
+FENCE = re.compile(r"<!-- (?:AI|CC)-[A-Z]+-START -->.*?<!-- (?:AI|CC)-[A-Z]+-END -->\n?", re.S)
 
 # Hidden files/dirs (.claude, .github, .env.example, ...) that MUST be visited.
 # glob('**/*') silently skips dotfiles, so we walk instead and assert coverage.

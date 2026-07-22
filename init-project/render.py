@@ -36,10 +36,16 @@ from render_schema import (
 
 # Stamped into .claude/.template-version when the bootstrap install did not
 # already write one. Bump on release (see the repo AGENTS.md <release-process>).
-TEMPLATE_VERSION = "v2.3.0"
+TEMPLATE_VERSION = "v2.5.0"
 
-FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
-FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
+AI_FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
+AI_FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
+
+# CC fences: same mechanics as AI fences, but keyed on "claude-code in the
+# agents roster" rather than ai_features -- used where a doc lists parts of
+# the .claude/ tree that only ship for a Claude Code roster (e.g. structure.txt).
+CC_FENCE_START_RE = re.compile(r"^\s*<!-- CC-[A-Z]+-START -->\s*$")
+CC_FENCE_END_RE = re.compile(r"^\s*<!-- CC-[A-Z]+-END -->\s*$")
 
 # Free-text (interview prose) placeholders may land verbatim only in Markdown
 # and plain-text files, or escaped into JSON/TOML. Anywhere else is an error --
@@ -57,6 +63,22 @@ FREE_TEXT_PLACEHOLDERS = {
 }
 
 NO_BROWSER_STEP = "# no browser needed for this project's e2e suite"
+
+# Offload roles each agent can cover in docs/agents.json. The file is a
+# RUNTIME config: users edit it (or run /select-agents) when the roster
+# changes mid-project; these are only the rendered starting values.
+AGENT_ROLES = {
+    "claude-code": ["orchestrator", "utility", "second_opinion", "heavy_batch"],
+    "codex": ["second_opinion", "heavy_batch"],
+    "antigravity": ["second_opinion", "heavy_batch"],
+    "cursor": ["second_opinion"],
+    "other": [],
+}
+
+
+def claude_selected(ans: dict) -> bool:
+    return any(a["name"] == "claude-code" for a in ans["agents"])
+
 
 # ------------------------------------------------------------------- mapping
 
@@ -93,6 +115,19 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
     else:
         browser_step = NO_BROWSER_STEP
 
+    matrix_parts = []
+    for agent in ans["agents"]:
+        snippet = _conditional(cond_dir,
+                               os.path.join("agents", agent["name"] + ".md")).rstrip("\n")
+        if agent["status"] == "planned":
+            snippet += ("\n\n> Status: **planned** -- selected in the interview but not "
+                        "detected as installed. Run `/select-agents` (or edit "
+                        "`docs/agents.json`) once it is available.")
+        matrix_parts.append(snippet)
+    if not claude_selected(ans):
+        matrix_parts.append(_conditional(
+            cond_dir, os.path.join("agents", "no-claude-note.md")).rstrip("\n"))
+
     mapping = {
         "PROJECT_NAME": p["name"], "PROJECT_GOAL": p["goal"],
         "PROJECT_SLUG": p["slug"], "PRIMARY_USER": p["primary_user"],
@@ -128,6 +163,7 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
         "DATE": ans["date"],
         "AI_DISCIPLINE_BLOCK": (_conditional(cond_dir, "ai-discipline.md").rstrip("\n")
                                 if ai_on else ""),
+        "AGENT_MATRIX": "\n\n".join(matrix_parts),
         "MEMORY_DOC_LINE": (_conditional(cond_dir, "memory-doc-line.md").rstrip("\n") + "\n"
                             if mem0 else ""),
         "CODEX_REVIEW_STEP": (_conditional(cond_dir, "codex-review-step.md").rstrip("\n")
@@ -199,18 +235,20 @@ def substitute(text: str, relpath: str, mapping: dict[str, str]) -> str:
     return PLACEHOLDER_RE.sub(repl, text)
 
 
-def apply_fences(text: str, keep_content: bool) -> str:
-    """AI-fence rule: AI project -> drop only the marker lines; no-AI project ->
-    drop the whole fenced block (collapsing a doubled blank line at the seam)."""
+def apply_fences(text: str, keep_content: bool, start_re: re.Pattern[str],
+                 end_re: re.Pattern[str]) -> str:
+    """Generic fence rule (shared by the AI and CC fence families): keep_content
+    -> drop only the marker lines; not keep_content -> drop the whole fenced
+    block (collapsing a doubled blank line at the seam)."""
     out: list[str] = []
     lines = text.splitlines(keepends=True)
     i = 0
     while i < len(lines):
-        if keep_content and (FENCE_START_RE.match(lines[i]) or FENCE_END_RE.match(lines[i])):
+        if keep_content and (start_re.match(lines[i]) or end_re.match(lines[i])):
             i += 1
             continue
-        if not keep_content and FENCE_START_RE.match(lines[i]):
-            while i < len(lines) and not FENCE_END_RE.match(lines[i]):
+        if not keep_content and start_re.match(lines[i]):
+            while i < len(lines) and not end_re.match(lines[i]):
                 i += 1
             i += 1  # the END marker line
             if (out and not out[-1].strip()
@@ -278,6 +316,11 @@ def skip_file(relpath: str, source: str, ans: dict) -> bool:
     parts = relpath.split(os.sep)
     if source == "profile" and relpath == "profile.json":
         return True  # renderer input, never part of a generated project
+    if relpath == os.path.join(".claude", "hooks", "slice-audit.sh"):
+        return False  # agent-neutral: CI invokes it as a plain script
+                      # (`bash .claude/hooks/slice-audit.sh`) regardless of roster
+    if (parts[0] == ".claude" and not claude_selected(ans)):
+        return True  # Claude Code not in the roster: no agents/hooks/skills/settings
     if parts[0] == ".devcontainer" and ans["stack"]["uses_devcontainer"] == "no":
         return True
     if parts[:2] == ["docs", "explanations"] and ans["opt_ins"]["explanations"] == "no":
@@ -306,7 +349,10 @@ def render_file(src: str, dst: str, relpath: str, ans: dict,
             f.write(raw)  # binary: copy verbatim
         shutil.copymode(src, dst)
         return
-    text = apply_fences(text, keep_content=bool(ans["stack"]["ai_features"]))
+    text = apply_fences(text, keep_content=bool(ans["stack"]["ai_features"]),
+                        start_re=AI_FENCE_START_RE, end_re=AI_FENCE_END_RE)
+    text = apply_fences(text, keep_content=claude_selected(ans),
+                        start_re=CC_FENCE_START_RE, end_re=CC_FENCE_END_RE)
     text = substitute(text, relpath, mapping)
     text = apply_insertions(text, relpath, ans, cond_dir)
     with open(dst, "w", encoding="utf-8", newline="") as f:
@@ -314,16 +360,17 @@ def render_file(src: str, dst: str, relpath: str, ans: dict,
     shutil.copymode(src, dst)
 
 
-def post_steps(out_dir: str) -> None:
-    # CLAUDE.md -> AGENTS.md (pointer file where symlinks are unavailable).
+def post_steps(out_dir: str, ans: dict) -> None:
+    # CLAUDE.md -> AGENTS.md pointer only makes sense for a Claude Code roster.
     claude_md = os.path.join(out_dir, "CLAUDE.md")
-    if os.path.lexists(claude_md):
-        os.remove(claude_md)
-    try:
-        os.symlink("AGENTS.md", claude_md)
-    except (OSError, NotImplementedError):
-        with open(claude_md, "w", encoding="utf-8") as f:
-            f.write("# See @AGENTS.md\n")
+    if claude_selected(ans):
+        if os.path.lexists(claude_md):
+            os.remove(claude_md)
+        try:
+            os.symlink("AGENTS.md", claude_md)
+        except (OSError, NotImplementedError):
+            with open(claude_md, "w", encoding="utf-8") as f:
+                f.write("# See @AGENTS.md\n")
     # Shell runners and hooks must be executable.
     for sub in (os.path.join(".claude", "hooks"), "scripts"):
         folder = os.path.join(out_dir, sub)
@@ -331,7 +378,18 @@ def post_steps(out_dir: str) -> None:
             for name in sorted(os.listdir(folder)):
                 if name.endswith(".sh"):
                     os.chmod(os.path.join(folder, name), 0o755)
-    # Template version stamp (bootstrap install.sh normally writes it first).
+    # Machine-readable agent roster -- the runtime offload config.
+    agents_json = os.path.join(out_dir, "docs", "agents.json")
+    os.makedirs(os.path.dirname(agents_json), exist_ok=True)
+    payload = {"schema": 1,
+               "agents": [{"name": a["name"], "status": a["status"],
+                           "roles": AGENT_ROLES[a["name"]]}
+                          for a in ans["agents"]]}
+    with open(agents_json, "w", encoding="utf-8", newline="") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
+        f.write("\n")
+    # Template version stamp is ALWAYS written (upgrade-project depends on it),
+    # even when the roster has no claude-code (bootstrap normally writes it first).
     stamp = os.path.join(out_dir, ".claude", ".template-version")
     if not os.path.exists(stamp):
         os.makedirs(os.path.dirname(stamp), exist_ok=True)
@@ -388,16 +446,18 @@ def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str) -> 
                         os.path.join(out_dir, target_rel),
                         target_rel, ans, mapping, cond_dir)
             written += 1
-    post_steps(out_dir)
+    post_steps(out_dir, ans)
 
     leftovers = leftover_scan(out_dir)
     if leftovers:
         raise RenderError("unresolved placeholders survived the render "
                           "(fail closed):\n  - " + "\n  - ".join(leftovers))
+    roster = ",".join(f"{a['name']}({a['status'][0]})" for a in ans["agents"])
     print(f"rendered {written} files -> {out_dir} "
           f"[{ans['stack']['language']}; ai={'on' if ans['stack']['ai_features'] else 'off'}; "
           f"devcontainer={ans['stack']['uses_devcontainer']}; "
-          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}]")
+          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}; "
+          f"agents={roster}]")
     return 0
 
 

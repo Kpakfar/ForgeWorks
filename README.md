@@ -2,19 +2,19 @@
 
 > One command turns an empty folder into a structured, TDD-driven, security-gated project — built for **agentic coding**.
 
-**You don't need a senior engineering team to build like one.** Bring the idea — ForgeWorks wraps your AI coding agent in a senior team's discipline (planning, a real test pyramid, a security review, a second-opinion reviewer), so a product manager, a designer, or a first-week coder can turn a prompt into a product that's actually tested, secure, and shippable — not a throwaway demo.
+**Senior-team discipline for your AI coding agent.** You bring the idea plus working development and agentic-coding experience -- ForgeWorks wraps your agent in a senior team's discipline (planning, a real test pyramid, a security review, a second-opinion reviewer), so a solo developer can turn a prompt into a product that is actually tested, secure, and shippable -- not a throwaway demo. (If you have never driven an AI coding agent before, expect a learning curve: the machine enforces design memos, TDD, and security gates.)
 
 It is not a starter app. It installs the rules, specialist roles, and deterministic gates that make an AI coding agent produce code you can actually review, ship, and maintain. The core is stack-agnostic; your language and tooling are chosen in a short interview, not hard-coded.
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.5.0/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
 ## Why use it
 
-- **Works with any agentic coder.** The whole constitution lives in `AGENTS.md` (symlinked to `CLAUDE.md`) — the cross-tool standard read by Claude Code, Codex, Cursor, opencode, and others. The rules and docs (`AGENTS.md`) are portable to any agent; the deep orchestration and local gates (subagents, hooks, MCP) run in Claude Code today, and other agents ignore the Claude-specific parts gracefully.
+- **Portable rules; enforcement is Claude Code today.** The whole constitution lives in `AGENTS.md` (symlinked to `CLAUDE.md`) — the cross-tool standard read by Claude Code, Codex, Cursor, opencode, and others. The rules and docs (`AGENTS.md`) are portable to any agent; the deep orchestration and local gates (subagents, hooks, MCP) run in Claude Code today, and other agents ignore the Claude-specific parts gracefully.
 - **Two agents, two perspectives.** Drive with your primary agent and bring a **second one as an independent reviewer** — e.g. **Codex** (opt in during setup) — for a genuine second opinion on important changes. Two models reviewing beats one.
 - **Plans from the heart, not lazily — on every slice.** A structured discovery — brainstorm the options, then grill the plan: core flow, riskiest assumption, non-goals, named test plan, a proactive "what's missing?" pass — is signed off *before* any code, for **every** feature and cycle, not just at setup. UI-heavy slices get a real mockup to approve *before* implementation.
 - **The whole test pyramid, at spec time.** Unit + functional/API + headless-browser e2e + security tests are named in the plan and written first (Red phase).
@@ -24,7 +24,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bo
 ## What you get
 
 - **`AGENTS.md` constitution** — architecture, security, test, planning, and design (mockup-over-ASCII) discipline, all in one source of truth.
-- **5 subagents** — `@test-spec-writer`, `@implementer`, `@code-reviewer` (+ optional Codex second opinion), `@security-reviewer`, `@tech-debt`.
+- **6 subagents** — `@test-spec-writer`, `@implementer`, `@code-reviewer` (+ optional Codex second opinion), `@security-reviewer`, `@tech-debt`, and `@utility` (haiku-pinned, for mechanical chores that should never burn expensive-model tokens).
 - **Deterministic gates** — a verify-only `qa` (plus a local `fix`), a supply-chain `deps-guard` hook, and CI (fast gate + separate e2e job).
 - **Living docs** — product vision, requirements, structure, gotchas, SECURITY, and a shared current-task scratchpad agents read and write.
 - **Batteries** — Context7 MCP for live library docs, an optional dev container, a green-on-first-run scaffold, a PR template, and a pre-commit config (Python profile only).
@@ -33,14 +33,14 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bo
 
 The main agent orchestrates the loop; `tdd` and `grill-me` (from `mattpocock/skills`) drive the methodology and planning. Two mandatory reviewers (code review always, security red-team on a canonical trigger) pair with the per-slice **Red → Green → Refactor → Review** loop; three optional workers isolate the heavier phases, and every shipped slice leaves a durable, hook-audited ship record. Tasks with no behavioral effect (typos, doc wording, formatting) skip the ceremony — anything that changes what the product does, however small, does not. The same gate runs locally (`Stop` + `PreToolUse` hooks that block a red build or an evidence-free ship) and in CI.
 
-![The ForgeWorks multi-agent TDD loop: a one-time bootstrap session, then a repeating seven-step cycle driven by an orchestration layer that dispatches five specialist subagents](docs/forgeworks-loop.png)
+![The ForgeWorks multi-agent TDD loop: a one-time bootstrap session, then a repeating seven-step cycle driven by an orchestration layer that dispatches six specialist subagents](docs/forgeworks-loop.png)
 
 ## Upgrade an existing project
 
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.5.0/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
@@ -58,7 +58,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v2.4.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v2.5.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 

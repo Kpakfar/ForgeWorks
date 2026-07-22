@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "date": "2026-07-12",
+  "agents": [{"name": "codex", "status": "installed"},
+             {"name": "antigravity", "status": "planned"}],
+  "project": {
+    "name": "Linkcheck",
+    "slug": "linkcheck",
+    "goal": "A CLI that finds dead links in a Markdown docs folder before they ship.",
+    "primary_user": "A docs maintainer who keeps finding broken links after release.",
+    "core_problem": "Dead links are only discovered by readers; existing checkers are heavyweight CI services when a fast local CLI would do.",
+    "core_journey": "1. The maintainer runs the CLI against a docs folder.\n2. The CLI scans every Markdown file and collects links.\n3. It reports dead links with file and line, exiting non-zero when any are found.",
+    "success_measure": "Running the CLI on a 200-file docs tree reports every dead link with file:line in under 30 seconds.",
+    "success_metrics": "- scan time on 200 files -- under 30 seconds\n- false positives per run -- zero on the reference docs tree",
+    "riskiest_assumption": "Concurrent HTTP checking is reliable enough to avoid false positives from rate-limited hosts.",
+    "req_ac_list": "- [ ] **REQ-AC1:** Running against a folder with one dead link exits non-zero and prints the link with file:line.\n- [ ] **REQ-AC2:** A fully healthy docs tree exits zero with a one-line summary.\n- [ ] **REQ-AC3:** Unreachable-host timeouts are retried once before being reported.",
+    "non_goals": "- No HTML or PDF scanning; Markdown only.\n- No CI service or hosted dashboard; local CLI only.",
+    "other_users": "- none identified yet",
+    "constraint_time": "Two-weekend side project.",
+    "constraint_cost": "No paid services; free tooling only.",
+    "constraint_data": "Only the user's local docs folder is read; nothing is uploaded.",
+    "first_milestone": "none set",
+    "deployment_target": "Local CLI installed from npm.",
+    "scale_expectations": "Single user, docs trees up to a few thousand files.",
+    "integrations": "- none",
+    "in_scope_list": "- Markdown link extraction across a folder tree.\n- Concurrent liveness checks with one retry.\n- file:line reporting and a non-zero exit on failures.",
+    "pain_point": "keeps finding broken links after release",
+    "product_category": "docs link checker CLI",
+    "current_alternative": "clicking links by hand or a heavyweight CI service",
+    "key_benefit": "catches dead links locally before they ship",
+    "key_differentiator": "one fast local command, no service to configure",
+    "positive_reference": null,
+    "negative_reference": null
+  },
+  "stack": {
+    "language": "typescript",
+    "has_frontend": "no",
+    "backend_framework": "none (CLI/library)",
+    "ai_features": [],
+    "vector_db": "none",
+    "llm_provider": "none",
+    "embeddings_model": "none",
+    "database": "none",
+    "uses_devcontainer": "no"
+  },
+  "security": {
+    "reads_untrusted": "no",
+    "holds_private_data": "no",
+    "acts_outward": "no"
+  },
+  "opt_ins": {
+    "explanations": "no",
+    "seed_gotchas": "no",
+    "mem0": "no",
+    "codex_reviewer": "no"
+  }
+}

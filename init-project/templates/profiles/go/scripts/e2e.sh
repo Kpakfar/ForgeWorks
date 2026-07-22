@@ -18,7 +18,7 @@ cd "$(dirname "$0")/.."
 
 echo "==> end-to-end tests (build tag: e2e)"
 set +e
-out=$(go test -tags e2e ./... 2>&1)
+out=$(go test -race -tags e2e ./... 2>&1)
 code=$?
 set -e
 

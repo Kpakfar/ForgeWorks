@@ -1,0 +1,21 @@
+{
+  "agents": [
+    {
+      "name": "codex",
+      "roles": [
+        "second_opinion",
+        "heavy_batch"
+      ],
+      "status": "installed"
+    },
+    {
+      "name": "antigravity",
+      "roles": [
+        "second_opinion",
+        "heavy_batch"
+      ],
+      "status": "planned"
+    }
+  ],
+  "schema": 1
+}

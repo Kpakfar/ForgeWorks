@@ -1,0 +1,40 @@
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Testing / coverage
+coverage/
+.vitest/
+playwright-report/
+test-results/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# IDE
+.vscode/*
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude / agent state
+.claude/cache/
+.claude/state/
+.claude/skills/_user-data/
+
+# Logs
+*.log
+logs/
+
+# Project-specific
+# archived task logs (move to git history instead)
+docs/_log/
+# temp answers file from /init-project (deleted after Phase 5 verification)
+docs/_init-answers.*

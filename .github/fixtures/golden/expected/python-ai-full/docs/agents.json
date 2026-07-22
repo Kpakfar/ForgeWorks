@@ -1,0 +1,23 @@
+{
+  "agents": [
+    {
+      "name": "claude-code",
+      "roles": [
+        "orchestrator",
+        "utility",
+        "second_opinion",
+        "heavy_batch"
+      ],
+      "status": "installed"
+    },
+    {
+      "name": "codex",
+      "roles": [
+        "second_opinion",
+        "heavy_batch"
+      ],
+      "status": "installed"
+    }
+  ],
+  "schema": 1
+}

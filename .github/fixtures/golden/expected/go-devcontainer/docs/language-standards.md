@@ -25,7 +25,7 @@ The bundled command `bash scripts/qa.sh` **verifies only and changes no files**,
 | Lint (check) | golangci-lint | `golangci-lint run` |
 | Format (check) | gofmt | `gofmt -l .` |
 | Type-check | go build | `go build ./...` |
-| Tests (unit + functional) | go test | `go test ./...` |
+| Tests (unit + functional) | go test | `go test -race ./...` |
 
 To auto-repair formatting and safe lint issues locally, run `bash scripts/fix.sh` -- the mutating counterpart -- then review the diff and commit. Never run `fix` in CI or a review hook: the gate must verify, not repair.
 

@@ -56,14 +56,14 @@ Ask the user only for what you could not detect. Keep it to 2-3 questions.
 The template is `core/` (language-free) plus one `profiles/<lang>/`. Pull both the core and the project's own language profile (from Phase 1) into temp dirs to reconcile against:
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.4.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.4.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.4.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v2.5.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v2.5.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v2.5.0 /tmp/upgrade-skill --force
 ```
 
 Use the detected language for `<lang>` (`python`, `typescript`, `go`, or `rust`). Reconcile core into the project's universal files and the profile into its language files -- **never** pull a different language's profile (that is the cross-language leak the structure exists to prevent). If the project's language has no profile folder at this version (e.g. an experimental language), reconcile `core/` only and report that the toolchain is the user's to maintain. The conditional block texts (<ai-discipline>, <memory>, the Codex sections, the gotchas seed) live in `init-project/templates/conditional/` (since v2.3.0; older releases embedded them in SKILL.md Phase 4) -- reconcile AI/memory-conditional content against `/tmp/upgrade-skill/templates/conditional/`.
 
-Reconcile against this skill's own released version (`v2.4.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
+Reconcile against this skill's own released version (`v2.5.0`), not `main`: installing the `vX.Y.Z` upgrade skill brings a project *up to* `vX.Y.Z` -- a versioned, reviewable target. (Each release bumps this ref; see the repo `AGENTS.md` release process.)
 
 ### Phase 3: Reconcile
 
@@ -77,12 +77,19 @@ Walk the template tree. For every template path, decide and act:
   *Special cases:*
   - `.claude/settings.json` -- if the project already has one, **merge** the `PreToolUse` hooks (deps-guard AND, since v2.1.0, `slice-audit.sh --hook`) into the existing `hooks` object; never replace the file (that would drop the project's own hooks). `slice-audit.sh` itself is placeholder-free: copy verbatim + `chmod +x`.
   - **AI fences** (same rule everywhere a template file carries them): if the project uses AI, delete only the marker lines and keep the content; if not, delete the fenced blocks entirely. Current fences: `<!-- AI-SECURITY-START/END -->` + `<!-- AI-REDTEAM-START/END -->` in `docs/SECURITY.md`, `<!-- AI-FEATURES-START/END -->` in `docs/requirements.md`, `<!-- AI-IMPL-START/END -->` in `.claude/agents/implementer.md`, `<!-- AI-REVIEW-START/END -->` in `.claude/agents/code-reviewer.md`.
+  - **CC fences** (since v2.5.0; same mechanic as AI fences but keyed on "claude-code in the project's agent roster" instead of AI-features): if claude-code is in the roster, delete only the marker lines and keep the content; if not, delete the fenced blocks entirely. Current fence: `<!-- CC-TREE-START/END -->` around the roster-dependent `.claude/` entries in `docs/structure.txt` (`.claude/hooks/slice-audit.sh` stays outside the fence -- it ships for every roster).
   - **Manifest `.example` suffix** (Python): the template ships `pyproject.toml.example` so the template repo's own tooling ignores it. A generated project already has a real `pyproject.toml` -- never copy the `.example` file in as "absent"; treat it as the merge source for the existing manifest (Phase 3-C), not a new file.
   - **Profile files come from the project's OWN profile** (Phase 2 pulled `profiles/<lang>/`). Copy them verbatim where absent -- including that language's real `scripts/` (Python, Go, and Rust have `scripts/e2e.sh`; TypeScript runs e2e via an `npm run e2e` script in `package.json`). Never substitute another language's runner or a stub for a complete profile; the Go and Rust profiles have real e2e runners.
   - `.claude/hooks/quality-gate.sh` -- carries `{{QA_COMMAND}}`, which IS recoverable (Phase 1). If the hook is missing, substitute the recovered command and copy it; never report it as manual.
   - **Discovery placeholders (interview-sourced) in an absent file** (e.g. `{{SUCCESS_MEASURE}}`, `{{NON_GOALS}}`, `{{REQ_AC_LIST}}`, the positioning and constraints values): do NOT report "add manually" and do NOT half-write `{{...}}`. Queue the file for the Phase 3-D mini-interview.
   - **.devcontainer/** -- respect the project's original opt-out: if the project has no .devcontainer/, do not copy it in as "absent"; note the availability once in the report instead.
   - **Renamed/reshaped placeholders** -- when a template file's placeholder changed name or shape between versions (e.g. a commented step replaced by a rendered one), recover the concrete value from the project's already-rendered copy of that file (it holds the substituted value) before falling back to the mini-interview. Do not punt.
+  - `docs/agents.md` + `docs/agents.json` (v2.5.0): these carry the interview's
+    B13 roster, which CANNOT be recovered from an existing project. Do not
+    copy the template versions (they contain `{{AGENT_MATRIX}}` / derive from
+    answers). Report them as missing and point the user at `/select-agents`
+    (installed by this upgrade when the project uses Claude Code) to create
+    both files interactively.
 
 **B. File PRESENT in both (merge target).** Compare the template version against the project's. Insert what is new, preserve what the project filled in. Never blow away the project's content.
 - **`AGENTS.md`** -- deterministic via FW-BLOCK markers. Since v2.0.0 every rule block in the template is wrapped in `<!-- FW-BLOCK: <name> vX.Y.Z -->` ... `<!-- /FW-BLOCK: <name> -->`. Reconcile by marker, not judgment:
@@ -113,6 +120,10 @@ The high-value deltas per language:
 - **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present. *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
 - **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`. *(since v2.1.1)* ensure `eslint.config.js` carries the `max-lines` rule (`['error', { max: 200, skipBlankLines: false, skipComments: false }]`) -- graft the rule object from the fetched profile config if absent.
 - **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it). *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
+- Go (v2.5.0): the race detector joined the gate. In `scripts/qa.sh`, step 5
+  becomes `go test -race ./...`; in `scripts/e2e.sh` the run line becomes
+  `out=$(go test -race -tags e2e ./... 2>&1)`. Apply if the project's scripts
+  still run without `-race`.
 - **Rust** -- ensure `scripts/qa.sh` runs the full verify chain in order (`scripts/linecap.sh` -- the mechanical 200-line cap, exceptions in a committed `.linecap-ignore` -- then `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check`, `cargo test`); e2e tests are `#[ignore]`-tagged in `tests/e2e.rs` and run only via `scripts/e2e.sh` (`cargo test --test e2e -- --ignored`), never in the fast gate; `rust-toolchain.toml` pins the toolchain (channel + `clippy`/`rustfmt` components); and CI sets up Rust via the SHA-pinned `actions-rust-lang/setup-rust-toolchain` action with `rustflags: ""` (the scripts alone define strictness).
 Show each proposed change against the project's current file before applying; don't overwrite hand-edits. For an experimental language with no profile, leave clearly-marked TODOs and report them.
 

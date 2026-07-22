@@ -242,9 +242,39 @@ Yes / No. Default: No. Link: https://github.com/mem0ai/mem0
 
 #### B12. Codex as a second-opinion reviewer (opt-in)
 
+Ask ONLY if `codex` is in the B13 roster (B13 is asked first); otherwise record `"no"` silently.
+
 > "Do you have the Codex CLI available? If so, the code-reviewer can run an independent Codex pass for a second perspective on important changes."
 
 Yes / No. Default: No. If yes, the generated `code-reviewer` agent includes a step to invoke Codex and reconcile its findings.
+
+#### B13. Agent roster -- which agentic coders drive this project
+
+Asked BEFORE B12 in the conversation (B12 only applies when `codex` is in the
+roster; the numbering is historical).
+
+First PROBE, do not guess: check which agent CLIs are installed
+(`command -v codex`, `command -v cursor`, `command -v agy || command -v antigravity`,
+`command -v gemini`, plus any the user names -- matches the probe list in the
+`/select-agents` skill). Claude Code counts as installed when this interview
+runs inside it. Then ask:
+
+> "Which agentic coders will drive this project? (multi-select)
+>  - claude-code {installed?} -- full enforcement: subagents, hooks, /select-agents
+>  - codex {installed?} -- rules + dispatch target (codex exec)
+>  - antigravity {installed?} -- rules + dispatch target
+>  - cursor {installed?} -- rules, interactive second opinion
+>  - other -- rules only; roles assigned manually"
+
+Default: `claude-code` alone. At least one required. A selected agent that is
+not installed is recorded with `"status": "planned"`. The roster lands in the
+answers file as the top-level `agents` list and, after render, lives on as the
+RUNTIME config `docs/agents.json` (+ the `docs/agents.md` matrix) -- changeable
+any time via `/select-agents`, never frozen at bootstrap.
+
+If `claude-code` is NOT selected: warn that the enforcement stack (subagents,
+hooks, settings, skills) will not be generated, and that the bootstrap-installed
+files under `.claude/skills/` are inert and safe to delete after Phase 5.
 
 ### Phase 3: Confirm the plan -- show the filled docs, not a settings list
 
@@ -265,7 +295,7 @@ to the user BEFORE generating -- surprises must surface here, not after:
 > Stack: {language}, frontend {answer}, backend {answer}, DB {answer},
 > AI {list or none}, LLM {provider or none}, dev container {yes/no},
 > security profile {three answers}{trifecta warning if all three},
-> opt-ins: memos {y/n}, gotchas seed {y/n}, mem0 {y/n}, Codex {y/n}.
+> opt-ins: memos {y/n}, gotchas seed {y/n}, mem0 {y/n}, Codex {y/n}; agents: {roster with installed/planned marks}.
 >
 > This will create approximately {N} files. Proceed?"
 
@@ -286,7 +316,7 @@ the renderer:
 
 - `templates/core/` -- language-free files every project gets (AGENTS.md, docs/, `.mcp.json`, the CI workflow shape, PR template, README, .env.example, `.claude/`).
 - `templates/profiles/<language>/` -- the chosen language's files (manifest, toolchain config, `scripts/` or package scripts, the green scaffold, `.gitignore`, dev container, and -- Python only -- a pre-commit config), plus `profile.json`: the machine-readable toolchain values the renderer substitutes. `profile.json` is renderer input only and never lands in the generated project. Keep it in sync with the YAML block in `<language-profiles>` below (CI cross-checks the load-bearing values).
-- `templates/conditional/` -- the canonical texts of the conditional blocks: `ai-discipline.md`, `memory-block.md`, `memory-doc-line.md`, `codex-review-step.md`, `codex-roster-note.md`, `gotchas-seed.md`. Edit them THERE; this file only points at them.
+- `templates/conditional/` -- the canonical texts of the conditional blocks: `ai-discipline.md`, `memory-block.md`, `memory-doc-line.md`, `codex-review-step.md`, `codex-roster-note.md`, `gotchas-seed.md`, the per-agent roster snippets under `agents/`, and the roster-wide `agents/no-claude-note.md` (rendered when `claude-code` is absent). Edit them THERE; this file only points at them.
 
 **Step 1 -- write the answers file** at `docs/_init-answers.json`, exactly in
 this schema. All four sections and every key are required; yes/no fields are the
@@ -297,6 +327,7 @@ abbreviated -- yours carry the real interview content):
 {
   "schema": 1,
   "date": "2026-07-12",
+  "agents": [{"name": "claude-code", "status": "installed"}],
   "project": {
     "name": "Recipe Radar",
     "slug": "recipe-radar",
@@ -358,6 +389,7 @@ Field rules the renderer enforces (it fails closed with a precise message):
 - Free-text answers land verbatim in prose files (and escaped in JSON/TOML), so any characters are fine EXCEPT HTML comment markers (`<!--`/`-->`) and `{{UPPER_SNAKE}}`-shaped text, which the renderer rejects.
 - Rule zero still holds: no bare `TODO` in any answer. The only allowed form is `TODO(interview-skipped)` when the user explicitly refused a question. `date` is today, ISO format.
 - `vector_db`, `llm_provider`, `embeddings_model`, `database`, `backend_framework`: write `none` (or `none (CLI/library)` for the framework) when not applicable.
+- `agents` (top-level): non-empty list of `{"name", "status"}`; `name` one of `claude-code` / `codex` / `antigravity` / `cursor` / `other` (no duplicates), `status` `installed` or `planned`. `codex_reviewer: "yes"` requires `codex` in the roster.
 
 **Step 2 -- run the renderer** from the project root:
 
@@ -395,6 +427,9 @@ fixtures in the template repo CI:
 | 13 | Renames profile manifests shipped with an `.example` suffix (`pyproject.toml.example` -> `pyproject.toml`). Core files are never renamed (`.env.example` stays). |
 | 14 | Creates the `CLAUDE.md` -> `AGENTS.md` symlink (a one-line pointer file where symlinks are unavailable), `chmod +x` on `.claude/hooks/*.sh` and `scripts/*.sh`, and stamps `.claude/.template-version` (with this release's version) if the bootstrap `install.sh` did not already write it. |
 | 15 | Fails closed if any `{{...}}` placeholder survives anywhere in the output. |
+| 16 | B13: when `claude-code` is NOT in `agents`, the `.claude/` tree (agents, hooks, settings, skills) and the `CLAUDE.md` symlink are not generated -- EXCEPT `.claude/hooks/slice-audit.sh`, which ships for every roster (it is agent-neutral; the generated CI workflow invokes it as a plain script) and is `chmod +x`'d regardless. The `.claude/.template-version` stamp is always written. A `claude-code` entry with `"status": "planned"` still counts as selected for this rule -- the full tree is still generated; `status` only affects `docs/agents.json` and the matrix status note (rule 17). |
+| 17 | B13: renders `{{AGENT_MATRIX}}` in `docs/agents.md` from `templates/conditional/agents/<name>.md` (planned agents get a status note) and writes the machine-readable roster `docs/agents.json` (name, status, offload roles). When `claude-code` is NOT in `agents`, an honest-omission note (`templates/conditional/agents/no-claude-note.md`) is appended as the final section of `docs/agents.md`, spelling out what was skipped and that `docs/SECURITY.md` / `docs/language-standards.md` / `docs/structure.txt` mandates fall to the driving agent manually. |
+| 18 | CC fences (same mechanic as AI fences, rule 4, keyed on "claude-code in `agents`" instead of `ai_features`): claude-code present -> strips only the marker lines; absent -> deletes the whole fenced block. Current fence: `<!-- CC-TREE-START/END -->` around the roster-dependent `.claude/` entries in `docs/structure.txt` (`.claude/hooks/slice-audit.sh` is listed outside the fence since it ships for every roster). |
 
 Keep `docs/_init-answers.json` until Phase 5 verification passes, then delete it
 (`rm docs/_init-answers.json`) -- its content lives on in the rendered docs.
@@ -436,16 +471,30 @@ If `{{USES_DEVCONTAINER}}` is `yes`: append the capability deps to the manifest,
 First, confirm the **core** files (every project, every language) exist:
 
 ```bash
-test -f AGENTS.md && test -L CLAUDE.md && test -f README.md && test -f .env.example && \
-test -f .mcp.json && test -d .claude/agents && \
-test -f .claude/agents/security-reviewer.md && test -f .claude/agents/tech-debt.md && \
-test -f .claude/settings.json && test -f .claude/hooks/deps-guard.sh && \
-test -f .claude/hooks/slice-audit.sh && test -x .claude/hooks/slice-audit.sh && \
+test -f AGENTS.md && test -f README.md && test -f .env.example && \
+test -f .mcp.json && test -f .claude/.template-version && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
 test -d docs && test -f docs/PRODUCT_VISION.md && test -f docs/SECURITY.md && \
 test -f docs/language-standards.md && \
+test -f docs/agents.md && test -f docs/agents.json && \
 test -f docs/designs/README.md && test -f docs/probes/README.md && test -f docs/ships/README.md
 ```
+
+Then, ONLY when `claude-code` is in the B13 roster, confirm the enforcement
+tree landed:
+
+```bash
+test -L CLAUDE.md && test -d .claude/agents && \
+test -f .claude/agents/security-reviewer.md && test -f .claude/agents/tech-debt.md && \
+test -f .claude/agents/utility.md && \
+test -f .claude/settings.json && test -f .claude/hooks/deps-guard.sh && \
+test -f .claude/hooks/slice-audit.sh && test -x .claude/hooks/slice-audit.sh && \
+test -f .claude/skills/select-agents/SKILL.md
+```
+
+When `claude-code` is NOT in the roster: skip that block, and tell the user
+the bootstrap-installed `.claude/skills/` trees (init-project itself and the
+Phase 1 skill pack) are inert for their agents and safe to delete.
 
 Then confirm the chosen profile landed: its manifest (`{{MANIFEST_FILE}}`) exists, and the green-scaffold source + test exist (Python `src/example.py`+`tests/test_example.py`; TypeScript `src/example.ts`+`tests/example.test.ts`; Go `greet.go`+`greet_test.go`; Rust `src/lib.rs` (with its in-file unit test) + `tests/e2e.rs` + `rust-toolchain.toml`).
 
@@ -540,6 +589,7 @@ Any new placeholder must be added here, to the answers schema (or
 | `{{AI_DISCIPLINE_BLOCK}}` | Derived from B4 (`templates/conditional/ai-discipline.md`, or empty) |
 | `{{CODEX_REVIEW_STEP}}` | Derived from B12 -- `templates/conditional/codex-review-step.md`, or empty |
 | `{{CODEX_ROSTER_NOTE}}` | Derived from B12 -- `templates/conditional/codex-roster-note.md`, or empty |
+| `{{AGENT_MATRIX}}` | Derived from B13 -- per-agent sections from `templates/conditional/agents/`, joined |
 | `{{DATE}}` | today, ISO format (`date` in the answers file) |
 
 B9 (`explanations`), B10 (`seed_gotchas`), and B11 (`mem0`) have no placeholder of their own: they are switches in the answers file's `opt_ins` section that turn renderer rules 6-8 on or off. B8 (security profile) renders its three `yes`/`no` placeholders above and additionally seeds the threat model (renderer rule 10).
@@ -764,7 +814,7 @@ fix_command: "bash scripts/fix.sh"
 e2e_command: "bash scripts/e2e.sh"
 e2e_browser_install: ""   # Go e2e is API/CLI-level by default (no browser)
 test_runner: "go test"
-test_command: "go test ./..."
+test_command: "go test -race ./..."
 lint_tool: "golangci-lint"
 lint_command: "golangci-lint run"
 format_tool: "gofmt"
