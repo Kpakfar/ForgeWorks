@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "date": "2026-07-12",
+  "agents": [{"name": "claude-code", "status": "installed"},
+             {"name": "codex", "status": "installed"}],
   "project": {
     "name": "Recipe Radar",
     "slug": "recipe-radar",

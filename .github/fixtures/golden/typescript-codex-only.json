@@ -1,7 +1,8 @@
 {
   "schema": 1,
   "date": "2026-07-12",
-  "agents": [{"name": "claude-code", "status": "installed"}],
+  "agents": [{"name": "codex", "status": "installed"},
+             {"name": "antigravity", "status": "planned"}],
   "project": {
     "name": "Linkcheck",
     "slug": "linkcheck",
