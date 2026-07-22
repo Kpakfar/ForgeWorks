@@ -118,6 +118,67 @@ def profile_sync_check() -> list[str]:
     return problems
 
 
+# Cross-profile parity contract: every profile must carry evidence of each
+# quality capability. (relpath, needle) -- needle None means "file exists".
+# race/sanitizer applies only where the language has one (Go: -race).
+PARITY_CONTRACT = {
+    "python": [
+        ("scripts/qa.sh", "linecap.sh"),            # line cap
+        ("scripts/qa.sh", "ruff format --check"),   # format check
+        ("scripts/qa.sh", "ruff check"),             # lint as error
+        ("scripts/qa.sh", "mypy"),                  # type check
+        ("scripts/qa.sh", 'pytest -m "not e2e"'),   # unit gate
+        ("scripts/e2e.sh", "pytest"),               # e2e runner
+    ],
+    "typescript": [
+        ("eslint.config.js", "max-lines"),          # line cap (lint rule)
+        ("package.json", "prettier --check"),       # format check
+        ("package.json", "eslint ."),               # lint as error
+        ("package.json", "tsc --noEmit"),           # type check
+        ("package.json", "vitest run"),             # unit gate
+        ("package.json", "playwright test"),        # e2e runner
+    ],
+    "go": [
+        ("scripts/qa.sh", "linecap.sh"),
+        ("scripts/qa.sh", "gofmt -l"),
+        ("scripts/qa.sh", "golangci-lint run"),
+        ("scripts/qa.sh", "go vet"),
+        ("scripts/qa.sh", "go test -race ./..."),   # unit gate + race detector
+        ("scripts/e2e.sh", "go test -race -tags e2e"),
+    ],
+    "rust": [
+        ("scripts/qa.sh", "linecap.sh"),
+        ("scripts/qa.sh", "cargo fmt --check"),
+        ("scripts/qa.sh", "-D warnings"),           # clippy, warnings are errors
+        ("scripts/qa.sh", "cargo check"),
+        ("scripts/qa.sh", "cargo test"),
+        ("scripts/e2e.sh", "cargo test"),
+    ],
+}
+
+
+def parity_check() -> list[str]:
+    """Every language profile must prove every capability in the contract."""
+    problems: list[str] = []
+    profiles = sorted(os.listdir(os.path.join(TEMPLATES, "profiles")))
+    for lang in profiles:
+        if lang not in PARITY_CONTRACT:
+            problems.append(f"{lang}: profile has no PARITY_CONTRACT entry -- "
+                            "add one before shipping the profile")
+    for lang, rows in PARITY_CONTRACT.items():
+        base = os.path.join(TEMPLATES, "profiles", lang)
+        for relpath, needle in rows:
+            path = os.path.join(base, relpath)
+            if not os.path.isfile(path):
+                problems.append(f"{lang}: parity evidence file missing: {relpath}")
+                continue
+            with open(path, encoding="utf-8") as f:
+                content = f.read()
+            if needle is not None and needle not in content:
+                problems.append(f"{lang}/{relpath}: parity evidence missing: {needle!r}")
+    return problems
+
+
 def main() -> int:
     update = "--update" in sys.argv[1:]
     fixtures = sorted(f for f in os.listdir(FIXTURES) if f.endswith(".json"))
@@ -127,6 +188,9 @@ def main() -> int:
     rc = 0
     for problem in profile_sync_check():
         print(f"FAIL [profile-sync] {problem}")
+        rc = 1
+    for problem in parity_check():
+        print(f"FAIL [parity] {problem}")
         rc = 1
     for fixture in fixtures:
         name = fixture[:-len(".json")]
