@@ -83,6 +83,12 @@ Walk the template tree. For every template path, decide and act:
   - **Discovery placeholders (interview-sourced) in an absent file** (e.g. `{{SUCCESS_MEASURE}}`, `{{NON_GOALS}}`, `{{REQ_AC_LIST}}`, the positioning and constraints values): do NOT report "add manually" and do NOT half-write `{{...}}`. Queue the file for the Phase 3-D mini-interview.
   - **.devcontainer/** -- respect the project's original opt-out: if the project has no .devcontainer/, do not copy it in as "absent"; note the availability once in the report instead.
   - **Renamed/reshaped placeholders** -- when a template file's placeholder changed name or shape between versions (e.g. a commented step replaced by a rendered one), recover the concrete value from the project's already-rendered copy of that file (it holds the substituted value) before falling back to the mini-interview. Do not punt.
+  - `docs/agents.md` + `docs/agents.json` (v2.5.0): these carry the interview's
+    B13 roster, which CANNOT be recovered from an existing project. Do not
+    copy the template versions (they contain `{{AGENT_MATRIX}}` / derive from
+    answers). Report them as missing and point the user at `/select-agents`
+    (installed by this upgrade when the project uses Claude Code) to create
+    both files interactively.
 
 **B. File PRESENT in both (merge target).** Compare the template version against the project's. Insert what is new, preserve what the project filled in. Never blow away the project's content.
 - **`AGENTS.md`** -- deterministic via FW-BLOCK markers. Since v2.0.0 every rule block in the template is wrapped in `<!-- FW-BLOCK: <name> vX.Y.Z -->` ... `<!-- /FW-BLOCK: <name> -->`. Reconcile by marker, not judgment:
@@ -113,6 +119,10 @@ The high-value deltas per language:
 - **Python** -- ensure `e2e` + `security` pytest markers exist in `[tool.pytest.ini_options].markers` (with `--strict-markers` an unregistered marker breaks the gate); `pytest-playwright` in the dev group; the fast gate runs `pytest -m "not e2e"`; the separate `e2e` CI job is present. *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
 - **TypeScript** -- ensure `qa`/`fix`/`e2e` npm scripts and the non-vulnerable dev-dep set (e.g. `vitest` >= 3.2.6) match the current profile; devcontainer uses `npm install`. *(since v2.1.1)* ensure `eslint.config.js` carries the `max-lines` rule (`['error', { max: 200, skipBlankLines: false, skipComments: false }]`) -- graft the rule object from the fetched profile config if absent.
 - **Go** -- ensure `go.mod` targets a supported Go (>= 1.25) and CI installs the pinned `golangci-lint` (v2); `scripts/qa.sh` requires the linter (does not skip it). *(since v2.1.1)* copy `scripts/linecap.sh` from the fetched profile (placeholder-free, `chmod +x`) and ensure `scripts/qa.sh` runs it as its first step (the mechanical 200-line cap; exceptions live in a committed `.linecap-ignore`).
+- Go (v2.5.0): the race detector joined the gate. In `scripts/qa.sh`, step 5
+  becomes `go test -race ./...`; in `scripts/e2e.sh` the run line becomes
+  `out=$(go test -race -tags e2e ./... 2>&1)`. Apply if the project's scripts
+  still run without `-race`.
 - **Rust** -- ensure `scripts/qa.sh` runs the full verify chain in order (`scripts/linecap.sh` -- the mechanical 200-line cap, exceptions in a committed `.linecap-ignore` -- then `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check`, `cargo test`); e2e tests are `#[ignore]`-tagged in `tests/e2e.rs` and run only via `scripts/e2e.sh` (`cargo test --test e2e -- --ignored`), never in the fast gate; `rust-toolchain.toml` pins the toolchain (channel + `clippy`/`rustfmt` components); and CI sets up Rust via the SHA-pinned `actions-rust-lang/setup-rust-toolchain` action with `rustflags: ""` (the scripts alone define strictness).
 Show each proposed change against the project's current file before applying; don't overwrite hand-edits. For an experimental language with no profile, leave clearly-marked TODOs and report them.
 
