@@ -58,6 +58,22 @@ FREE_TEXT_PLACEHOLDERS = {
 
 NO_BROWSER_STEP = "# no browser needed for this project's e2e suite"
 
+# Offload roles each agent can cover in docs/agents.json. The file is a
+# RUNTIME config: users edit it (or run /select-agents) when the roster
+# changes mid-project; these are only the rendered starting values.
+AGENT_ROLES = {
+    "claude-code": ["orchestrator", "utility", "second_opinion", "heavy_batch"],
+    "codex": ["second_opinion", "heavy_batch"],
+    "antigravity": ["second_opinion", "heavy_batch"],
+    "cursor": ["second_opinion"],
+    "other": [],
+}
+
+
+def claude_selected(ans: dict) -> bool:
+    return any(a["name"] == "claude-code" for a in ans["agents"])
+
+
 # ------------------------------------------------------------------- mapping
 
 def _conditional(cond_dir: str, name: str) -> str:
@@ -92,6 +108,16 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
                         f"  run: {prof['e2e_browser_install']}")
     else:
         browser_step = NO_BROWSER_STEP
+
+    matrix_parts = []
+    for agent in ans["agents"]:
+        snippet = _conditional(cond_dir,
+                               os.path.join("agents", agent["name"] + ".md")).rstrip("\n")
+        if agent["status"] == "planned":
+            snippet += ("\n\n> Status: **planned** -- selected in the interview but not "
+                        "detected as installed. Run `/select-agents` (or edit "
+                        "`docs/agents.json`) once it is available.")
+        matrix_parts.append(snippet)
 
     mapping = {
         "PROJECT_NAME": p["name"], "PROJECT_GOAL": p["goal"],
@@ -128,6 +154,7 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
         "DATE": ans["date"],
         "AI_DISCIPLINE_BLOCK": (_conditional(cond_dir, "ai-discipline.md").rstrip("\n")
                                 if ai_on else ""),
+        "AGENT_MATRIX": "\n\n".join(matrix_parts),
         "MEMORY_DOC_LINE": (_conditional(cond_dir, "memory-doc-line.md").rstrip("\n") + "\n"
                             if mem0 else ""),
         "CODEX_REVIEW_STEP": (_conditional(cond_dir, "codex-review-step.md").rstrip("\n")
@@ -278,6 +305,8 @@ def skip_file(relpath: str, source: str, ans: dict) -> bool:
     parts = relpath.split(os.sep)
     if source == "profile" and relpath == "profile.json":
         return True  # renderer input, never part of a generated project
+    if (parts[0] == ".claude" and not claude_selected(ans)):
+        return True  # Claude Code not in the roster: no agents/hooks/skills/settings
     if parts[0] == ".devcontainer" and ans["stack"]["uses_devcontainer"] == "no":
         return True
     if parts[:2] == ["docs", "explanations"] and ans["opt_ins"]["explanations"] == "no":
@@ -314,16 +343,17 @@ def render_file(src: str, dst: str, relpath: str, ans: dict,
     shutil.copymode(src, dst)
 
 
-def post_steps(out_dir: str) -> None:
-    # CLAUDE.md -> AGENTS.md (pointer file where symlinks are unavailable).
+def post_steps(out_dir: str, ans: dict) -> None:
+    # CLAUDE.md -> AGENTS.md pointer only makes sense for a Claude Code roster.
     claude_md = os.path.join(out_dir, "CLAUDE.md")
-    if os.path.lexists(claude_md):
-        os.remove(claude_md)
-    try:
-        os.symlink("AGENTS.md", claude_md)
-    except (OSError, NotImplementedError):
-        with open(claude_md, "w", encoding="utf-8") as f:
-            f.write("# See @AGENTS.md\n")
+    if claude_selected(ans):
+        if os.path.lexists(claude_md):
+            os.remove(claude_md)
+        try:
+            os.symlink("AGENTS.md", claude_md)
+        except (OSError, NotImplementedError):
+            with open(claude_md, "w", encoding="utf-8") as f:
+                f.write("# See @AGENTS.md\n")
     # Shell runners and hooks must be executable.
     for sub in (os.path.join(".claude", "hooks"), "scripts"):
         folder = os.path.join(out_dir, sub)
@@ -331,7 +361,18 @@ def post_steps(out_dir: str) -> None:
             for name in sorted(os.listdir(folder)):
                 if name.endswith(".sh"):
                     os.chmod(os.path.join(folder, name), 0o755)
-    # Template version stamp (bootstrap install.sh normally writes it first).
+    # Machine-readable agent roster -- the runtime offload config.
+    agents_json = os.path.join(out_dir, "docs", "agents.json")
+    os.makedirs(os.path.dirname(agents_json), exist_ok=True)
+    payload = {"schema": 1,
+               "agents": [{"name": a["name"], "status": a["status"],
+                           "roles": AGENT_ROLES[a["name"]]}
+                          for a in ans["agents"]]}
+    with open(agents_json, "w", encoding="utf-8", newline="") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
+        f.write("\n")
+    # Template version stamp is ALWAYS written (upgrade-project depends on it),
+    # even when the roster has no claude-code (bootstrap normally writes it first).
     stamp = os.path.join(out_dir, ".claude", ".template-version")
     if not os.path.exists(stamp):
         os.makedirs(os.path.dirname(stamp), exist_ok=True)
@@ -388,16 +429,18 @@ def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str) -> 
                         os.path.join(out_dir, target_rel),
                         target_rel, ans, mapping, cond_dir)
             written += 1
-    post_steps(out_dir)
+    post_steps(out_dir, ans)
 
     leftovers = leftover_scan(out_dir)
     if leftovers:
         raise RenderError("unresolved placeholders survived the render "
                           "(fail closed):\n  - " + "\n  - ".join(leftovers))
+    roster = ",".join(f"{a['name']}({a['status'][0]})" for a in ans["agents"])
     print(f"rendered {written} files -> {out_dir} "
           f"[{ans['stack']['language']}; ai={'on' if ans['stack']['ai_features'] else 'off'}; "
           f"devcontainer={ans['stack']['uses_devcontainer']}; "
-          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}]")
+          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}; "
+          f"agents={roster}]")
     return 0
 
 
