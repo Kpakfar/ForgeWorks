@@ -31,12 +31,20 @@ tool does mechanically versus what is still future work.
 
 ## Known limitations / roadmap
 
-- **Supply-chain pinning is partial.** The `deps-guard` hook is a best-effort
-  guard, not a sandbox. Full SHA-pinning of GitHub Actions, container images, and
-  installers (e.g. the `uv` installer by checksum) is future work. (The Context7
-  MCP package is now pinned to a version.) The real controls today are lockfile
-  review and CI scanning.
-- **Cross-agent parity beyond `AGENTS.md` is future.** Other agents inherit the
-  rules and docs, but dedicated adapters that reproduce the Claude Code subagents,
-  hooks, and MCP orchestration elsewhere are not built.
+- **Supply-chain pinning is largely done (v2.4.0).** GitHub Actions are
+  SHA-pinned (with a CI job asserting it), dev-container base images are
+  digest-pinned, the `uv` installer is sha256-verified, and `degit` and the
+  Context7 MCP package are version-pinned. Remaining softness: the npm/npx
+  runtime itself and degit's fetch integrity are trusted; the `deps-guard`
+  hook stays a best-effort guard, not a sandbox.
+- **Cross-agent parity beyond rules + roster is future.** Since v2.5.0 the
+  interview selects the project's agent roster (B13), emits it as a runtime
+  config (`docs/agents.json` + `docs/agents.md`), and ships `/select-agents`
+  for mid-project changes. Other agents inherit the rules, docs, and roster;
+  dedicated adapters that reproduce the Claude Code subagents, hooks, and MCP
+  orchestration elsewhere are still not built.
 - Conditional prototype/mockup-skill install at bootstrap (v2 spec section 7): deferred -- the visual-design baseline in the generated `<design-discipline>` block covers mockup quality without a skill dependency; revisit if a canonical prototype skill lands in the default pack.
+- **Express/starter mode** (a lighter on-ramp with fewer gates) is deferred;
+  positioning is honest-copy-only for now.
+- **A 5-minute worked example** ("watch it build one real feature" walkthrough
+  doc) is deferred.

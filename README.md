@@ -2,7 +2,7 @@
 
 > One command turns an empty folder into a structured, TDD-driven, security-gated project — built for **agentic coding**.
 
-**You don't need a senior engineering team to build like one.** Bring the idea — ForgeWorks wraps your AI coding agent in a senior team's discipline (planning, a real test pyramid, a security review, a second-opinion reviewer), so a product manager, a designer, or a first-week coder can turn a prompt into a product that's actually tested, secure, and shippable — not a throwaway demo.
+**Senior-team discipline for your AI coding agent.** You bring the idea plus working development and agentic-coding experience -- ForgeWorks wraps your agent in a senior team's discipline (planning, a real test pyramid, a security review, a second-opinion reviewer), so a solo developer can turn a prompt into a product that is actually tested, secure, and shippable -- not a throwaway demo. (If you have never driven an AI coding agent before, expect a learning curve: the machine enforces design memos, TDD, and security gates.)
 
 It is not a starter app. It installs the rules, specialist roles, and deterministic gates that make an AI coding agent produce code you can actually review, ship, and maintain. The core is stack-agnostic; your language and tooling are chosen in a short interview, not hard-coded.
 
@@ -14,7 +14,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bo
 
 ## Why use it
 
-- **Works with any agentic coder.** The whole constitution lives in `AGENTS.md` (symlinked to `CLAUDE.md`) — the cross-tool standard read by Claude Code, Codex, Cursor, opencode, and others. The rules and docs (`AGENTS.md`) are portable to any agent; the deep orchestration and local gates (subagents, hooks, MCP) run in Claude Code today, and other agents ignore the Claude-specific parts gracefully.
+- **Portable rules; enforcement is Claude Code today.** The whole constitution lives in `AGENTS.md` (symlinked to `CLAUDE.md`) — the cross-tool standard read by Claude Code, Codex, Cursor, opencode, and others. The rules and docs (`AGENTS.md`) are portable to any agent; the deep orchestration and local gates (subagents, hooks, MCP) run in Claude Code today, and other agents ignore the Claude-specific parts gracefully.
 - **Two agents, two perspectives.** Drive with your primary agent and bring a **second one as an independent reviewer** — e.g. **Codex** (opt in during setup) — for a genuine second opinion on important changes. Two models reviewing beats one.
 - **Plans from the heart, not lazily — on every slice.** A structured discovery — brainstorm the options, then grill the plan: core flow, riskiest assumption, non-goals, named test plan, a proactive "what's missing?" pass — is signed off *before* any code, for **every** feature and cycle, not just at setup. UI-heavy slices get a real mockup to approve *before* implementation.
 - **The whole test pyramid, at spec time.** Unit + functional/API + headless-browser e2e + security tests are named in the plan and written first (Red phase).
@@ -24,7 +24,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v2.4.0/bo
 ## What you get
 
 - **`AGENTS.md` constitution** — architecture, security, test, planning, and design (mockup-over-ASCII) discipline, all in one source of truth.
-- **5 subagents** — `@test-spec-writer`, `@implementer`, `@code-reviewer` (+ optional Codex second opinion), `@security-reviewer`, `@tech-debt`.
+- **6 subagents** — `@test-spec-writer`, `@implementer`, `@code-reviewer` (+ optional Codex second opinion), `@security-reviewer`, `@tech-debt`, and `@utility` (haiku-pinned, for mechanical chores that should never burn expensive-model tokens).
 - **Deterministic gates** — a verify-only `qa` (plus a local `fix`), a supply-chain `deps-guard` hook, and CI (fast gate + separate e2e job).
 - **Living docs** — product vision, requirements, structure, gotchas, SECURITY, and a shared current-task scratchpad agents read and write.
 - **Batteries** — Context7 MCP for live library docs, an optional dev container, a green-on-first-run scaffold, a PR template, and a pre-commit config (Python profile only).
