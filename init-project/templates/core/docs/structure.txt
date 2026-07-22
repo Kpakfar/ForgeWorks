@@ -33,13 +33,17 @@ README.md
 (some language profiles add more here -- e.g. a pre-commit config; see docs/language-standards.md)
 
 Agent infrastructure:
+.mcp.json                          # MCP server config (Context7 for live library docs)
+AGENTS.md                          # the constitution (read first, every conversation)
+.claude/hooks/slice-audit.sh       # agent-neutral; CI runs it as a plain script for every roster
+<!-- CC-TREE-START -->
 .claude/agents/                    # subagents: test-spec-writer, implementer, code-reviewer, security-reviewer, tech-debt
 .claude/hooks/quality-gate.sh      # deterministic static+test gate (code-reviewer Stop event)
 .claude/hooks/deps-guard.sh        # supply-chain guard (PreToolUse): blocks unvetted dependency installs
 .claude/settings.json              # wires the deps-guard PreToolUse hook
-.mcp.json                          # MCP server config (Context7 for live library docs)
-AGENTS.md                          # the constitution (read first, every conversation)
+.claude/skills/select-agents/      # /select-agents skill: reconciles docs/agents.json when the roster changes
 CLAUDE.md                          # symlink to AGENTS.md (for Claude Code compatibility)
+<!-- CC-TREE-END -->
 
 CI:
 .github/workflows/qa.yml           # fast quality gate + separate e2e job, on PRs and pushes to main

@@ -160,13 +160,19 @@ PARITY_CONTRACT = {
 def parity_check() -> list[str]:
     """Every language profile must prove every capability in the contract."""
     problems: list[str] = []
-    profiles = sorted(os.listdir(os.path.join(TEMPLATES, "profiles")))
+    profiles_dir = os.path.join(TEMPLATES, "profiles")
+    profiles = sorted(d for d in os.listdir(profiles_dir)
+                      if os.path.isdir(os.path.join(profiles_dir, d)))
     for lang in profiles:
         if lang not in PARITY_CONTRACT:
             problems.append(f"{lang}: profile has no PARITY_CONTRACT entry -- "
                             "add one before shipping the profile")
     for lang, rows in PARITY_CONTRACT.items():
-        base = os.path.join(TEMPLATES, "profiles", lang)
+        base = os.path.join(profiles_dir, lang)
+        if not os.path.isdir(base):
+            problems.append(f"{lang}: PARITY_CONTRACT entry has no matching "
+                            f"profile folder at {base}")
+            continue
         for relpath, needle in rows:
             path = os.path.join(base, relpath)
             if not os.path.isfile(path):

@@ -38,8 +38,14 @@ from render_schema import (
 # already write one. Bump on release (see the repo AGENTS.md <release-process>).
 TEMPLATE_VERSION = "v2.5.0"
 
-FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
-FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
+AI_FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
+AI_FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
+
+# CC fences: same mechanics as AI fences, but keyed on "claude-code in the
+# agents roster" rather than ai_features -- used where a doc lists parts of
+# the .claude/ tree that only ship for a Claude Code roster (e.g. structure.txt).
+CC_FENCE_START_RE = re.compile(r"^\s*<!-- CC-[A-Z]+-START -->\s*$")
+CC_FENCE_END_RE = re.compile(r"^\s*<!-- CC-[A-Z]+-END -->\s*$")
 
 # Free-text (interview prose) placeholders may land verbatim only in Markdown
 # and plain-text files, or escaped into JSON/TOML. Anywhere else is an error --
@@ -118,6 +124,9 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
                         "detected as installed. Run `/select-agents` (or edit "
                         "`docs/agents.json`) once it is available.")
         matrix_parts.append(snippet)
+    if not claude_selected(ans):
+        matrix_parts.append(_conditional(
+            cond_dir, os.path.join("agents", "no-claude-note.md")).rstrip("\n"))
 
     mapping = {
         "PROJECT_NAME": p["name"], "PROJECT_GOAL": p["goal"],
@@ -226,18 +235,20 @@ def substitute(text: str, relpath: str, mapping: dict[str, str]) -> str:
     return PLACEHOLDER_RE.sub(repl, text)
 
 
-def apply_fences(text: str, keep_content: bool) -> str:
-    """AI-fence rule: AI project -> drop only the marker lines; no-AI project ->
-    drop the whole fenced block (collapsing a doubled blank line at the seam)."""
+def apply_fences(text: str, keep_content: bool, start_re: re.Pattern[str],
+                 end_re: re.Pattern[str]) -> str:
+    """Generic fence rule (shared by the AI and CC fence families): keep_content
+    -> drop only the marker lines; not keep_content -> drop the whole fenced
+    block (collapsing a doubled blank line at the seam)."""
     out: list[str] = []
     lines = text.splitlines(keepends=True)
     i = 0
     while i < len(lines):
-        if keep_content and (FENCE_START_RE.match(lines[i]) or FENCE_END_RE.match(lines[i])):
+        if keep_content and (start_re.match(lines[i]) or end_re.match(lines[i])):
             i += 1
             continue
-        if not keep_content and FENCE_START_RE.match(lines[i]):
-            while i < len(lines) and not FENCE_END_RE.match(lines[i]):
+        if not keep_content and start_re.match(lines[i]):
+            while i < len(lines) and not end_re.match(lines[i]):
                 i += 1
             i += 1  # the END marker line
             if (out and not out[-1].strip()
@@ -305,6 +316,9 @@ def skip_file(relpath: str, source: str, ans: dict) -> bool:
     parts = relpath.split(os.sep)
     if source == "profile" and relpath == "profile.json":
         return True  # renderer input, never part of a generated project
+    if relpath == os.path.join(".claude", "hooks", "slice-audit.sh"):
+        return False  # agent-neutral: CI invokes it as a plain script
+                      # (`bash .claude/hooks/slice-audit.sh`) regardless of roster
     if (parts[0] == ".claude" and not claude_selected(ans)):
         return True  # Claude Code not in the roster: no agents/hooks/skills/settings
     if parts[0] == ".devcontainer" and ans["stack"]["uses_devcontainer"] == "no":
@@ -335,7 +349,10 @@ def render_file(src: str, dst: str, relpath: str, ans: dict,
             f.write(raw)  # binary: copy verbatim
         shutil.copymode(src, dst)
         return
-    text = apply_fences(text, keep_content=bool(ans["stack"]["ai_features"]))
+    text = apply_fences(text, keep_content=bool(ans["stack"]["ai_features"]),
+                        start_re=AI_FENCE_START_RE, end_re=AI_FENCE_END_RE)
+    text = apply_fences(text, keep_content=claude_selected(ans),
+                        start_re=CC_FENCE_START_RE, end_re=CC_FENCE_END_RE)
     text = substitute(text, relpath, mapping)
     text = apply_insertions(text, relpath, ans, cond_dir)
     with open(dst, "w", encoding="utf-8", newline="") as f:
