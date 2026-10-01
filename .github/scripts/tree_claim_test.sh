@@ -37,6 +37,22 @@ check "second session test run"        0 '{"session_id":"BBB","tool_name":"Bash"
 check "second session opens its own worktree" 0 '{"session_id":"BBB","tool_name":"Bash","tool_input":{"command":"git worktree add ../wt -b feat/x"}}'
 check "no session id fails open"       0 '{"tool_name":"Edit","tool_input":{"file_path":"a"}}'
 
+# The way out has to work. A session that moved into a worktree is judged
+# against THAT tree's claim, though CLAUDE_PROJECT_DIR still names the checkout
+# it was launched from. A path outside the repository is not guarded at all.
+wt="$tree/.claude/worktrees/w1"
+git -C "$tree" worktree add -q "$wt" -b w1
+outside=$(mktemp -d)
+check "second session Edit in its own worktree"  0 '{"session_id":"BBB","cwd":"'"$wt"'","tool_name":"Edit","tool_input":{"file_path":"'"$wt"'/a"}}'
+check "second session new dir in its worktree"   0 '{"session_id":"BBB","cwd":"'"$wt"'","tool_name":"Write","tool_input":{"file_path":"'"$wt"'/new/dir/a"}}'
+check "second session commit in its worktree"    0 '{"session_id":"BBB","cwd":"'"$wt"'","tool_name":"Bash","tool_input":{"command":"git commit -m x"}}'
+check "worktree session still blocked on primary" 2 '{"session_id":"BBB","cwd":"'"$wt"'","tool_name":"Edit","tool_input":{"file_path":"'"$tree"'/a"}}'
+check "third session blocked in a claimed worktree" 2 '{"session_id":"CCC","cwd":"'"$wt"'","tool_name":"Edit","tool_input":{"file_path":"'"$wt"'/a"}}'
+check "owner still owns the primary"             0 '{"session_id":"AAA","cwd":"'"$tree"'","tool_name":"Edit","tool_input":{"file_path":"'"$tree"'/a"}}'
+check "write outside the repository not guarded" 0 '{"session_id":"BBB","cwd":"'"$tree"'","tool_name":"Write","tool_input":{"file_path":"'"$outside"'/a"}}'
+[ ! -e "$outside/.claude" ] || { echo "FAIL  hook wrote a claim outside the repository"; rc=1; }
+rm -rf "$outside"
+
 # A claim nobody has refreshed for longer than the TTL is taken over, so a
 # closed or crashed session never leaves the tree locked.
 touch -d "2020-01-01" "$tree/.claude/.tree-claim" 2>/dev/null \

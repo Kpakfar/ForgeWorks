@@ -1,5 +1,5 @@
 {
-  "$comment": "Project hooks. Enforcement belongs in hooks, not prompts. The deps-guard PreToolUse hook enforces supply-chain checks deterministically; the tree-claim PreToolUse hook keeps a second session opened in the same directory from writing over the first. The static+test quality gate is enforced by the reviewer subagent's Stop hook (see .claude/agents/reviewer.md) and by CI.",
+  "$comment": "Project hooks. Enforcement belongs in hooks, not prompts. The deps-guard PreToolUse hook enforces supply-chain checks deterministically; the tree-claim PreToolUse hook keeps a second session opened in the same directory from writing over the first, and sends it into its own worktree. The static+test quality gate is enforced by the reviewer subagent's Stop hook (see .claude/agents/reviewer.md) and by CI.",
   "hooks": {
     "PreToolUse": [
       {

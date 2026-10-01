@@ -97,8 +97,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: tree-claim blocks a second session and takes a stale claim over
+      - name: tree-claim blocks a second session, frees it in its own worktree, takes a stale claim over
         run: bash .github/scripts/tree_claim_test.sh
+
+  land:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: land.sh rebases and fast-forwards, and never overwrites the base checkout
+        run: bash .github/scripts/land_test.sh
 
   skills-doctor:
     runs-on: ubuntu-latest

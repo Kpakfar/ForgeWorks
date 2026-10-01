@@ -13,7 +13,18 @@ git rev-parse --verify --quiet "$BASE" >/dev/null || { echo "factory-doctor: bas
 
 echo "== worktrees =="
 git worktree prune
-git worktree list
+# One line per tree: what removing it would lose. Listed, never removed -- a
+# session may still be standing in it.
+git worktree list --porcelain | sed -n 's/^worktree //p' | while IFS= read -r tree; do
+  br=$(git -C "$tree" symbolic-ref --quiet --short HEAD 2>/dev/null || echo "detached")
+  ahead=$(git -C "$tree" rev-list --count "$BASE..HEAD" 2>/dev/null || echo "?")
+  dirty=$(git -C "$tree" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$br" = "$BASE" ]; then state="the base"
+  elif [ "$ahead" = "0" ] && [ "$dirty" = "0" ]; then state="nothing unlanded -- safe to remove"
+  else state="${ahead} commit(s) not on $BASE, ${dirty} uncommitted file(s)"
+  fi
+  echo "  $tree [$br]: $state"
+done
 echo
 echo "== merged branches (safe to delete) =="
 git branch --merged "$BASE" | grep -vE '^\*|  '"$BASE"'$' || echo "  none"

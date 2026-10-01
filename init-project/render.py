@@ -36,7 +36,7 @@ from render_schema import (
 
 # Stamped into .claude/.template-version when the bootstrap install did not
 # already write one. Bump on release (see the repo AGENTS.md <release-process>).
-TEMPLATE_VERSION = "v5.0.0"
+TEMPLATE_VERSION = "v5.1.0"
 
 AI_FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
 AI_FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
@@ -337,6 +337,8 @@ def skip_file(relpath: str, source: str, ans: dict) -> bool:
         # (.claude/skills/ ships regardless -- plain-markdown procedures any
         # driving agent can read; only the Claude-specific mechanics they
         # invoke, e.g. subagents/hooks, are unavailable without Claude Code)
+    if relpath == ".worktreeinclude" and not claude_selected(ans):
+        return True  # read only by Claude Code, when it creates a worktree
     if parts[0] == ".devcontainer" and ans["stack"]["uses_devcontainer"] == "no":
         return True
     if parts[:2] == ["docs", "explanations"] and ans["opt_ins"]["explanations"] == "no":

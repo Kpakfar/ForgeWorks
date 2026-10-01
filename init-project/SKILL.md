@@ -33,7 +33,8 @@ jobs, plus a PR template), `docs/` (PRD, `features.json` and its
 writing, plans/, probes/, agents; `design/` for frontend projects),
 `scripts/` (`feature.py`, `resume.py`, `features_check.py`, `dup_check.py`,
 `tamper_check.py`, `prune.py`, `backlog.py`, `factory_doctor.sh`,
-`skills_doctor.py`), `README.md`, `.env.example`, an optional
+`land.sh`, `skills_doctor.py`), `README.md`, `.env.example`,
+`.worktreeinclude` (Claude Code roster), an optional
 `.devcontainer/`, and the language's manifest, runners (`qa`, `fix`, `e2e`),
 and green scaffold.
 
@@ -283,7 +284,8 @@ When `claude-code` is in the roster:
 ```bash
 test -L CLAUDE.md && test -f .claude/agents/reviewer.md && \
 test -f .claude/agents/utility.md && test -f .claude/settings.json && \
-test -f .claude/hooks/deps-guard.sh && test -f .claude/hooks/tree-claim.sh
+test -f .claude/hooks/deps-guard.sh && test -f .claude/hooks/tree-claim.sh && \
+test -f .worktreeinclude
 ```
 
 Otherwise tell the user the Phase 1 upstream skills are inert for their
