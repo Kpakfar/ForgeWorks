@@ -1,0 +1,3 @@
+# Gitignored files that Claude Code copies into each new worktree, so a session
+# in its own tree starts with the same local config. .gitignore syntax.
+.env

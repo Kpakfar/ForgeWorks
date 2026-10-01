@@ -8,7 +8,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.0.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.1.0/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -27,6 +27,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.
 - **2 subagents** — `@reviewer` (the single fresh-context REVIEW pass — plan conformance, correctness, design fidelity, and security in one lens set, + optional Codex second opinion) and `@utility` (haiku-pinned, for mechanical chores that should never burn expensive-model tokens). There is no implementer subagent — main context drives GRILL and GREEN itself.
 - **Skills** — `iteration` (the one per-feature workflow: GRILL -> RED -> GREEN -> REVIEW -> MERGE, chores skip straight to green), `security-review` (the trigger + procedure), and `tech-debt` (on-demand sweep).
 - **Deterministic gates** — a verify-only `qa` (plus a local `fix`), a supply-chain `deps-guard` hook, a `features.json`/`features_check.py` feature-list check, a `docs-budget` doc-size check (including the `AGENTS.md` character cap), a test-tamper guard, a `skills_doctor.py` instruction-stack check (one copy per skill name, no always-on SessionStart plugin, the real session-start inventory), and CI (fast gate + separate e2e job).
+- **A tree per session** — run several agent sessions on one project at once. The first session writes the main checkout; the `tree-claim` hook sends every later one into its own git worktree, and `bash scripts/land.sh` puts its commits back on the base branch (rebase, then fast-forward; conflicts stop in the session that caused them). `scripts/factory_doctor.sh` lists the trees that are safe to remove.
 - **Living docs** — `docs/PRD.md`, the feature list (`docs/features.json`) with its human-readable `docs/BACKLOG.md` view, design docs, gotchas, and SECURITY. The loop's state (phase, next action, deviations) lives in each feature's entry, read and written by `scripts/feature.py`.
 - **Batteries** — Context7 MCP for live library docs, an optional dev container, a green-on-first-run scaffold, a PR template, and a pre-commit config (Python profile only).
 
@@ -41,7 +42,7 @@ A short conversation (at most 5 questions) drafts `docs/PRD.md`, the owner appro
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.0.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.1.0/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
@@ -59,7 +60,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v5.0.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v5.1.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 

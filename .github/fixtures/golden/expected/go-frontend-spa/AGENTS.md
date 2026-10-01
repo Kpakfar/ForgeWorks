@@ -20,9 +20,9 @@ Code style anchor: Pattern-match every file you write or modify to the single-bi
 </commands>
 <!-- /FW-BLOCK: commands -->
 
-<!-- FW-BLOCK: etiquette v5.0.0 -->
+<!-- FW-BLOCK: etiquette v5.1.0 -->
 <etiquette>
-Conventional Commits. One branch per feature; CI green before merge. One writer per branch, one session per working tree (the tree-claim hook enforces the second). Work inside this repo only unless asked.
+Conventional Commits. One branch per feature; CI green before merge. One writer per branch, one session per working tree. When the tree-claim hook blocks a write, do not ask and do not write elsewhere: move into your own worktree (`EnterWorktree`), continue there, and land with `bash scripts/land.sh`. Work inside this repo only unless asked.
 </etiquette>
 <!-- /FW-BLOCK: etiquette -->
 

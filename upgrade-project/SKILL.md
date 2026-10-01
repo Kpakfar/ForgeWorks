@@ -42,12 +42,12 @@ Recover from the project, ask only for what you cannot detect (2-3 questions at 
 ## Phase 2: Fetch the current template
 
 ```bash
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/core#v5.0.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/profiles/<lang>#v5.0.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project#v5.0.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/core#v5.1.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/profiles/<lang>#v5.1.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project#v5.1.0 /tmp/upgrade-skill --force
 ```
 
-Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.0.0`), not `main`.
+Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.1.0`), not `main`.
 
 ## Phase 3: Reconcile
 
@@ -90,6 +90,7 @@ Language-independent deltas, oldest first (each idempotent; skip what already la
   4. Delete `docs/archive/` after the same citation grep as 3-F.
   5. Replace the `docs-budget`, `checkpoint-budget`, and `resume-check` jobs in `qa.yml` with the fetched versions (this release changes the `AGENTS.md` cap from lines to characters and drops the retired files; show the diff).
   6. Replace the `iteration` skill (now `SKILL.md` plus `reference/dispatch.md`), `reviewer.md`, `utility.md`, `security-review`, `tech-debt`, `docs/plans/README.md`, and the PR template with the fetched versions; graft every `AGENTS.md` block at v5.0.0 through 3-B (all nine blocks changed: shorter, and the conflicts with the harness's own system prompt removed). A hand-edited `AGENTS.md` must land under the new character cap; delete stale sentences rather than rewrite them.
+- *Since v5.1.0 (a tree per session)*: replace `.claude/hooks/tree-claim.sh` with the fetched version (claude-code rosters). The old hook read the claim from the checkout the session was launched from, so a session that moved into its own worktree stayed blocked. Copy `scripts/land.sh`, and `.worktreeinclude` for claude-code rosters. Replace `scripts/factory_doctor.sh` and the `iteration` skill. Graft the `etiquette` block at v5.1.0 through 3-B.
 
 **E. Mini-interview.** Collect every queued interview-sourced placeholder, dedupe, ask only those questions in one message (using the Phase 2 wording from `init-project/SKILL.md`), substitute, write. The upgrade ends with zero `{{...}}` on disk. A declined question writes `TODO(interview-skipped)`.
 

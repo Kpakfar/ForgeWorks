@@ -82,8 +82,8 @@ hit stops and asks in the `<communication>` cap-hit shape.
 ## 5. MERGE
 
 1. `uv run qa`, `bash scripts/e2e.sh`, `python3 scripts/features_check.py` green.
-2. Merge to main; delete the branch; `bash scripts/factory_doctor.sh`
-   reports no worktree left behind.
+2. Merge to main (from a worktree: `bash scripts/land.sh`); delete the
+   branch; `bash scripts/factory_doctor.sh` reports no worktree left behind.
 3. `status=done` (cited tests exist and pass, a hard rule). Move what still
    changes a future decision: a lesson to `docs/gotchas.md`, a security
    delta to `docs/SECURITY.md`, owed work to `notes` or a new todo entry.
