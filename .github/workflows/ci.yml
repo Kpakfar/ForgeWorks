@@ -3,7 +3,8 @@ name: CI
 # Tests the ForgeWorks template itself. Generation is deterministic (the
 # interview writes an answers file; init-project/render.py renders it). What
 # CI proves:
-#   - sources        : shell/JSON syntax + the CLAUDE.md symlink + supply-chain pins.
+#   - sources        : shell/JSON syntax + the CLAUDE.md symlink + supply-chain pins
+#                      + release refs (pins match VERSION, slugs match this repo).
 #   - render-smoke   : core + each profile substitutes with NO leftover placeholders.
 #   - golden-fixtures: render.py output is byte-for-byte identical to the committed
 #                      expected trees across the answer matrix (AI/devcontainer/
@@ -50,6 +51,10 @@ jobs:
             || { echo "CLAUDE.md must be a symlink -> AGENTS.md"; exit 1; }
       - name: Supply-chain pins (SHA-pinned uses:, no pipe-to-shell)
         run: bash .github/scripts/pin_check.sh
+      - name: Release refs (every pin is v<VERSION>, every slug is this repository)
+        env:
+          EXPECT_REPO: ${{ !github.event.repository.fork && github.repository || '' }}
+        run: bash .github/scripts/release_check.sh
 
   render-smoke:
     # Render core + each profile with safe values and assert NO leftover

@@ -30,7 +30,7 @@ project and inspect what landed. In an empty directory outside this repo:
 
 ```bash
 mkdir /tmp/forgeworks-smoke && cd /tmp/forgeworks-smoke && git init
-BRANCH=main bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/main/bootstrap/install.sh)
+BRANCH=main bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/main/bootstrap/install.sh)
 # open Claude Code, run /init-project, walk the interview, inspect the tree.
 ```
 

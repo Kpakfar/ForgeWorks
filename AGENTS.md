@@ -87,7 +87,7 @@ Beyond that, the way to fully validate an end-to-end change (bootstrap + intervi
 # release tag; to test UNRELEASED changes, override the ref with BRANCH=<branch>
 # (here, main) so install.sh fetches the skill from that branch instead of the tag.
 mkdir /tmp/template-smoke && cd /tmp/template-smoke && git init
-BRANCH=main bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/main/bootstrap/install.sh)
+BRANCH=main bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/main/bootstrap/install.sh)
 # Open Claude Code, run /init-project, walk through the interview.
 # Inspect the generated tree. Confirm:
 #   - all placeholders are substituted (no leftover {{...}} in committed files)
@@ -128,7 +128,9 @@ When you ship a change that affects the generated structure, cut a release:
 1. Bump `VERSION` (semver: breaking-for-old-projects = major, additive = minor).
 2. Update the pinned `vX.Y.Z` ref everywhere it appears: the `REF` default in `bootstrap/install.sh`, the reconcile ref + target version in `upgrade-project/SKILL.md`, the `TEMPLATE_VERSION` stamp fallback in `init-project/render.py`, and the documented one-liners in `README.md` and `docs/how-to-use.md`.
 3. Regenerate the golden expected trees (`python3 .github/scripts/golden_test.py --update`) -- the version stamp is part of the rendered bytes -- and commit them with the bump.
-4. Merge to `main` (PR per `<conventions>`), then tag the merge commit and push it: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+4. Merge to `main` (PR per `<conventions>`), then tag the merge commit and push it: `git tag vX.Y.Z && git push origin vX.Y.Z`. The published one-liner returns 404 until the tag is on the remote.
+
+Two gates hold this process. `.github/scripts/release_check.sh` runs in CI's `sources` job and fails when a pinned ref is not `v<VERSION>` or a repository slug is not this repository. The `release-tag` workflow runs it with `--remote-tag` on every push to `main` that does not change `VERSION`, on every pushed tag, and once a day; it fails while the tag `v<VERSION>` is missing from the remote.
 
 To test unreleased changes, override the pin with `BRANCH=main` (see `<testing-changes>`). Still-open supply-chain hardening (review finding #8, deferred): pin GitHub Actions to commit SHAs, pin the Context7 MCP package to a version, and verify the `uv` installer by checksum.
 </release-process>

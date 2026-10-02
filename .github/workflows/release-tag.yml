@@ -1,0 +1,42 @@
+name: Release tag
+
+# The published one-liner is pinned to the tag v<VERSION>. If that tag is not on
+# the remote, the one-liner returns 404. This workflow fails until the tag exists.
+#
+# A release merges first and tags second, so the push that changes VERSION is
+# skipped: its tag cannot exist yet. Every later push to main, each pushed tag,
+# and the daily run then require the tag.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 2
+      - name: Skip the push that changes VERSION
+        id: bump
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        run: |
+          if git diff --quiet HEAD^ HEAD -- VERSION; then
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION changed in this push; the tag comes next."
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Tag v<VERSION> is on the remote
+        if: steps.bump.outputs.bumped != 'true'
+        env:
+          EXPECT_REPO: ${{ !github.event.repository.fork && github.repository || '' }}
+        run: bash .github/scripts/release_check.sh --remote-tag

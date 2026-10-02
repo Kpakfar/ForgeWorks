@@ -31,4 +31,4 @@ is green from the first run. Replace them with your first feature.
   lives in `docs/plans/` only while its feature is being built and is
   deleted at merge; its decisions land in `features.json` and the commit.
 
-*Bootstrapped from [ForgeWorks](https://github.com/kp-multiverse/ForgeWorks).*
+*Bootstrapped from [ForgeWorks](https://github.com/Kpakfar/ForgeWorks).*

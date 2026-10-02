@@ -42,9 +42,9 @@ Recover from the project, ask only for what you cannot detect (2-3 questions at 
 ## Phase 2: Fetch the current template
 
 ```bash
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/core#v5.1.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project/templates/profiles/<lang>#v5.1.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 kp-multiverse/ForgeWorks/init-project#v5.1.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.1.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.1.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.1.0 /tmp/upgrade-skill --force
 ```
 
 Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.1.0`), not `main`.
