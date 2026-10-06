@@ -8,7 +8,7 @@ It is not a starter app. It installs the rules, specialist roles, and determinis
 
 ```bash
 mkdir my-project && cd my-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.1.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.1.0/bootstrap/install.sh)
 # then open your agent and run:  /init-project
 ```
 
@@ -42,7 +42,7 @@ A short conversation (at most 5 questions) drafts `docs/PRD.md`, the owner appro
 Run the **same command** inside it — `install.sh` detects a generated project and installs `/upgrade-project` instead of bootstrapping:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/kp-multiverse/ForgeWorks/v5.1.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.1.0/bootstrap/install.sh)
 # then run:  /upgrade-project
 ```
 
