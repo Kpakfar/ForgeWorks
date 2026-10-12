@@ -27,7 +27,7 @@ Conventional Commits. One branch per feature; CI green before merge. One writer 
 </etiquette>
 <!-- /FW-BLOCK: etiquette -->
 
-<!-- FW-BLOCK: hard-rules v5.0.0 -->
+<!-- FW-BLOCK: hard-rules v5.2.0 -->
 <hard-rules>
 Few and absolute:
 - Never weaken, skip, or delete a failing test to make a gate pass. A change to an existing test, fixture, or gate config states its reason in a `test-change:` line of the commit body; the tamper guard checks.
@@ -35,6 +35,7 @@ Few and absolute:
 - Never set a feature `done` unless its cited tests exist and pass. Never delete an entry: `status: dropped` with the reason in `notes`.
 - Work matching the `security-review` skill's trigger merges only after its security lens ran.
 - No state change without evidence: test output, the command run, or a screenshot path.
+- A hard-to-reverse action waits for the owner's yes, every time. The `iteration` skill lists them.
 </hard-rules>
 <!-- /FW-BLOCK: hard-rules -->
 

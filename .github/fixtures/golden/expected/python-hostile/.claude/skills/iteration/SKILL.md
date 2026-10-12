@@ -117,6 +117,25 @@ Merge to main (from a worktree: `bash scripts/land.sh`); delete the branch;
 `bash scripts/factory_doctor.sh` reports no worktree left behind. Then the
 merge report, three lines; "next up" is the entry REPLAN chose.
 
+## Owner gates -- what the GRILL approval does not cover
+
+The GRILL approval covers building this scope and merging it locally. It
+never covers an action that is hard to undo. Each of these stops and asks,
+every time, with one line saying what will happen and what is lost if it is
+wrong:
+
+- Deleting data, or files the plan did not name. (`scripts/prune.py`
+  deleting a closed feature's plan is not this: git keeps it.)
+- A migration that drops or rewrites stored data.
+- Pushing, opening or merging a pull request, tagging a release, deploying.
+- Publishing or sending anything outward: a post, an email, a message, a
+  package.
+- Moving money, or changing access, secrets, or billing.
+
+Name any such action in the plan's Decisions at GRILL so the owner sees it
+early. The yes is still asked at the moment of the action; an earlier
+"do all of it" does not count. Unsure whether an action belongs here? It does.
+
 ## Deviations and surprises
 
 Must deviate from the plan or mockup? Take the conservative option, append

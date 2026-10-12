@@ -32,9 +32,11 @@ is still future work. The history of each release is in the git log.
   ForgeWorks did not generate. Today `install.sh` stops in such a folder.
 - **Re-run the gate inside `land.sh`.** A rebase can break a green branch;
   today `land.sh` only tells the session to run the gate again.
-- **Blast-radius lanes.** Classify a feature at GRILL as contained, wide, or
-  hard to reverse. Hard-to-reverse work (migrations, deletions, money) would
-  keep an owner gate at MERGE; the rest would not need one.
+- **Enforce the owner gates by hook.** Since v5.2.0 a hard rule makes every
+  hard-to-reverse action (deleting data, a destructive migration, push,
+  publish, deploy, money) wait for the owner's yes. It is a rule the agent
+  follows, not a mechanism. A `PreToolUse` hook that blocks the matching
+  commands would make it one.
 - **Unit-scoped correction.** A reviewer finding returns one unit with its
   scope stated, so a fix cannot grow into an unreviewed diff.
 
