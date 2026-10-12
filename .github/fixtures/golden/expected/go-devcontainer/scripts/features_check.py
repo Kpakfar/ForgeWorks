@@ -4,8 +4,9 @@
 Checks: schema shape, unique F-ids, status/tier/phase enums, and the hard
 rules: a `done` feature must cite at least one test whose file exists, a
 `dropped` feature must carry a reason in `notes`, an `in-progress` feature
-carries its `phase` (and nothing else does), and a feature with a surface (not
-"none") may not leave todo without citing an existing mockup file under
+carries its `phase` and `next` (and nothing else does), `depends_on` names
+real ids and has no cycle, and a feature with a surface (not
+"none") may not leave GRILL without citing an existing mockup file under
 docs/design/mockups/ -- except a `dropped` feature, which never needed one.
 Test EXECUTION is the quality gate's job, not this script's. Run locally or in CI:
 
@@ -19,6 +20,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import backlog  # noqa: E402
+
 REQUIRED = ("id", "title", "intent", "serves", "acceptance", "tests", "status", "tier", "surface")
 STATUSES = {"todo", "in-progress", "done", "dropped"}
 TIERS = {"chore", "feature"}
@@ -28,14 +32,17 @@ PATH = os.path.join("docs", "features.json")
 PLANS = os.path.join("docs", "plans")
 
 
-def check(plans: bool = True) -> list[str]:
+def check(plans: bool = True, data: dict | None = None) -> list[str]:
     """`plans=False` skips the orphan-plan check: `feature.py` sets `done` one
-    step before `prune.py` deletes the plan, so that transition is legal."""
-    try:
-        with open(PATH, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, json.JSONDecodeError) as exc:
-        return [f"{PATH}: {exc}"]
+    step before `prune.py` deletes the plan, so that transition is legal.
+    `data` checks an in-memory list instead of the file, so `feature.py` can
+    validate an update before it writes it."""
+    if data is None:
+        try:
+            with open(PATH, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            return [f"{PATH}: {exc}"]
     feats = data.get("features")
     if not isinstance(feats, list) or not feats:
         return [f"{PATH}: 'features' must be a non-empty list"]
@@ -67,16 +74,23 @@ def check(plans: bool = True) -> list[str]:
             errors.append(f"{where}: in-progress needs phase in {sorted(PHASES)}")
         elif ft["status"] != "in-progress" and ("phase" in ft or "next" in ft):
             errors.append(f"{where}: phase/next only belong on an in-progress feature")
-        if "next" in ft and (not isinstance(ft["next"], str) or not ft["next"].strip()):
+        nxt = ft.get("next")
+        owed = "next" in ft or ft["status"] == "in-progress"
+        if owed and not (isinstance(nxt, str) and nxt.strip()):
             errors.append(f"{where}: next must be a non-empty string (the single next action)")
+        for key in ("decisions", "depends_on"):
+            vals = ft.get(key, [])
+            if not (isinstance(vals, list) and all(isinstance(v, str) and v.strip() for v in vals)):
+                errors.append(f"{where}: {key} must be a list of non-empty strings")
         surface = ft["surface"]
         if not isinstance(surface, str) or not surface.strip():
             errors.append(f"{where}: surface must be a non-empty string ('none' if not visual)")
-        elif surface != "none" and ft["status"] not in ("todo", "dropped"):
+        elif surface != "none" and ft["status"] not in ("todo", "dropped") and phase != "grill":
+            # GRILL is where the mockup gets built, so it is owed from RED on.
             mockup = ft.get("mockup")
             if not isinstance(mockup, str) or not mockup.strip():
                 errors.append(
-                    f"{where}: surface feature past todo needs a 'mockup' path "
+                    f"{where}: surface feature past GRILL needs a 'mockup' path "
                     f"(docs/design/mockups/...) -- no mockup, no code"
                 )
             elif os.path.isabs(mockup) or ".." in mockup.split(os.sep):
@@ -120,19 +134,15 @@ def check(plans: bool = True) -> list[str]:
             errors.append(f"{where}: notes must be a string")
         if ft["status"] == "dropped" and not str(notes or "").strip():
             errors.append(f"{where}: dropped without a reason in notes")
+    if not errors:
+        errors += backlog.dep_errors(feats)
     if plans:
         errors += orphan_plans(feats)
     return errors
 
 
 def orphan_plans(feats: list) -> list[str]:
-    """A plan outlives its feature only if someone forgot to delete it.
-
-    "Plans are deleted at merge" was workflow prose until this check existed: a
-    stale plan for a `done` feature that happened to fit under the size cap
-    survived forever, and a fresh session could load a decision record for work
-    that shipped months ago. The rule now has teeth.
-    """
+    """A plan outlives its feature only if someone forgot to delete it."""
     closed = {ft["id"] for ft in feats if ft["status"] in ("done", "dropped")}
     out = []
     if not os.path.isdir(PLANS):

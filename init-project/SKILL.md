@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: Bootstrap a new project through a short conversation (at most 5 questions; the agent infers the rest and states its defaults) that ends in an owner-approved one-page PRD, then renders the project deterministically -- AGENTS.md, the iteration/security-review/tech-debt skills, the reviewer and utility subagents with hooks, docs/ (PRD, machine-checked feature list, threat model, gotchas), CI, and the chosen language's toolchain with a green-on-first-run scaffold. Use whenever a project is uninitialized (no docs/features.json or .claude/agents/), when the user says "init", "bootstrap", "set up this project", "/init-project", or describes starting a new project. Pairs with the upstream `tdd` and `grill-me` skills from mattpocock/skills.
+description: Bootstrap a new project through a short conversation (at most 5 questions; the agent infers the rest and states its defaults) that ends in an owner-approved one-page PRD, then renders the project deterministically -- AGENTS.md, the iteration/security-review/tech-debt skills, the reviewer and utility subagents with hooks, docs/ (PRD, machine-checked feature list, threat model, gotchas), CI, and the chosen language's toolchain with a green-on-first-run scaffold. Use whenever a project is uninitialized (no docs/features.json or .claude/agents/), when the user says "init", "bootstrap", "set up this project", "/init-project", or describes starting a new project. The upstream `tdd` and `grill-me` skills from mattpocock/skills are optional companions.
 ---
 
 # init-project
@@ -45,26 +45,22 @@ and green scaffold.
 Ask: "I'm going to bootstrap this project. I'll ask a few questions about
 scope and stack, then generate the structure. Continue?" Wait for a yes.
 
-## Phase 1: Install the two upstream skills
+## Phase 1: Check the instruction stack
 
-```bash
-npx skills@latest add mattpocock/skills
-```
+The generated `iteration` skill holds the whole per-feature procedure, so
+nothing has to be installed. The upstream `tdd` and `grill-me` skills
+(`npx skills@latest add mattpocock/skills`) pair well with it; offer them
+once and accept a no.
 
-Pick `tdd` and `grill-me`. They are required: `grill-me` drives this
-interview and every feature's GRILL step; `tdd` drives RED/GREEN. If the
-user refuses, stop and explain that the loop cannot run without them.
-
-**One copy per process skill.** This install is the only source of `tdd` and
-`grill-me`. Ask which packs are enabled (`/plugin`); the `superpowers`
-plugin (which also injects a SessionStart hook into every session) and the
-`mattpocock-skills` plugin overlap and get disabled first. A field project
-lost a week to three TDD skills racing. Phase 5 runs `scripts/skills_doctor.py`
-to confirm.
+**One copy per process skill.** Ask which packs are enabled (`/plugin`). Two
+skills that both claim TDD or grilling make routing a race, and the generic
+copy wins: a field project lost a week to three TDD skills racing. The
+`superpowers` plugin also injects a SessionStart hook into every session.
+Phase 5 runs `scripts/skills_doctor.py` to confirm.
 
 ## Phase 2: The conversation (at most 5 questions)
 
-Run `grill-me` to drive it; if unavailable, mirror its style: probe
+Run `grill-me` to drive it when installed; otherwise mirror its style: probe
 assumptions, surface trade-offs, ask the follow-up. Collect answers into
 `docs/_init-answers.json` as you go (schema in Phase 4). Rule zero: nothing
 this conversation can elicit ships as a TODO. Vague answer? Grill it: "How
@@ -218,7 +214,7 @@ Rules the renderer enforces (it fails closed with a precise message):
 - No bare `TODO` in any answer; only `TODO(interview-skipped)`. `date` is today, ISO format.
 - `vector_db`, `llm_provider`, `embeddings_model`, `database`, `backend_framework`: `none` when not applicable.
 - `agents`: non-empty, no duplicates, names from the Phase 2 list, status `installed` or `planned`. `codex_reviewer: "yes"` requires `codex` in the roster.
-- `features`: non-empty. Each entry: `id` (`F000`-`F999`, unique), `title`, `intent`, `serves` (a `docs/PRD.md` section; cannot name one? question the feature), `acceptance` (non-empty), `tests` (`[]` at bootstrap), `status` (`todo`), `tier` (`chore` or `feature`), `surface`. Derive 3-7 features from the core journey, user-visible journey first; acceptance criteria from the conversation feed each `acceptance` array.
+- `features`: non-empty. Each entry: `id` (`F000`-`F999`, unique), `title`, `intent`, `serves` (a `docs/PRD.md` section; cannot name one? question the feature), `acceptance` (non-empty), `tests` (`[]` at bootstrap), `status` (`todo`), `tier` (`chore` or `feature`), `surface`, and optionally `depends_on` (ids of the features whose output this one consumes, each listed earlier in the array; name what crosses the edge or leave it out). Derive 3-7 features from the core journey, user-visible journey first; acceptance criteria from the conversation feed each `acceptance` array.
 - `design`: `references`, `tone`, `anti_reference` when `has_frontend` is not `"no"`; `null` otherwise.
 - `weight`: `"lite"` or `"full"`. Lite runs the e2e job at release tags instead of every push and makes the dup gate advisory; every hard rule is identical in both.
 
@@ -288,8 +284,7 @@ test -f .claude/hooks/deps-guard.sh && test -f .claude/hooks/tree-claim.sh && \
 test -f .worktreeinclude
 ```
 
-Otherwise tell the user the Phase 1 upstream skills are inert for their
-agents and safe to delete; the generated `.claude/skills/` procedures stay.
+When the roster has `codex` or `antigravity`: `test -e .agents/skills/iteration/SKILL.md`. If that fails, `.agents/skills` was already a real directory: link each generated skill into it (`ln -s ../../.claude/skills/<name> .agents/skills/<name>`).
 
 When the project has a frontend: `test -f docs/design/DESIGN.md`.
 
@@ -332,6 +327,5 @@ checks. Without it a red build can still be merged by pushing directly.
 - **The user cannot decide on a language.** Default to Python.
 - **The user wants to skip the interview.** Minimum: name, one-sentence goal, the core flow, one acceptance criterion. Everything else takes the default or `TODO(interview-skipped)`.
 - **Non-empty directory.** Refuse unless the user confirms after seeing what would be overwritten.
-- **Skill installation fails (no npm/node).** Stop; `tdd` and `grill-me` are required.
 - **Package manager missing.** Stop with the install link for `uv`, `npm`, `cargo`, or `go`.
 - **Context7 fails to start after bootstrap.** Check `npx`; if broken, note it in `docs/gotchas.md` and let the user fix npx or remove the entry from `.mcp.json`.

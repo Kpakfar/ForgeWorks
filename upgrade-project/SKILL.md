@@ -42,12 +42,12 @@ Recover from the project, ask only for what you cannot detect (2-3 questions at 
 ## Phase 2: Fetch the current template
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.1.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.1.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.1.0 /tmp/upgrade-skill --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.2.0 /tmp/upgrade-core --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.2.0 /tmp/upgrade-profile --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.2.0 /tmp/upgrade-skill --force
 ```
 
-Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.1.0`), not `main`.
+Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.2.0`), not `main`.
 
 ## Phase 3: Reconcile
 
@@ -91,6 +91,7 @@ Language-independent deltas, oldest first (each idempotent; skip what already la
   5. Replace the `docs-budget`, `checkpoint-budget`, and `resume-check` jobs in `qa.yml` with the fetched versions (this release changes the `AGENTS.md` cap from lines to characters and drops the retired files; show the diff).
   6. Replace the `iteration` skill (now `SKILL.md` plus `reference/dispatch.md`), `reviewer.md`, `utility.md`, `security-review`, `tech-debt`, `docs/plans/README.md`, and the PR template with the fetched versions; graft every `AGENTS.md` block at v5.0.0 through 3-B (all nine blocks changed: shorter, and the conflicts with the harness's own system prompt removed). A hand-edited `AGENTS.md` must land under the new character cap; delete stale sentences rather than rewrite them.
 - *Since v5.1.0 (a tree per session)*: replace `.claude/hooks/tree-claim.sh` with the fetched version (claude-code rosters). The old hook read the claim from the checkout the session was launched from, so a session that moved into its own worktree stayed blocked. Copy `scripts/land.sh`, and `.worktreeinclude` for claude-code rosters. Replace `scripts/factory_doctor.sh` and the `iteration` skill. Graft the `etiquette` block at v5.1.0 through 3-B.
+- *Since v5.2.0 (the outer loop)*: replace `scripts/feature.py`, `scripts/features_check.py`, `scripts/resume.py`, `scripts/backlog.py`, and `scripts/factory_doctor.sh` with the fetched versions (diff first). Entries gain two optional keys, `decisions` and `depends_on`; existing entries need no edit. An in-progress entry now needs `next`: set it with `python3 scripts/feature.py <id> next="..."` before running the check. Replace the `iteration` skill (branch at GRILL, and the new REPLAN step, which closes the feature and re-aims the backlog on the branch before the merge) and `docs/plans/README.md`; graft the `project` and `tiers` blocks at v5.2.0 through 3-B. When the roster has `codex` or `antigravity`, create the link `.agents/skills` -> `../.claude/skills` (if `.agents/skills` is already a real directory, link each generated skill into it instead: `ln -s ../../.claude/skills/<name> .agents/skills/<name>`) and refresh `docs/agents.md`. TypeScript: raise `vitest` to the profile's version (the old range pulls a vulnerable `tinypool`).
 
 **E. Mini-interview.** Collect every queued interview-sourced placeholder, dedupe, ask only those questions in one message (using the Phase 2 wording from `init-project/SKILL.md`), substitute, write. The upgrade ends with zero `{{...}}` on disk. A declined question writes `TODO(interview-skipped)`.
 

@@ -14,8 +14,6 @@
 #
 # Check 3 is a separate mode because a release merges first and tags second:
 # the commit that bumps VERSION has no tag yet. See .github/workflows/release-tag.yml.
-#
-# Not scanned: docs/superpowers/ (dated plans; they record the refs of their day).
 
 set -euo pipefail
 cd "$(dirname "$0")/../.."

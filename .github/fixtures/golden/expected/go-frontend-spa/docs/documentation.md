@@ -7,6 +7,7 @@ This project uses **Context7 MCP** (wired up in `.mcp.json`) as the primary tool
 - Always query the **pinned version** in `go.mod`, not "latest."
 - Use for any library whose API may have shifted since training cutoff.
 - If Context7 returns nothing useful, fall back to `WebFetch` and note the gap in `docs/gotchas.md`.
+- An agent that does not load `.mcp.json` gets the same lookups from the Context7 CLI: `npx -y ctx7@0.6.0 library <name>`, then `npx -y ctx7@0.6.0 docs <libraryId> "<question>"`.
 
 ## Library URLs
 
@@ -17,13 +18,3 @@ This project uses **Context7 MCP** (wired up in `.mcp.json`) as the primary tool
 - **Managing dependencies**: https://go.dev/doc/modules/managing-dependencies
 - **testing package**: https://pkg.go.dev/testing
 - **golangci-lint**: https://golangci-lint.run/
-
-## Notes for agents
-
-- Always query Context7 first. Training-data memory will be off for fast-moving libraries.
-- Some library APIs change frequently between minor versions. Verify before writing from memory.
-- When a library's API changes between minor versions, capture the lesson in `docs/gotchas.md`.
-
----
-
-*Add new entries here whenever a new library is introduced to the project.*

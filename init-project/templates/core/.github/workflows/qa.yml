@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     # FW-LITE-START
-    tags: ["v*"]  # lite weight: release tags trigger the e2e job below
+    tags: ['v*'] # lite weight: release tags trigger the e2e job below
     # FW-LITE-END
   pull_request:
 
@@ -172,7 +172,7 @@ jobs:
   dup-check:
     runs-on: ubuntu-latest
     # FW-LITE-START
-    continue-on-error: true  # lite weight: the dup gate reports, never blocks
+    continue-on-error: true # lite weight: the dup gate reports, never blocks
     # FW-LITE-END
     timeout-minutes: 5
     steps:

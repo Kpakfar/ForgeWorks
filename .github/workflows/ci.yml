@@ -127,6 +127,14 @@ jobs:
       - name: Loop state scripts on a rendered fixture
         run: bash .github/scripts/loop_scripts_test.sh
 
+  install-detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: install.sh bootstraps, upgrades, or stops on the right directories
+        run: bash .github/scripts/install_detect_test.sh
+
   line-cap:
     runs-on: ubuntu-latest
     steps:
@@ -169,6 +177,14 @@ jobs:
           npm run qa
           npm audit --audit-level=high
           npm run e2e
+      - name: A lite-weight render passes the same gate
+        run: |
+          python3 init-project/render.py --answers .github/fixtures/golden/typescript-minimal.json \
+            --core init-project/templates/core --profile init-project/templates/profiles/typescript \
+            --out /tmp/ts-lite
+          cd /tmp/ts-lite
+          npm install
+          npm run qa
       - name: eslint max-lines cap fires on a synthetic 201-line file
         run: |
           cd /tmp/ts

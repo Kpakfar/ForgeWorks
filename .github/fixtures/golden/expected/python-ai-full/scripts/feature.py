@@ -8,8 +8,11 @@
     python3 scripts/feature.py F012 notes+="deviation: kept sync I/O, plan said async"
     python3 scripts/feature.py F012 mockup=docs/design/mockups/F012-list.html
 
-Writable keys: status, phase, next, mockup, tests (+= appends one), notes
-(+= appends one line). `status`, `tier`, `phase` values are the enums
+    python3 scripts/feature.py F012 decisions+="owner said no to offline mode"
+    python3 scripts/feature.py F012 depends_on+=F003
+
+Writable keys: status, phase, next, mockup, tests / decisions / depends_on
+(+= appends one), notes (+= appends one line). `status`, `tier`, `phase` values are the enums
 features_check.py validates. Leaving in-progress drops phase and next.
 The write is validated before it lands; an invalid update changes nothing.
 """
@@ -25,7 +28,7 @@ import features_check  # noqa: E402
 
 PATH = os.path.join("docs", "features.json")
 SET_KEYS = {"status", "phase", "next", "mockup", "tier", "surface"}
-APPEND_KEYS = {"tests", "notes"}
+APPEND_KEYS = {"tests", "notes", "decisions", "depends_on"}
 
 
 def load() -> dict:
@@ -34,9 +37,11 @@ def load() -> dict:
 
 
 def save(data: dict) -> None:
-    with open(PATH, "w", encoding="utf-8", newline="") as f:
+    tmp = PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
         f.write("\n")
+    os.replace(tmp, PATH)  # the live file is never half-written
 
 
 def apply(ft: dict, updates: list[str]) -> list[str]:
@@ -47,10 +52,10 @@ def apply(ft: dict, updates: list[str]) -> list[str]:
             if key not in APPEND_KEYS:
                 errors.append(f"{key!r} does not take +=; use it with {sorted(APPEND_KEYS)}")
                 continue
-            if key == "tests":
-                ft.setdefault("tests", [])
-                if value not in ft["tests"]:
-                    ft["tests"].append(value)
+            if key != "notes":
+                ft.setdefault(key, [])
+                if value not in ft[key]:
+                    ft[key].append(value)
             else:
                 ft["notes"] = (ft.get("notes", "").rstrip("\n") + "\n" + value).strip("\n")
             continue
@@ -87,14 +92,9 @@ def main(argv: list[str]) -> int:
     if not updates:
         print(json.dumps(ft, indent=2, ensure_ascii=False))
         return 0
-    before = json.dumps(ft)
-    errors = apply(ft, updates)
+    errors = apply(ft, updates) or features_check.check(plans=False, data=data)
     if not errors:
         save(data)
-        errors = features_check.check(plans=False)
-        if errors:
-            data["features"][data["features"].index(ft)] = json.loads(before)
-            save(data)
     if errors:
         print(f"feature: {fid} unchanged")
         for e in errors:

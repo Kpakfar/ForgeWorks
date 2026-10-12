@@ -12,6 +12,7 @@ one feature, not a record. Everything durable it produced has a home already:
 | Acceptance criteria and tests | the entry's `acceptance` and `tests` arrays in `docs/features.json` |
 | Threat model | new rows / edited checklist lines in `docs/SECURITY.md` |
 | The approved mockup | `docs/design/mockups/<id>-<name>.html`, named in the entry's `mockup` |
+| A decision that binds later work | the entry's `decisions` |
 | Deviations and owed work | the entry's `notes` |
 | What shipped, and the evidence | the merge commit |
 | A surprise reality handed you | `docs/gotchas.md` |

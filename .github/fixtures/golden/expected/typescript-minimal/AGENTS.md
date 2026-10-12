@@ -1,10 +1,10 @@
-<!-- FW-BLOCK: project v5.0.0 -->
+<!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Linkcheck -- A CLI that finds dead links in a Markdown docs folder before they ship.
 Primary user: A docs maintainer who keeps finding broken links after release.. Stack: TypeScript; frontend: no; AI features: none; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
-- `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge.
+- `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.
 - `docs/gotchas.md` lists pitfalls this codebase paid for. Read it before working in the same area.
 - `docs/SECURITY.md` (threat model + red-team checklist), `docs/design/` (frontend only: tokens, rubric, approved mockups), `docs/language-standards.md`, `docs/documentation.md` (Context7 is wired: verify unfamiliar APIs there, not from memory).
 
@@ -37,10 +37,10 @@ Few and absolute:
 </hard-rules>
 <!-- /FW-BLOCK: hard-rules -->
 
-<!-- FW-BLOCK: tiers v5.0.0 -->
+<!-- FW-BLOCK: tiers v5.2.0 -->
 <tiers>
 - **Chore** (the diff fits in one sentence, no behavior change): build, gate green, commit.
-- **Feature** (any new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> MERGE. Unsure? It is a feature.
+- **Feature** (any new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> REPLAN -> MERGE. Unsure? It is a feature.
 The owner approves once, at GRILL. A cap hit stops and asks. Everything else proceeds with the conservative choice, noted in the feature's `notes`.
 </tiers>
 <!-- /FW-BLOCK: tiers -->

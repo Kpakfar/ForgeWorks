@@ -8,10 +8,10 @@ symlink. Where `AGENTS.md`, `docs/SECURITY.md`, or `docs/language-standards.md`
 mandate a subagent or hook, treat the mandate as a manual responsibility of the
 driving agent -- nothing replaces that automation today.
 
-What DOES still ship: the plain-markdown procedures under `.claude/skills/`
-(`iteration`, `security-review`, and `tech-debt`). They are not Claude Code
-slash commands here, but they are still the canonical procedures for this
-project; read and follow them manually. In particular, the security review
+What DOES still ship: the skills under `.claude/skills/` (`iteration`,
+`security-review`, and `tech-debt`). A Codex or Antigravity roster also gets
+them linked at `.agents/skills`, where those agents discover skills. An agent
+that discovers neither path reads and follows them as plain markdown. In particular, the security review
 trigger (when a change needs a security pass) lives in
 `.claude/skills/security-review/SKILL.md`, not in a subagent. Keep
 `docs/features.json` and `docs/agents.json` current by hand.

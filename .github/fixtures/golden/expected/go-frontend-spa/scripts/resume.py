@@ -18,9 +18,12 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from backlog import blocked_by  # noqa: E402
+
 FEATURES = os.path.join("docs", "features.json")
 PLANS = os.path.join("docs", "plans")
-NEXT_PHASE = {"grill": "RED", "red": "GREEN", "green": "REVIEW", "review": "MERGE"}
+NEXT_PHASE = {"grill": "RED", "red": "GREEN", "green": "REVIEW", "review": "REPLAN"}
 
 
 def git(*args: str) -> str:
@@ -62,8 +65,15 @@ def collect() -> tuple[dict, list[str]]:
         )
         return state, problems
     if not live:
-        todo = next((ft for ft in feats if ft["status"] == "todo"), None)
+        todos = [ft for ft in feats if ft["status"] == "todo"]
+        todo = next((ft for ft in todos if not blocked_by(ft, feats)), None)
         state["idle"] = True
+        branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        closed = [ft["id"] for ft in feats if ft["status"] == "done"]
+        if branch.startswith("feat/"):
+            state["unmerged"] = next((i for i in closed if i.lower() in branch.lower()), None)
+            state["branch"] = branch
+        state["blocked"] = [ft["id"] for ft in todos] if not todo else []
         state["next_todo"] = todo["id"] if todo else None
         state["next_title"] = todo["title"] if todo else None
         return state, problems
@@ -98,12 +108,23 @@ def collect() -> tuple[dict, list[str]]:
 
 
 def brief(state: dict) -> str:
+    if state.get("idle") and state.get("unmerged"):
+        return (
+            f"{state['unmerged']} is closed on branch {state['branch']} but not merged.\n"
+            f"Finish REPLAN (prune, check, commit), then MERGE. "
+            f"Next after that: {state.get('next_todo') or 'nothing todo'}."
+        )
     if state.get("idle"):
         if state.get("next_todo"):
             return (
                 f"Nothing in progress. Next in the backlog: "
                 f"{state['next_todo']} -- {state['next_title']}.\n"
                 f"Say the word and I will start it at GRILL."
+            )
+        if state.get("blocked"):
+            return (
+                "Nothing in progress and every todo is blocked: "
+                f"{', '.join(state['blocked'])}. Fix a `depends_on` or reopen what they wait for."
             )
         return "Nothing in progress and nothing todo. The backlog is empty."
     ft = state["feature"]
