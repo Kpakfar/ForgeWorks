@@ -11,7 +11,11 @@ description: >-
 
 State lives in the feature's `docs/features.json` entry. Update it with
 `python3 scripts/feature.py <id> key=value`; every phase change sets `phase`
-and `next` (the single next action) in one command.
+and `next` (the single next action) in one command. That script owns the
+edges: it refuses a start before a dependency is done, a skipped phase, a
+GREEN with no cited test, a close that did not pass REVIEW, and a REVIEW
+past its cap. A refusal means stop and ask.
+With the owner's yes, repeat the command with `override="<their reason>"`.
 
 ## 0. Route
 
@@ -80,8 +84,9 @@ model on a job card: `reference/dispatch.md`.
 
 `phase=review`. Dispatch `@reviewer` with a minimal brief: the plan path,
 the branch or diff, the doc sections to grep, the mockup path if visual.
-Fix blocking findings directly, and only what each finding names. **Caps:** two fix passes; one re-review,
-which continues the same reviewer conversation; one design rework. A cap
+Fix blocking findings directly, and only what each finding names. Each new pass sets `phase=green`, then `phase=review` again. **Caps:**
+`feature.py` counts the reviews and refuses one past its cap; the re-review
+continues the same reviewer conversation; one design rework. A cap
 hit stops and asks in the `<communication>` cap-hit shape.
 
 ## 5. REPLAN -- close the feature on its branch, then re-aim

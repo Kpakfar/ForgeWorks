@@ -4,8 +4,8 @@
 Checks: schema shape, unique F-ids, status/tier/phase enums, and the hard
 rules: a `done` feature must cite at least one test whose file exists, a
 `dropped` feature must carry a reason in `notes`, an `in-progress` feature
-carries its `phase` and `next` (and nothing else does), `depends_on` names
-real ids and has no cycle, and a feature with a surface (not
+carries its `phase` and `next` (and nothing else does), GREEN and REVIEW
+cite a test, `depends_on` names real ids and has no cycle, and a feature with a surface (not
 "none") may not leave GRILL without citing an existing mockup file under
 docs/design/mockups/ -- except a `dropped` feature, which never needed one.
 Test EXECUTION is the quality gate's job, not this script's. Run locally or in CI:
@@ -129,6 +129,10 @@ def check(plans: bool = True, data: dict | None = None) -> list[str]:
                     errors.append(f"{where}: cited test file missing: {test_file}")
         if ft["status"] == "done" and not tests:
             errors.append(f"{where}: done with no mapped tests")
+        if phase in ("green", "review") and not tests:
+            errors.append(f"{where}: {phase} with no cited test -- RED comes first")
+        if not isinstance(ft.get("reviews", 0), int):
+            errors.append(f"{where}: reviews is a count that scripts/feature.py keeps")
         notes = ft.get("notes")
         if "notes" in ft and not isinstance(notes, str):
             errors.append(f"{where}: notes must be a string")

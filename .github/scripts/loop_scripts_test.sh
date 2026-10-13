@@ -41,6 +41,20 @@ python3 scripts/resume.py | grep -q "RED -> next GREEN" || { echo "FAIL brief ph
 fails python3 scripts/feature.py F001 phase=bogus
 python3 scripts/feature.py F001 | grep -q '"phase": "red"' || { echo "FAIL invalid update landed"; exit 1; }
 ok python3 scripts/feature.py F001 notes+="deviation: kept sync I/O"
+# feature.py owns the edges: no skipped phase, no close before REVIEW, a counted review cap.
+fails python3 scripts/feature.py F001 phase=review                                     # skips GREEN
+fails python3 scripts/feature.py F001 status=done                                      # closes from REVIEW only
+python3 scripts/feature.py F001 | grep -q '"phase": "red"' || { echo "FAIL refused edge landed"; exit 1; }
+ok python3 scripts/feature.py F001 phase=green
+ok python3 scripts/feature.py F001 phase=review
+ok python3 scripts/feature.py F001 phase=green                                         # a fix pass goes back
+ok python3 scripts/feature.py F001 phase=review                                        # the one re-review
+ok python3 scripts/feature.py F001 phase=green
+fails python3 scripts/feature.py F001 phase=review                                     # cap hit
+fails python3 scripts/feature.py F001 phase=review override=                           # the owner's reason is owed
+ok python3 scripts/feature.py F001 phase=review override="owner: auth changed, one more pass"
+python3 scripts/feature.py F001 | grep -q 'override: owner: auth changed' || { echo "FAIL override not on the record"; exit 1; }
+python3 scripts/feature.py F001 | grep -q '"reviews": 3' || { echo "FAIL reviews not counted"; exit 1; }
 ok python3 scripts/feature.py F001 status=done
 python3 scripts/resume.py | grep -q "F001 is closed on branch feat/F001-x but not merged" || { echo "FAIL closed-unmerged brief"; exit 1; }
 python3 scripts/feature.py F001 | grep -q '"phase"' && { echo "FAIL phase must drop on done"; exit 1; }
@@ -65,4 +79,15 @@ python3 scripts/resume.py | grep -q "F003" || { echo "FAIL go must skip the bloc
 ok python3 scripts/backlog.py
 grep -q 'F002.*waits for F003' docs/BACKLOG.md || { echo "FAIL backlog must show the wait"; exit 1; }
 fails python3 scripts/feature.py F003 status=in-progress phase=grill   # no `next`
+fails python3 scripts/feature.py F003 status=in-progress phase=red next="write tests"   # starts at GRILL
+ok python3 scripts/feature.py F003 status=in-progress phase=grill next="draft plan"
+ok python3 scripts/feature.py F003 phase=red
+fails python3 scripts/feature.py F003 phase=green              # no cited test
+fails python3 scripts/feature.py F003 tier=chore status=done tests+=tests/test_example.py::test_greet   # no tier flip to skip REVIEW
+fails python3 scripts/feature.py F003 tier=chore
+ok python3 scripts/feature.py F003 status=todo
+fails python3 scripts/feature.py F002 status=in-progress phase=grill next="draft plan"   # waits for F003
+ok python3 scripts/feature.py F003 tier=chore
+ok python3 scripts/feature.py F003 status=done tests+=tests/test_example.py::test_greet   # a chore closes without the loop
+ok python3 scripts/feature.py F002 status=in-progress phase=grill next="draft plan"
 echo "loop-scripts: OK"

@@ -25,6 +25,13 @@ is still future work. The history of each release is in the git log.
   Antigravity roster gets them linked at `.agents/skills`). Subagents, hooks, and MCP wiring run in
   Claude Code only.
 
+- **The loop's edges are refused and recorded.** `scripts/feature.py` refuses
+  a start before a dependency is done, a skipped phase, a GREEN with no cited
+  test, a close that did not pass REVIEW, and a review past its counted cap.
+  A refused edge opens with a reason that is recorded on the entry. The
+  script cannot tell who typed the reason: that stays a rule until the
+  owner-gate hook below exists.
+
 ## Next
 
 - **Adopt an existing codebase (v5.3).** A separate `adopt-project` skill that
@@ -37,6 +44,11 @@ is still future work. The history of each release is in the git log.
   publish, deploy, money) wait for the owner's yes. It is a rule the agent
   follows, not a mechanism. A `PreToolUse` hook that blocks the matching
   commands would make it one.
+- **Count what the scripts cannot see yet.** The GREEN stall cap and the
+  design-rework cap are still prose: no script observes a failed cycle. The
+  `reviews` count and the `override:` notes are the first intervention
+  record; a report over them (reviews per feature, overrides per release)
+  would show where the loop needs the owner.
 - **Unit-scoped correction.** A reviewer finding returns one unit with its
   scope stated, so a fix cannot grow into an unreviewed diff.
 
