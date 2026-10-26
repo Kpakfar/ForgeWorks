@@ -84,7 +84,10 @@ model on a job card: `reference/dispatch.md`.
 
 `phase=review`. Dispatch `@reviewer` with a minimal brief: the plan path,
 the branch or diff, the doc sections to grep, the mockup path if visual.
-Fix blocking findings directly, and only what each finding names. Each new pass sets `phase=green`, then `phase=review` again. **Caps:**
+Fix blocking findings directly, and only what each finding names. A
+finding that misreads the plan or names no real defect may be declined:
+`notes+="declined: <finding> -- <reason>"`. A decline does not close
+REVIEW. The re-review rules on it. Each new pass sets `phase=green`, then `phase=review` again. **Caps:**
 `feature.py` counts the reviews and refuses one past its cap; the re-review
 continues the same reviewer conversation; one design rework. A cap
 hit stops and asks in the `<communication>` cap-hit shape.
