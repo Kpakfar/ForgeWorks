@@ -49,6 +49,15 @@ is still future work. The history of each release is in the git log.
   `reviews` count and the `override:` notes are the first intervention
   record; a report over them (reviews per feature, overrides per release)
   would show where the loop needs the owner.
+- **Adversarial review panel (deferred).** Several cheap attackers try to
+  break the work, and a judge keeps only the findings that hold. It conflicts
+  with the one-reviewer rule in `reviewer.md`, which exists because fresh
+  re-reviews burned tokens in the heurema audit. Revisit only with a token
+  budget per panel.
+- **Skill ablation check.** After each model release, render a fixture, run
+  one feature with and without each generated skill, and compare. A skill
+  whose removal does not hurt the result is cut. Skills written for an older
+  model can make a newer one worse.
 - **Unit-scoped correction.** A reviewer finding returns one unit with its
   scope stated, so a fix cannot grow into an unreviewed diff.
 
