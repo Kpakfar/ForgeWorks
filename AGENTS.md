@@ -138,6 +138,13 @@ To test unreleased changes, override the pin with `BRANCH=main` (see `<testing-c
 <self-improvement>
 **Run this after every real project, not just when something feels broken.** The end of a project is the trigger: review what went wrong and right, pull the project's `gotchas.md` / reviewer notes and any written feedback (`docs/FEEDBACK.md` is the inbox), and backport the generic lessons here so the next project starts with them baked in. This is the whole point of the template. The history of what each release backported is in the git log and `docs/ROADMAP.md`, not here.
 
+Distill the feedback before you backport it, in three passes:
+1. Collect every piece of feedback the owner gave in the project: reviewer findings, `notes` overrides, gotchas, and chat corrections.
+2. Condense it into a short list of principles the owner applied.
+3. Name the principles the owner applied but never stated. These are often the most valuable.
+
+The list feeds the backport below and the `@reviewer` lenses. A principle that appears in only one project waits for a second one.
+
 When backporting:
 1. Confirm the lesson is truly generic (would apply to a TypeScript CLI, a Rust library, a Python web app, equally). Stack-specific bits go to language profiles or conditional/fenced content, never the always-on core.
 2. Decide whether it belongs in `templates/core/AGENTS.md` (always-on), a conditional block (sometimes), or an opt-in (often-off).
