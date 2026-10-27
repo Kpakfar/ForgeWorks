@@ -1,10 +1,10 @@
-<!-- FW-BLOCK: project v5.0.0 -->
+<!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Pillarwatch -- A self-hosted status page that shows the up/down history of a small team's own services, no third-party dependency.
 Primary user: An on-call engineer at a small team who wants an honest status page without paying for or trusting a SaaS status vendor.. Stack: Go; frontend: yes-minimal; AI features: none; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
-- `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge.
+- `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.
 - `docs/gotchas.md` lists pitfalls this codebase paid for. Read it before working in the same area.
 - `docs/SECURITY.md` (threat model + red-team checklist), `docs/design/` (frontend only: tokens, rubric, approved mockups), `docs/language-standards.md`, `docs/documentation.md` (Context7 is wired: verify unfamiliar APIs there, not from memory).
 
@@ -26,7 +26,7 @@ Conventional Commits. One branch per feature; CI green before merge. One writer 
 </etiquette>
 <!-- /FW-BLOCK: etiquette -->
 
-<!-- FW-BLOCK: hard-rules v5.0.0 -->
+<!-- FW-BLOCK: hard-rules v5.2.0 -->
 <hard-rules>
 Few and absolute:
 - Never weaken, skip, or delete a failing test to make a gate pass. A change to an existing test, fixture, or gate config states its reason in a `test-change:` line of the commit body; the tamper guard checks.
@@ -34,13 +34,14 @@ Few and absolute:
 - Never set a feature `done` unless its cited tests exist and pass. Never delete an entry: `status: dropped` with the reason in `notes`.
 - Work matching the `security-review` skill's trigger merges only after its security lens ran.
 - No state change without evidence: test output, the command run, or a screenshot path.
+- A hard-to-reverse action waits for the owner's yes, every time. The `iteration` skill lists them.
 </hard-rules>
 <!-- /FW-BLOCK: hard-rules -->
 
-<!-- FW-BLOCK: tiers v5.0.0 -->
+<!-- FW-BLOCK: tiers v5.2.0 -->
 <tiers>
 - **Chore** (the diff fits in one sentence, no behavior change): build, gate green, commit.
-- **Feature** (any new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> MERGE. Unsure? It is a feature.
+- **Feature** (any new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> REPLAN -> MERGE. Unsure? It is a feature.
 The owner approves once, at GRILL. A cap hit stops and asks. Everything else proceeds with the conservative choice, noted in the feature's `notes`.
 </tiers>
 <!-- /FW-BLOCK: tiers -->

@@ -36,7 +36,7 @@ from render_schema import (
 
 # Stamped into .claude/.template-version when the bootstrap install did not
 # already write one. Bump on release (see the repo AGENTS.md <release-process>).
-TEMPLATE_VERSION = "v5.1.0"
+TEMPLATE_VERSION = "v5.2.0"
 
 AI_FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
 AI_FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
@@ -395,6 +395,21 @@ def post_steps(out_dir: str, ans: dict) -> None:
         except (OSError, NotImplementedError):
             with open(claude_md, "w", encoding="utf-8") as f:
                 f.write("# See @AGENTS.md\n")
+    # Codex and Antigravity discover project skills under .agents/skills only,
+    # so a roster with either gets a link to the one real directory. Agents
+    # that read .claude/skills get no link: a second path would list each
+    # skill twice.
+    agents_skills = os.path.join(out_dir, ".agents", "skills")
+    wants_link = any(a["name"] in ("codex", "antigravity") for a in ans["agents"])
+    # A real directory there holds skills the owner installed: leave it alone.
+    if wants_link and (os.path.islink(agents_skills) or not os.path.exists(agents_skills)):
+        os.makedirs(os.path.dirname(agents_skills), exist_ok=True)
+        if os.path.islink(agents_skills):
+            os.remove(agents_skills)
+        try:
+            os.symlink(os.path.join("..", ".claude", "skills"), agents_skills)
+        except (OSError, NotImplementedError):
+            pass  # no symlinks here: docs/agents.md names the real path
     # Shell runners and hooks must be executable.
     for sub in (os.path.join(".claude", "hooks"), "scripts"):
         folder = os.path.join(out_dir, sub)

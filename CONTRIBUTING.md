@@ -42,6 +42,6 @@ Full procedure: `AGENTS.md` `<testing-changes>`.
 A new profile must meet the same readiness contract as Python/TypeScript/Go/Rust: a
 manifest, a verify-only `qa` runner plus separate `fix` and `e2e` runners, a
 **green-on-first-run scaffold**, `.gitignore`, a hardened dev container, a YAML
-block in `SKILL.md` `<language-profiles>`, and a Q3 menu entry marked `[complete]`
+block in `init-project/reference/language-profiles.md` with its `profile.json`, and a language-menu entry marked `[complete]`
 only once a bootstrapped project is green on the first run. Full contract:
 `AGENTS.md` `<adding-a-language-profile>`.

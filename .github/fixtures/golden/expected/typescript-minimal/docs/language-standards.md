@@ -5,7 +5,7 @@ Language- and tool-specific conventions for this project. Filled in by `/init-pr
 ## Language
 
 - **Language:** TypeScript
-- **Version:** Node 22 (LTS) / TypeScript 5.7+
+- **Version:** Node 24 (LTS) / TypeScript 5.7+
 
 ## Package management
 

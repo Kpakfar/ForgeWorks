@@ -106,7 +106,7 @@ notes:
 Files live in `templates/profiles/typescript/`. The gate is expressed as npm scripts in `package.json` (qa is verify-only; fix mutates; e2e is separate). Ships no pre-commit config.
 
 ```yaml
-language_version: "Node 22 (LTS) / TypeScript 5.7+"
+language_version: "Node 24 (LTS) / TypeScript 5.7+"
 file_extension: "ts"
 package_manager: "npm"
 manifest_file: "package.json"
@@ -131,7 +131,7 @@ ci_setup_steps: |
   - name: Set up Node
     uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
     with:
-      node-version: '22'
+      node-version: '24'
       cache: 'npm'
   - name: Install deps
     run: npm ci

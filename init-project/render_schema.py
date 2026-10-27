@@ -52,7 +52,7 @@ SECURITY_KEYS = ("reads_untrusted", "holds_private_data", "acts_outward")
 OPT_IN_KEYS = ("explanations", "seed_gotchas", "mem0", "codex_reviewer")
 FEATURE_KEYS = ("id", "title", "intent", "serves", "acceptance", "tests",
                 "status", "tier", "surface")
-FEATURE_OPTIONAL_KEYS = ("mockup",)
+FEATURE_OPTIONAL_KEYS = ("mockup", "depends_on")
 FEATURE_STATUSES = ("todo", "in-progress", "done", "dropped")
 FEATURE_TIERS = ("chore", "feature")
 FEATURE_ID_RE = re.compile(r"^F\d{3}$")
@@ -164,6 +164,10 @@ def _check_features(errors: list[str], value: object) -> None:
             _check_text(errors, f"{where}.surface", ft["surface"])
         if "mockup" in ft:
             _check_text(errors, f"{where}.mockup", ft["mockup"])
+        deps = ft.get("depends_on", [])
+        if not isinstance(deps, list) or any(not isinstance(d, str) or d not in seen or d == ft.get("id") for d in deps):
+            errors.append(f"{where}.depends_on: must list ids of features that appear "
+                          "earlier in the array (no unknown id, no cycle)")
         acc = ft.get("acceptance")
         if "acceptance" in ft and (not isinstance(acc, list) or not acc
                                    or any(not isinstance(a, str) or not a.strip()

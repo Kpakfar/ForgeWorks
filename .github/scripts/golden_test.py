@@ -43,7 +43,9 @@ def tree_entries(root: str) -> dict[str, tuple[str, object]]:
     entries: dict[str, tuple[str, object]] = {}
     for dirpath, dirnames, names in os.walk(root):
         dirnames.sort()
-        for name in sorted(names):
+        # os.walk lists a symlink to a directory under dirnames, not names.
+        links = [d for d in dirnames if os.path.islink(os.path.join(dirpath, d))]
+        for name in sorted(names + links):
             path = os.path.join(dirpath, name)
             rel = os.path.relpath(path, root)
             if os.path.islink(path):

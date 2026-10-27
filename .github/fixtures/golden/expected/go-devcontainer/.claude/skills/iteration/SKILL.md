@@ -3,15 +3,19 @@ name: iteration
 description: >-
   The per-feature workflow. Use when starting any feature, change, or fix:
   "build F003", "next feature", "add X", "fix Y". Chores build straight
-  through; features run GRILL -> RED -> GREEN -> REVIEW -> MERGE with caps.
+  through; features run GRILL -> RED -> GREEN -> REVIEW -> REPLAN -> MERGE
+  with caps.
 ---
 
 # iteration -- one bounded loop per feature
 
 State lives in the feature's `docs/features.json` entry. Update it with
 `python3 scripts/feature.py <id> key=value`; every phase change sets `phase`
-and `next` (the single next action) in one command. No state change without
-evidence: test output, the command run, or a screenshot path.
+and `next` (the single next action) in one command. That script owns the
+edges: it refuses a start before a dependency is done, a skipped phase, a
+GREEN with no cited test, a close that did not pass REVIEW, and a REVIEW
+past its cap. A refusal means stop and ask.
+With the owner's yes, repeat the command with `override="<their reason>"`.
 
 ## 0. Route
 
@@ -23,10 +27,14 @@ Anything else is a **feature**. No entry yet? Add one: next free id,
 `"none"`, `serves:` a `docs/PRD.md` section (cannot name one? question the
 feature). Unsure which tier? Feature.
 
+`depends_on` lists the entries whose output this one consumes. Name what
+crosses the edge (a table, an endpoint, a module); if you cannot, there is no
+edge. Entries with no edge between them can be built in parallel worktrees.
+
 ## 1. GRILL -- decide, then the one owner gate
 
-`status=in-progress phase=grill`. Write `docs/plans/<id>.md` with these
-sections and nothing else:
+Branch `feat/<id>-<slug>`; `status=in-progress phase=grill`. Write
+`docs/plans/<id>.md` with these sections and nothing else:
 
 - **Decisions.** What the owner asked, in their words. Every decision made,
   including "owner said no to X". The riskiest bit and how it is de-risked.
@@ -47,14 +55,15 @@ values from the tokens file), the owner picks, commit the winner to
 
 Then attack the plan: strongest objection, failure modes, a simpler
 alternative. Present it in the `<communication>` GRILL shape. The owner
-approves once, here. Write every decision from the conversation back into
+approves once, here; the approval covers merging this scope locally, and a
+changed acceptance line needs a new one. Write every decision from the conversation back into
 the plan; a decision that lives only in chat does not exist. The plan must
 let a fresh session execute the feature alone and fit the plan cap the
 `docs-budget` job enforces. Decisions, not narrative.
 
 ## 2. RED
 
-Branch `feat/<id>-<slug>`; `phase=red`. One failing test per acceptance
+`phase=red`. One failing test per acceptance
 line, plus the threat model's tests; add each with `tests+=`. Confirm each
 fails for the right reason. Evidence: the failing run.
 
@@ -75,23 +84,65 @@ model on a job card: `reference/dispatch.md`.
 
 `phase=review`. Dispatch `@reviewer` with a minimal brief: the plan path,
 the branch or diff, the doc sections to grep, the mockup path if visual.
-Fix blocking findings directly. **Caps:** two fix passes; one re-review,
-which continues the same reviewer conversation; one design rework. A cap
+Fix blocking findings directly, and only what each finding names. A
+finding that misreads the plan or names no real defect may be declined:
+`notes+="declined: <finding> -- <reason>"`. A decline does not close
+REVIEW. The re-review rules on it. Each new pass sets `phase=green`, then `phase=review` again. **Caps:**
+`feature.py` counts the reviews and refuses one past its cap; the re-review
+continues the same reviewer conversation; one design rework. A cap
 hit stops and asks in the `<communication>` cap-hit shape.
 
-## 5. MERGE
+## 5. REPLAN -- close the feature on its branch, then re-aim
+
+Everything here is committed on the feature branch, so it lands with the
+feature. Nothing is edited on main after the merge.
 
 1. `bash scripts/qa.sh`, `bash scripts/e2e.sh`, `python3 scripts/features_check.py` green.
-2. Merge to main (from a worktree: `bash scripts/land.sh`); delete the
-   branch; `bash scripts/factory_doctor.sh` reports no worktree left behind.
-3. `status=done` (cited tests exist and pass, a hard rule). Move what still
-   changes a future decision: a lesson to `docs/gotchas.md`, a security
-   delta to `docs/SECURITY.md`, owed work to `notes` or a new todo entry.
-   Carry a status verbatim or delete it; never reword an obligation into a
-   claim.
-4. `python3 scripts/prune.py`: deletes the plan, losing mockups, and
-   uncited probes, then regenerates `docs/BACKLOG.md`.
-5. Merge report: three lines.
+2. Move what still changes a future decision out of the plan: a choice that
+   binds later work ("owner said no to X") to the entry with `decisions+=`,
+   a lesson to `docs/gotchas.md`, a security delta to `docs/SECURITY.md`,
+   owed work to `notes` or a new todo entry. Carry a status verbatim or
+   delete it; never reword an obligation into a claim.
+3. `status=done` (cited tests exist and pass, a hard rule).
+4. The inner loop fixed one feature. Now fix the plan that produces
+   features. Three questions; "no change" is a valid answer to each.
+   - **Does `docs/PRD.md` still describe the product?** If the feature
+     proved a line wrong, propose the edit. The owner confirms every PRD
+     change before the merge.
+   - **Is the next entry still the right one?** `python3 scripts/resume.py`
+     names it. Reorder, drop (`status=dropped` with the reason), split, or
+     add entries, and fix any `depends_on` this feature made false.
+   - **Did this feature teach something the next one must obey?** Write it
+     where the next GRILL reads it: a `decisions` line, a gotcha, or the
+     PRD. At most one, and only with evidence.
+5. `python3 scripts/prune.py`: it deletes the plan, losing mockups, and
+   uncited probes, and regenerates `docs/BACKLOG.md` from the entries as
+   REPLAN left them. `python3 scripts/features_check.py` green. Commit.
+
+## 6. MERGE
+
+Merge to main (from a worktree: `bash scripts/land.sh`); delete the branch;
+`bash scripts/factory_doctor.sh` reports no worktree left behind. Then the
+merge report, three lines; "next up" is the entry REPLAN chose.
+
+## Owner gates -- what the GRILL approval does not cover
+
+The GRILL approval covers building this scope and merging it locally. It
+never covers an action that is hard to undo. Each of these stops and asks,
+every time, with one line saying what will happen and what is lost if it is
+wrong:
+
+- Deleting data, or files the plan did not name. (`scripts/prune.py`
+  deleting a closed feature's plan is not this: git keeps it.)
+- A migration that drops or rewrites stored data.
+- Pushing, opening or merging a pull request, tagging a release, deploying.
+- Publishing or sending anything outward: a post, an email, a message, a
+  package.
+- Moving money, or changing access, secrets, or billing.
+
+Name any such action in the plan's Decisions at GRILL so the owner sees it
+early. The yes is still asked at the moment of the action; an earlier
+"do all of it" does not count. Unsure whether an action belongs here? It does.
 
 ## Deviations and surprises
 
