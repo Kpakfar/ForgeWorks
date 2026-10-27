@@ -1,7 +1,7 @@
 {
   "_comment": "Machine-readable language profile consumed by init-project/render.py. Keep in sync with the matching YAML block in init-project/SKILL.md <language-profiles>. Multi-line values are arrays of lines (joined with newlines at render time). This file is renderer input only -- it is never copied into a generated project.",
   "display_name": "TypeScript",
-  "language_version": "Node 22 (LTS) / TypeScript 5.7+",
+  "language_version": "Node 24 (LTS) / TypeScript 5.7+",
   "package_manager": "npm",
   "manifest_file": "package.json",
   "install_command": "npm install",
@@ -24,7 +24,7 @@
     "- name: Set up Node",
     "  uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4",
     "  with:",
-    "    node-version: '22'",
+    "    node-version: '24'",
     "    cache: 'npm'",
     "- name: Install deps",
     "  run: npm ci"

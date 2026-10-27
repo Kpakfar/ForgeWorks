@@ -1,11 +1,11 @@
 # Dev container for a TypeScript / Node project.
-# Base: Node.js 22 LTS on Debian bookworm, run as the non-root `node` user.
+# Base: Node.js 24 LTS on Debian bookworm, run as the non-root `node` user.
 # No docker-in-docker (see devcontainer.json for the rationale).
 
-# Digest-pinned tag: 1-22-bookworm (Dockerfiles do not allow inline comments,
+# Digest-pinned tag: 24-bookworm (Dockerfiles do not allow inline comments,
 # so the human-readable tag lives here). To update, resolve the tag's current
-# digest: `docker manifest inspect mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm`.
-FROM mcr.microsoft.com/devcontainers/typescript-node@sha256:7c2e711a4f7b02f32d2da16192d5e05aa7c95279be4ce889cff5df316f251c1d
+# digest: `docker manifest inspect mcr.microsoft.com/devcontainers/typescript-node:24-bookworm`.
+FROM mcr.microsoft.com/devcontainers/typescript-node@sha256:970eebf5b82d3800bdd9f46680e1c4c664d365d18603148540788356700ce301
 
 # Install handy CLI tools (git and a recent Node toolchain ship in the base).
 RUN apt-get update && apt-get install -y --no-install-recommends \
