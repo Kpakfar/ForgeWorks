@@ -273,7 +273,8 @@ test -f .claude/skills/tech-debt/SKILL.md
 ```
 
 Run `python3 scripts/skills_doctor.py` and show its output. A `FAIL` line is
-a duplicated skill name or an always-on SessionStart plugin; the fix is the
+a duplicated skill name or an always-on SessionStart plugin that ships
+process skills; a SessionStart plugin without them is a `WARN`. The fix is the
 owner's (`/plugin`). The first line of the final report is that FAIL, before
 any "done".
 
