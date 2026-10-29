@@ -32,7 +32,13 @@ for answers in .github/fixtures/golden/*.json; do
       python3 scripts/resume.py --check && python3 scripts/prune.py --check &&
       python3 scripts/tamper_check.py && budget_job docs-budget && budget_job checkpoint-budget
   ) > "$tmp/$name.log" 2>&1 || { echo "generated-gates: FAIL [$name]"; cat "$tmp/$name.log"; fail=1; continue; }
-  echo "ok   [$name] features, dup, resume, prune, tamper, docs-budget, checkpoint-budget"
+  # Stack-free: only a TypeScript project may need Node. deps-guard names npm
+  # because it blocks installs for every package manager, so it is exempt.
+  if [ "$lang" != typescript ]; then
+    leak=$(grep -rnE '\bnpx\b|\bnpm\b|node:|Node\.js' "$out" --exclude=deps-guard.sh --exclude-dir=.git || true)
+    [ -z "$leak" ] || { echo "generated-gates: FAIL [$name] a $lang project depends on Node:"; echo "$leak"; fail=1; continue; }
+  fi
+  echo "ok   [$name] features, dup, resume, prune, tamper, docs-budget, checkpoint-budget, no Node"
 done
 # The import-line skip must not blind the gate: a copied function body still fails.
 probe="$tmp/python-ai-full"

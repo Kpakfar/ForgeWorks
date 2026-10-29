@@ -7,7 +7,7 @@ This project uses **Context7 MCP** (wired up in `.mcp.json`) as the primary tool
 - Always query the **pinned version** in `{{MANIFEST_FILE}}`, not "latest."
 - Use for any library whose API may have shifted since training cutoff.
 - If Context7 returns nothing useful, fall back to `WebFetch` and note the gap in `docs/gotchas.md`.
-- An agent that does not load `.mcp.json` gets the same lookups from the Context7 CLI: `npx -y ctx7@0.6.0 library <name>`, then `npx -y ctx7@0.6.0 docs <libraryId> "<question>"`.
+- Context7 is a hosted HTTP server (the URL is in `.mcp.json`), so nothing runs locally. An agent that does not read `.mcp.json` registers the same URL in its own MCP config.
 
 ## Library URLs
 

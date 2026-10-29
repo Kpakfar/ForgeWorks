@@ -30,7 +30,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bo
 - **Deterministic gates** — a verify-only `qa` (plus a local `fix`), a supply-chain `deps-guard` hook, a `features.json`/`features_check.py` feature-list check, a `docs-budget` doc-size check (including the `AGENTS.md` size cap), a test-tamper guard, a `skills_doctor.py` instruction-stack check (one copy per skill name, no always-on SessionStart plugin that ships process skills, the real session-start inventory), and CI (fast gate, a pinned dependency `audit` job with a Dependabot config, and a separate e2e job).
 - **A tree per session** — run several agent sessions on one project at once. The first session writes the main checkout; the `tree-claim` hook sends every later one into its own git worktree, and `bash scripts/land.sh` puts its commits back on the base branch (rebase, then fast-forward; conflicts stop in the session that caused them). `scripts/factory_doctor.sh` lists the trees that are safe to remove.
 - **Living docs** — `docs/PRD.md`, the feature list (`docs/features.json`) with its human-readable `docs/BACKLOG.md` view, design docs, gotchas, and SECURITY. The loop's state (phase, next action, deviations) lives in each feature's entry, read and written by `scripts/feature.py`. So do the two things that outlive a feature's plan: `decisions` (choices that bind later work) and `depends_on` (the features whose output it consumes; `go` offers only a feature whose dependencies are done).
-- **Batteries** — Context7 MCP for live library docs, an optional dev container, a green-on-first-run scaffold, a PR template, and a pre-commit config (Python profile only).
+- **Batteries** — Context7 MCP for live library docs (a hosted HTTP server: nothing to install), an optional dev container, a green-on-first-run scaffold, a PR template, and a pre-commit config (Python profile only).
 
 ## How it works
 
@@ -61,7 +61,7 @@ VERSION           stamped into generated projects
 
 ## Languages
 
-**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v5.3.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (npm/degit/Context7) aren't fully reproducible yet — see `docs/ROADMAP.md`.
+**Python, TypeScript, Go, and Rust** are complete profiles — pick any in the interview and you get only that language's toolchain (no cross-language leakage). All four are verified green on the first run by CI, on the **merged core+profile tree** (the exact shape a generated project has). "Other" isn't built yet (the interview tells you so and gets consent). Adding a language is a documented recipe (`docs/how-to-use.md`). Releases are versioned tags (current: `v5.3.0`): a pinned tag gives you the same template files tomorrow, though runtime inputs (package managers, the hosted Context7 server) aren't fully reproducible yet — see `docs/ROADMAP.md`.
 
 ## Status
 

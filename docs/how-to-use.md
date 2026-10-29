@@ -24,13 +24,14 @@ less /tmp/forgeworks-install.sh   # it writes AGENTS.md, .claude/skills/, and a 
 bash /tmp/forgeworks-install.sh
 ```
 
-### Option C: manual (curl + degit, no installer)
+### Option C: manual (curl + tar, no installer)
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/AGENTS.md -o AGENTS.md
-mkdir -p .claude/skills
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.3.0 .claude/skills/init-project --force
+mkdir -p /tmp/forgeworks .claude/skills
+curl -fsSL https://github.com/Kpakfar/ForgeWorks/archive/v5.3.0.tar.gz | tar -xz -C /tmp/forgeworks --strip-components=1
+cp /tmp/forgeworks/bootstrap/AGENTS.md AGENTS.md
+cp -R /tmp/forgeworks/init-project .claude/skills/init-project
 printf 'v5.3.0\n' > .claude/.template-version
 ```
 
@@ -38,9 +39,9 @@ Then open Claude Code and run `/init-project`.
 
 ### What runs on your machine
 
-- The installer runs `curl`, `npx degit@2.8.4`, and `git`. It never runs a package manager.
+- The installer runs `curl` and `tar` to fetch one release archive. It needs no Node and never runs a package manager.
 - `/init-project` runs `python3` (the renderer, stdlib only) and then your language's package manager to install the scaffold's locked dependencies (`uv sync`, `npm install`, `go mod download`, or `cargo fetch`). It may offer `npx skills@1.7.2 add mattpocock/skills`; that runs only on your yes.
-- After a restart, Claude Code starts the Context7 MCP server from `.mcp.json` (`npx -y @upstash/context7-mcp@3.2.3`).
+- Nothing starts locally for Context7: `.mcp.json` points Claude Code at its hosted HTTP server, so library-doc lookups leave your machine as queries to Context7. Delete the entry if that is not acceptable.
 
 ## What happens during bootstrap
 
@@ -90,7 +91,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 ## Troubleshooting
 
 **`/init-project` slash command doesn't appear.**
-The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If degit put it elsewhere, move it.
+The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If it landed elsewhere, move it.
 
 **Symlink fails on Windows.**
 Use Option A above on WSL, or skip the symlink and use a one-line `CLAUDE.md` pointing to `AGENTS.md` instead: `# See @AGENTS.md for project conventions.`

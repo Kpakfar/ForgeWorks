@@ -5,9 +5,8 @@
     "context": ".."
   },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    }
+    // No Node: nothing in a Python project needs it (pytest-playwright ships
+    // its own driver, and Context7 is a hosted HTTP server).
     // docker-in-docker is intentionally NOT enabled by default: it widens the
     // attack surface and grants the container Docker control. Add it back only
     // if this project genuinely needs to build/run containers from inside.

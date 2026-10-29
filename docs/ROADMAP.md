@@ -69,10 +69,11 @@ is still future work. The history of each release is in the git log.
 ## Known limitations
 
 - **Supply chain.** Actions are SHA-pinned, dev-container images are
-  digest-pinned, the `uv` installer is checksum-verified, `degit` and the
-  Context7 package are version-pinned, and `pin_check.sh` fails any doc that
-  runs `npx` or `uvx` without an exact version. The npm runtime and degit's
-  fetch integrity are trusted; the `deps-guard` hook is a best-effort guard, not a
+  digest-pinned, the `uv` installer is checksum-verified, the installer
+  fetches one release archive with `curl` and `tar` (no Node), and
+  `pin_check.sh` fails any doc that runs `npx` or `uvx` without an exact
+  version. The archive is trusted by tag, not by checksum, and Context7 is a
+  hosted service whose version the project does not pin; the `deps-guard` hook is a best-effort guard, not a
   sandbox.
 - **Enforcement parity.** Other agents inherit the rules, docs, skills, and
   roster. Adapters that reproduce the Claude Code subagents and hooks
