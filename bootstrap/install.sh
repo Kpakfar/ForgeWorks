@@ -6,7 +6,7 @@
 #
 # The template files this script fetches are pinned to one ref (default: the
 # release tag below), so they do not change under you when `main` moves. (Runtime
-# inputs -- skills@latest, the MCP package -- are not fully reproducible
+# inputs -- the package managers, the MCP server's own dependencies -- are not fully reproducible
 # yet; see docs/ROADMAP.md.) Override the ref for development with REF=... or
 # BRANCH=... (e.g. BRANCH=main to test the latest unreleased state).
 #
@@ -14,7 +14,7 @@
 #   1. Validates the environment (curl, git, npx, python3).
 #   2. Drops the bootstrap AGENTS.md into the current directory.
 #   3. Installs the init-project skill (SKILL.md + templates/) into
-#      .claude/skills/init-project/ using `npx degit` (pinned version).
+#      .claude/skills/init-project/ with degit (version pinned below).
 #   4. Prints next steps.
 #
 # The whole body runs inside main(), called on the last line, so a truncated

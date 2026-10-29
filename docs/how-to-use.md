@@ -2,7 +2,7 @@
 
 ## Starting a new project
 
-Two equivalent options:
+Three equivalent options. All of them are pinned to one release tag.
 
 ### Option A: One-line install (recommended)
 
@@ -13,16 +13,34 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bo
 
 Then open Claude Code and run `/init-project`.
 
-### Option B: manual (curl + degit, no `bash <(curl ...)`)
+### Option B: download, read, then run
+
+A release tag pins the content, but it does not prove what the script does. Read it before it runs:
+
+```bash
+mkdir my-new-project && cd my-new-project && git init
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh -o /tmp/forgeworks-install.sh
+less /tmp/forgeworks-install.sh   # it writes AGENTS.md, .claude/skills/, and a version stamp; nothing else
+bash /tmp/forgeworks-install.sh
+```
+
+### Option C: manual (curl + degit, no installer)
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
 curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/AGENTS.md -o AGENTS.md
 mkdir -p .claude/skills
-npx degit Kpakfar/ForgeWorks/init-project#v5.2.0 .claude/skills/init-project --force
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.2.0 .claude/skills/init-project --force
+printf 'v5.2.0\n' > .claude/.template-version
 ```
 
 Then open Claude Code and run `/init-project`.
+
+### What runs on your machine
+
+- The installer runs `curl`, `npx degit@2.8.4`, and `git`. It never runs a package manager.
+- `/init-project` runs `python3` (the renderer, stdlib only) and then your language's package manager to install the scaffold's locked dependencies (`uv sync`, `npm install`, `go mod download`, or `cargo fetch`). It may offer `npx skills@1.7.2 add mattpocock/skills`; that runs only on your yes.
+- After a restart, Claude Code starts the Context7 MCP server from `.mcp.json` (`npx -y @upstash/context7-mcp@3.2.3`).
 
 ## What happens during bootstrap
 
@@ -72,7 +90,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 ## Troubleshooting
 
 **`/init-project` slash command doesn't appear.**
-The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If `npx degit` put it elsewhere, move it.
+The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If degit put it elsewhere, move it.
 
 **Symlink fails on Windows.**
 Use Option A above on WSL, or skip the symlink and use a one-line `CLAUDE.md` pointing to `AGENTS.md` instead: `# See @AGENTS.md for project conventions.`
