@@ -135,7 +135,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Every fixture passes its own features, dup, resume, prune, and tamper gates
+      - name: Every fixture passes its own features, dup, resume, prune, tamper, and budget gates
         run: bash .github/scripts/generated_gates_test.sh
       - name: the tamper guard catches a direct push, an inline Rust test, and a gate edit
         run: bash .github/scripts/tamper_check_test.sh

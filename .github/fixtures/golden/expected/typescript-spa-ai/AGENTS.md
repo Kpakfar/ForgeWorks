@@ -13,10 +13,10 @@ Code style anchor: Pattern-match every file you write or modify to the clean SPA
 </project>
 <!-- /FW-BLOCK: project -->
 
-<!-- FW-BLOCK: commands v5.0.0 -->
+<!-- FW-BLOCK: commands v5.3.0 -->
 <commands>
 - Quality gate (verify only): `npm run qa` | auto-fix: `npm run fix` | e2e: `npm run e2e`
-- One feature entry: `python3 scripts/feature.py <id>` (add `key=value` to update it) | resume brief (`go`): `python3 scripts/resume.py` | feature list check: `python3 scripts/features_check.py` | duplication gate: `python3 scripts/dup_check.py` | merge cleanup: `python3 scripts/prune.py` | doctor (stale worktrees, merged branches, skill collisions): `bash scripts/factory_doctor.sh`
+- One feature entry: `python3 scripts/feature.py <id>` (add `key=value` to update it) | resume brief (`go`): `python3 scripts/resume.py` | feature list check: `python3 scripts/features_check.py` | duplication gate: `python3 scripts/dup_check.py` | merge cleanup: `python3 scripts/prune.py` | doctor: `bash scripts/factory_doctor.sh`
 - New dependencies go through the manifest and the deps-guard hook (`DEPS_VETTED=1` once vetted); details in `docs/language-standards.md`.
 </commands>
 <!-- /FW-BLOCK: commands -->
@@ -27,9 +27,8 @@ Conventional Commits. One branch per feature; CI green before merge. One writer 
 </etiquette>
 <!-- /FW-BLOCK: etiquette -->
 
-<!-- FW-BLOCK: hard-rules v5.2.0 -->
+<!-- FW-BLOCK: hard-rules v5.3.0 -->
 <hard-rules>
-Few and absolute:
 - Never weaken, skip, or delete a failing test to make a gate pass. A change to an existing test, fixture, or gate config states its reason in a `test-change:` line of the commit body; the tamper guard checks.
 - Never commit secrets. Env or a secret store only.
 - Never set a feature `done` unless its cited tests exist and pass. Never delete an entry: `status: dropped` with the reason in `notes`.
@@ -39,17 +38,18 @@ Few and absolute:
 </hard-rules>
 <!-- /FW-BLOCK: hard-rules -->
 
-<!-- FW-BLOCK: tiers v5.2.0 -->
+<!-- FW-BLOCK: tiers v5.3.0 -->
 <tiers>
 - **Chore** (the diff fits in one sentence, no behavior change): build, gate green, commit.
-- **Feature** (any new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> REPLAN -> MERGE. Unsure? It is a feature.
+- **Fix** (restores behavior an entry's `acceptance` already states): a failing regression test, green, commit, one `notes+=` line on that entry.
+- **Feature** (any other new or changed behavior): the `iteration` skill, GRILL -> RED -> GREEN -> REVIEW -> REPLAN -> MERGE. Unsure? It is a feature.
 The owner approves once, at GRILL. A cap hit stops and asks. Everything else proceeds with the conservative choice, noted in the feature's `notes`.
 </tiers>
 <!-- /FW-BLOCK: tiers -->
 
-<!-- FW-BLOCK: communication v5.0.0 -->
+<!-- FW-BLOCK: communication v5.3.0 -->
 <communication>
-Write to `docs/writing.md`: short sentences, active voice, no hedging in instructions. Lead with the point. Do not repeat what the owner knows or what a gate already printed. Three fixed shapes. GRILL: what I will build / decisions I need (numbered) / top risks with my answer. Cap hit: one paragraph (state, rounds used, what is stuck, recommendation). Merge report: three lines (shipped, evidence, next up). Ask the fewest questions that unblock the work, batch independent ones, and offer choices when they exist.
+Write to `docs/writing.md`. Lead with the point. Do not repeat what the owner knows or what a gate already printed. Three fixed shapes. GRILL: what I will build / decisions I need (numbered) / top risks with my answer. Cap hit: one paragraph (state, rounds used, what is stuck, recommendation). Merge report: three lines (shipped, evidence, next up). Ask the fewest questions that unblock the work, batch independent ones, and offer choices when they exist.
 </communication>
 <!-- /FW-BLOCK: communication -->
 

@@ -6,6 +6,18 @@
 set -euo pipefail
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 fail=0
+# Run one budget job's `run: |` script exactly as the rendered qa.yml has it.
+budget_job() {
+  awk -v job="  $1:" '
+    $0 == job { injob = 1; next }
+    injob && /^  [a-z-]+:$/ { exit }
+    injob && /^        run: \|$/ { inrun = 1; next }
+    inrun && /^          / { print substr($0, 11); next }
+    inrun && /^$/ { print; next }
+    inrun { exit }' .github/workflows/qa.yml > "$tmp/job.sh"
+  [ -s "$tmp/job.sh" ] || { echo "no $1 job in qa.yml"; return 1; }
+  bash "$tmp/job.sh"
+}
 for answers in .github/fixtures/golden/*.json; do
   name=$(basename "$answers" .json)
   lang=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["stack"]["language"])' "$answers")
@@ -18,9 +30,9 @@ for answers in .github/fixtures/golden/*.json; do
       git -c user.name=ci -c user.email=ci@example.com commit -qm "chore: bootstrap project" &&
       python3 scripts/features_check.py && python3 scripts/dup_check.py &&
       python3 scripts/resume.py --check && python3 scripts/prune.py --check &&
-      python3 scripts/tamper_check.py
+      python3 scripts/tamper_check.py && budget_job docs-budget && budget_job checkpoint-budget
   ) > "$tmp/$name.log" 2>&1 || { echo "generated-gates: FAIL [$name]"; cat "$tmp/$name.log"; fail=1; continue; }
-  echo "ok   [$name] features, dup, resume, prune, tamper"
+  echo "ok   [$name] features, dup, resume, prune, tamper, docs-budget, checkpoint-budget"
 done
 # The import-line skip must not blind the gate: a copied function body still fails.
 probe="$tmp/python-ai-full"
