@@ -20,9 +20,30 @@ set -euo pipefail
 # review would complete with no gate at all -- fail CLOSED instead.
 trap 'echo "FAILED: quality-gate hook errored before QA could complete." >&2; exit 2' ERR
 
-cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
+# Gate the tree under review, not the launch checkout. $CLAUDE_PROJECT_DIR
+# stays on the checkout the session started in, so a session that moved into
+# its own worktree would get main's green. The hook payload's cwd follows the
+# session; it is trusted only when it is a worktree of this same repository.
+project="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+input=$(cat 2>/dev/null || true)
+cwd=""
+if command -v jq >/dev/null 2>&1; then
+  cwd=$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
+elif command -v python3 >/dev/null 2>&1; then
+  cwd=$(printf '%s' "$input" | python3 -c 'import sys, json; print(json.load(sys.stdin).get("cwd") or "")' 2>/dev/null || true)
+fi
+tree="$project"
+if [ -n "$cwd" ] && [ -d "$cwd" ]; then
+  top=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || true)
+  ours=$(git -C "$project" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+  theirs=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+  if [ -n "$top" ] && [ -n "$ours" ] && [ "$ours" = "$theirs" ]; then
+    tree="$top"
+  fi
+fi
+cd "$tree"
 
-echo "==> Quality gate: running bash scripts/qa.sh"
+echo "==> Quality gate: running bash scripts/qa.sh in $tree"
 echo
 
 if ! bash scripts/qa.sh; then

@@ -105,6 +105,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: tree-claim blocks a second session, frees it in its own worktree, takes a stale claim over
         run: bash .github/scripts/tree_claim_test.sh
+      - name: the reviewer's quality gate runs in the worktree under review, not the launch checkout
+        run: bash .github/scripts/quality_gate_test.sh
 
   land:
     runs-on: ubuntu-latest
