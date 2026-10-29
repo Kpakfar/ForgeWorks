@@ -36,6 +36,18 @@ d="$tmp/escape"; mkdir "$d" "$tmp/elsewhere"; ln -s "$tmp/elsewhere" "$d/docs"
 render "$d" | grep -q "outside --out" || fail "a symlinked folder out of --out was followed"
 [ -z "$(ls -A "$tmp/elsewhere")" ] || fail "the render wrote through a symlink"
 
+# The AGENTS.md cap counts bytes, as the docs-budget job's `wc -c` does: an
+# answer that fits in characters but not in bytes must fail here, not in CI.
+d="$tmp/bytes"; mkdir "$d"
+python3 - "$tmp/answers.json" "$tmp/wide.json" <<'PY'
+import json, sys
+a = json.load(open(sys.argv[1])); a["project"]["goal"] += " " + "é" * 70
+json.dump(a, open(sys.argv[2], "w"), ensure_ascii=False)
+PY
+out=$(python3 init-project/render.py --answers "$tmp/wide.json" --core init-project/templates/core \
+  --profile init-project/templates/profiles/python --out "$d" 2>&1 || true)
+echo "$out" | grep -q "bytes; hard cap" || fail "a multi-byte AGENTS.md over the byte cap rendered: $out"
+
 # A failed render (bad answers) writes nothing.
 d="$tmp/bad"; mkdir "$d"
 python3 - "$tmp/answers.json" <<'PY'

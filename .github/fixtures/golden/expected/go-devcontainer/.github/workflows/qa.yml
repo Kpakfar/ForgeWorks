@@ -98,7 +98,7 @@ jobs:
           check() { f="$1"; cap="$2"; [ -f "$f" ] || return 0
             size=$(wc -c < "$f")
             if [ "$size" -gt "$cap" ]; then
-              echo "::error::$f is ${size} chars (cap ${cap}) -- delete what is stale, do not shave to just under the cap"
+              echo "::error::$f is ${size} bytes (cap ${cap}) -- delete what is stale, do not shave to just under the cap"
               exit 1; fi }
           # The only always-loaded file. The renderer enforces the same number.
           check AGENTS.md 8000

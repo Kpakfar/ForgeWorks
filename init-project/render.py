@@ -382,10 +382,12 @@ def render_file(src: str, dst: str, relpath: str, ans: dict,
                         start_re=LITE_FENCE_START_RE, end_re=LITE_FENCE_END_RE)
     text = substitute(text, relpath, mapping)
     text = apply_insertions(text, relpath, ans, cond_dir)
-    if relpath == "AGENTS.md" and len(text) > 8000:
+    # Bytes, not characters: the docs-budget job counts with `wc -c`, so one
+    # unit keeps a non-ASCII answer from rendering fine and failing CI.
+    if relpath == "AGENTS.md" and len(text.encode("utf-8")) > 8000:
         raise RenderError(
-            f"AGENTS.md rendered to {len(text)} chars; hard cap is 8000 "
-            "(the same number the generated docs-budget job enforces)")
+            f"AGENTS.md rendered to {len(text.encode('utf-8'))} bytes; hard cap is "
+            "8000 (the same number the generated docs-budget job enforces)")
     with open(dst, "w", encoding="utf-8", newline="") as f:
         f.write(text)
     shutil.copymode(src, dst)
