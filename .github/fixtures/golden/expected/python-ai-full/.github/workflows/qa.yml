@@ -35,6 +35,29 @@ jobs:
       - name: Run quality gate (lint, format, types, unit + functional)
         run: uv run qa
 
+  # Known-vulnerability check on the lockfile (docs/SECURITY.md, supply
+  # chain). Its own job, so a new advisory names itself instead of hiding in
+  # the quality gate. .github/dependabot.yml keeps the lockfile moving.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install deps
+        run: uv sync
+
+      - name: Dependency audit (known vulnerabilities)
+        run: |
+          uv export --frozen --no-emit-project --format requirements-txt -q -o /tmp/audit-requirements.txt && uvx --from 'pip-audit==2.10.1' pip-audit --disable-pip --require-hashes -r /tmp/audit-requirements.txt
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

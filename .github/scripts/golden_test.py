@@ -34,7 +34,7 @@ TEMPLATES = os.path.join(ROOT, "init-project", "templates")
 
 SYNC_KEYS = ("language_version", "package_manager", "manifest_file",
              "install_command", "add_dep_command", "qa_command", "fix_command",
-             "e2e_command", "test_runner", "test_path_regex", "inline_test_regex", "lint_tool",
+             "e2e_command", "audit_command", "test_runner", "test_path_regex", "inline_test_regex", "lint_tool",
              "format_tool", "type_tool")
 
 
@@ -131,6 +131,7 @@ def profile_sync_check() -> list[str]:
 # race/sanitizer applies only where the language has one (Go: -race).
 PARITY_CONTRACT = {
     "python": [
+        (".github/dependabot.yml", 'package-ecosystem: "uv"'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),            # line cap
         ("scripts/qa.sh", "ruff format --check"),   # format check
         ("scripts/qa.sh", "ruff check"),             # lint as error
@@ -139,6 +140,7 @@ PARITY_CONTRACT = {
         ("scripts/e2e.sh", "pytest"),               # e2e runner
     ],
     "typescript": [
+        (".github/dependabot.yml", 'package-ecosystem: "npm"'),  # dependency updates
         ("eslint.config.js", "max-lines"),          # line cap (lint rule)
         ("package.json", "prettier --check"),       # format check
         ("package.json", "eslint ."),               # lint as error
@@ -147,6 +149,7 @@ PARITY_CONTRACT = {
         ("package.json", "playwright test"),        # e2e runner
     ],
     "go": [
+        (".github/dependabot.yml", 'package-ecosystem: "gomod"'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),
         ("scripts/qa.sh", "gofmt -l"),
         ("scripts/qa.sh", "golangci-lint run"),
@@ -155,6 +158,7 @@ PARITY_CONTRACT = {
         ("scripts/e2e.sh", "go test -race -tags e2e"),
     ],
     "rust": [
+        (".github/dependabot.yml", 'package-ecosystem: "cargo"'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),
         ("scripts/qa.sh", "cargo fmt --check"),
         ("scripts/qa.sh", "-D warnings"),           # clippy, warnings are errors

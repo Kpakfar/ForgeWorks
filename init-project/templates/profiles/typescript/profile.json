@@ -9,6 +9,7 @@
   "qa_command": "npm run qa",
   "fix_command": "npm run fix",
   "e2e_command": "npm run e2e",
+  "audit_command": "npm audit --audit-level=high",
   "e2e_browser_install": "npx playwright install --with-deps chromium",
   "test_runner": "vitest",
   "test_path_regex": "\\.(test|spec)\\.[jt]sx?$|^tests/",

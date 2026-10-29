@@ -9,7 +9,7 @@
 # string -- it does not catch every form (a script that installs, an editor tool
 # writing a manifest, a novel package manager, plain `npx <pkg>`). The REAL
 # controls are: committed lockfiles + reviewed dependency updates, and CI
-# vulnerability scanning (npm audit, Dependabot). Treat this as a reminder.
+# vulnerability scanning (the qa.yml `audit` job, Dependabot). Treat this as a reminder.
 #
 # Lockfile / from-lock installs (npm ci, uv sync, pip install -r/-e, etc.) are NOT
 # blocked: they add nothing new. To proceed past a block after vetting (real,

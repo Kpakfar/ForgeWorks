@@ -9,6 +9,7 @@
   "qa_command": "bash scripts/qa.sh",
   "fix_command": "bash scripts/fix.sh",
   "e2e_command": "bash scripts/e2e.sh",
+  "audit_command": "go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...",
   "e2e_browser_install": "",
   "test_runner": "go test",
   "test_path_regex": "_test\\.go$",

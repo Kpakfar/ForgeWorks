@@ -31,6 +31,22 @@ jobs:
       - name: Run quality gate (lint, format, types, unit + functional)
         run: {{QA_COMMAND}}
 
+  # Known-vulnerability check on the lockfile (docs/SECURITY.md, supply
+  # chain). Its own job, so a new advisory names itself instead of hiding in
+  # the quality gate. .github/dependabot.yml keeps the lockfile moving.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      {{CI_SETUP_STEPS}}
+
+      - name: Dependency audit (known vulnerabilities)
+        run: |
+          {{AUDIT_COMMAND}}
+
   e2e:
     runs-on: ubuntu-latest
     # FW-LITE-START

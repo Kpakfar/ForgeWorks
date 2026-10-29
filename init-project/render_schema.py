@@ -64,7 +64,7 @@ SCHEMA_VERSION = 1
 PROFILE_SCALARS = (
     "display_name", "language_version", "package_manager", "manifest_file",
     "install_command", "add_dep_command", "qa_command", "fix_command",
-    "e2e_command", "e2e_browser_install", "test_runner", "test_command",
+    "e2e_command", "audit_command", "e2e_browser_install", "test_runner", "test_command",
     "lint_tool", "lint_command", "format_tool", "format_command", "type_tool",
     "type_command", "precommit_install_command", "test_path_regex",
     "inline_test_regex", "source_suffixes",

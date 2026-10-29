@@ -26,9 +26,9 @@ A generated project is `templates/core/` (language-free) plus exactly one
 symlinked, for a Claude Code roster), `.claude/` (the `iteration`,
 `security-review`, and `tech-debt` skills; the `reviewer` and `utility`
 subagents; the quality-gate, deps-guard, and tree-claim hooks), `.mcp.json`
-(Context7), `.github/` (CI with the quality gate, e2e, feature-check,
-docs-budget, checkpoint-budget, resume-check, dup-check, and test-tamper
-jobs, plus a PR template), `docs/` (PRD, `features.json` and its
+(Context7), `.github/` (CI with the quality gate, audit, e2e,
+feature-check, docs-budget, checkpoint-budget, resume-check, dup-check, and
+test-tamper jobs, a PR template, and a Dependabot config), `docs/` (PRD, `features.json` and its
 `BACKLOG.md` view, SECURITY, language-standards, documentation, gotchas,
 writing, plans/, probes/, agents; `design/` for frontend projects),
 `scripts/` (`feature.py`, `resume.py`, `features_check.py`, `dup_check.py`,
@@ -256,6 +256,7 @@ Core files, every project:
 test -f AGENTS.md && test -f README.md && test -f .env.example && \
 test -f .mcp.json && test -f .claude/.template-version && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
+test -f .github/dependabot.yml && \
 test -f docs/PRD.md && test -f docs/features.json && test -f docs/BACKLOG.md && \
 test -f docs/SECURITY.md && test -f docs/language-standards.md && \
 test -f docs/writing.md && test -f docs/plans/README.md && \

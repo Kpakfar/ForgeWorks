@@ -167,13 +167,14 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
       - run: uv python install 3.12
-      - name: Render merged core+profile and run QA + e2e
+      - name: Render merged core+profile and run QA + the profile's audit + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit python /tmp/py
           mkdir -p /tmp/py/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/py/.claude/skills/init-project
           cd /tmp/py
           uv sync
           uv run qa
+          bash -c "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["audit_command"])' "$GITHUB_WORKSPACE/init-project/templates/profiles/python/profile.json")"
           bash scripts/e2e.sh
 
   typescript-profile:
@@ -183,14 +184,14 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "24"
-      - name: Render merged core+profile and run QA + audit + e2e
+      - name: Render merged core+profile and run QA + the profile's audit + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit typescript /tmp/ts
           mkdir -p /tmp/ts/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/ts/.claude/skills/init-project
           cd /tmp/ts
           npm install
           npm run qa
-          npm audit --audit-level=high
+          bash -c "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["audit_command"])' "$GITHUB_WORKSPACE/init-project/templates/profiles/typescript/profile.json")"
           npm run e2e
       - name: A lite-weight render passes the same gate
         run: |
@@ -220,12 +221,13 @@ jobs:
           echo "d32d3534af96cfd59546a084d22b213e8a47541cada5013aa8a84c4fa2589905  /tmp/golangci-install.sh" | sha256sum -c -
           sh /tmp/golangci-install.sh -b "$(go env GOPATH)/bin" v2.12.2
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - name: Render merged core+profile and run QA + e2e
+      - name: Render merged core+profile and run QA + the profile's audit + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit go /tmp/go
           mkdir -p /tmp/go/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/go/.claude/skills/init-project
           cd /tmp/go
           bash scripts/qa.sh
+          bash -c "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["audit_command"])' "$GITHUB_WORKSPACE/init-project/templates/profiles/go/profile.json")"
           bash scripts/e2e.sh
 
   rust-profile:
@@ -243,10 +245,11 @@ jobs:
           components: clippy,rustfmt
           cache: false
           rustflags: ""
-      - name: Render merged core+profile and run QA + e2e
+      - name: Render merged core+profile and run QA + the profile's audit + e2e
         run: |
           python3 .github/scripts/render_smoke.py --emit rust /tmp/rust
           mkdir -p /tmp/rust/.claude/skills && cp -R "$GITHUB_WORKSPACE/init-project" /tmp/rust/.claude/skills/init-project
           cd /tmp/rust
           bash scripts/qa.sh
+          bash -c "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["audit_command"])' "$GITHUB_WORKSPACE/init-project/templates/profiles/rust/profile.json")"
           bash scripts/e2e.sh

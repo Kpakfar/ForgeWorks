@@ -35,6 +35,28 @@ jobs:
       - name: Run quality gate (lint, format, types, unit + functional)
         run: npm run qa
 
+  # Known-vulnerability check on the lockfile (docs/SECURITY.md, supply
+  # chain). Its own job, so a new advisory names itself instead of hiding in
+  # the quality gate. .github/dependabot.yml keeps the lockfile moving.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+
+      - name: Dependency audit (known vulnerabilities)
+        run: |
+          npm audit --audit-level=high
+
   e2e:
     runs-on: ubuntu-latest
     # Lite weight: the full e2e suite runs at release (a v* tag), not on every
