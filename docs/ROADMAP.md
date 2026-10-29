@@ -57,7 +57,7 @@ is still future work. The history of each release is in the git log.
 - **Adversarial review panel (deferred).** Several cheap attackers try to
   break the work, and a judge keeps only the findings that hold. It conflicts
   with the one-reviewer rule in `reviewer.md`, which exists because fresh
-  re-reviews burned tokens in the heurema audit. Revisit only with a token
+  re-reviews burned tokens in a field audit. Revisit only with a token
   budget per panel.
 - **Skill ablation check.** After each model release, render a fixture, run
   one feature with and without each generated skill, and compare. A skill
