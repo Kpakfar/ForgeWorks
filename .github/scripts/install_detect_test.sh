@@ -52,7 +52,7 @@ expect "an existing codebase stops" "$(run "$d")" "not an empty folder"
 [ ! -e "$d/AGENTS.md" ] || { echo "install-detect: FAIL -- a stopped run wrote AGENTS.md"; exit 1; }
 expect "FORCE_BOOTSTRAP overrides a non-empty folder" "$(run "$d" FORCE_BOOTSTRAP=1)" "Bootstrap kit installed"
 
-d="$tmp/gh-clone"; mkdir -p "$d/.git"; printf '# x\n' > "$d/README.md"; : > "$d/LICENSE"; : > "$d/.gitignore"
-expect "a fresh gh repo clone bootstraps" "$(run "$d")" "Bootstrap kit installed"
+d="$tmp/gh-clone"; mkdir -p "$d/.git" "$d/.idea" "$d/.vscode"; printf '# x\n' > "$d/README.md"; : > "$d/LICENSE"; : > "$d/.gitignore"
+expect "a fresh gh repo clone with editor folders bootstraps" "$(run "$d")" "Bootstrap kit installed"
 
 echo "install-detect: OK"

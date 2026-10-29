@@ -76,11 +76,12 @@ elif [[ -e "CLAUDE.md" ]]; then
 elif [[ -d ".claude/agents" ]]; then
   FOREIGN="a .claude/agents/ folder that ForgeWorks did not write"
 else
-  # Empty means nothing but what `git init` or `gh repo create` leaves behind.
+  # Empty means nothing but what `git init`, `gh repo create`, or an editor
+  # opening the folder (.idea/, .vscode/) leaves behind.
   # The renderer still refuses to overwrite those without the owner's yes.
   OTHER=$(find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .DS_Store \
     ! -name '.gitignore' ! -name '.gitattributes' ! -name 'README*' ! -name 'LICENSE*' \
-    ! -name .claude | head -3 | sed 's|^\./||' | tr '\n' ' ')
+    ! -name .claude ! -name .idea ! -name .vscode | head -3 | sed 's|^\./||' | tr '\n' ' ')
   [[ -z "${OTHER}" ]] || FOREIGN="existing files (${OTHER% }) -- not an empty folder"
 fi
 if [[ "${FORCE_BOOTSTRAP:-0}" == "1" ]]; then

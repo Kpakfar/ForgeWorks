@@ -30,6 +30,11 @@ printf '\n# edited\n' >> .github/workflows/qa.yml
 check "a workflow edited" FAIL "ci: tweak"
 printf '\n# edited\n' >> .github/workflows/qa.yml
 check "a workflow edited with a reason" OK $'ci: tweak\n\ntest-change: faster runner'
+sed -i.bak -E 's/(uses: actions\/checkout@)[0-9a-f]{40} # v4/\13d3c42e5aac5ba805825da76410c181273ba90b1 # v6/' .github/workflows/qa.yml && rm .github/workflows/qa.yml.bak
+check "a Dependabot pin bump in a workflow" OK "chore(deps): bump actions/checkout"
+sed -i.bak -E 's/(uses: actions\/checkout@)[0-9a-f]{40} # v4/\13d3c42e5aac5ba805825da76410c181273ba90b1 # v6/' .github/workflows/qa.yml && rm .github/workflows/qa.yml.bak
+printf '\n# edited\n' >> .github/workflows/qa.yml
+check "a pin bump plus another workflow edit" FAIL "chore(deps): bump actions/checkout"
 printf 'echo hi\n' >> scripts/qa.sh
 check "a QA runner edited" FAIL "chore: qa"
 printf '#[test]\nfn extra() {}\n' > tests/extra.rs

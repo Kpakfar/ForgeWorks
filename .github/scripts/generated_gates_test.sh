@@ -11,7 +11,7 @@ budget_job() {
   awk -v job="  $1:" '
     $0 == job { injob = 1; next }
     injob && /^  [a-z-]+:$/ { exit }
-    injob && /^        run: \|$/ { inrun = 1; next }
+    injob && /^        run: [|]$/ { inrun = 1; next }
     inrun && /^          / { print substr($0, 11); next }
     inrun && /^$/ { print; next }
     inrun { exit }' .github/workflows/qa.yml > "$tmp/job.sh"

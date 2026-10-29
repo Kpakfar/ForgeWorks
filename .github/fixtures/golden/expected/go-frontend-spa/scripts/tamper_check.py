@@ -8,7 +8,8 @@ the commit messages of the range is required when the range:
 
 - modifies, deletes, or renames a file matching the profile's test-path pattern;
 - changes a gate: a workflow, a QA runner, a gate script, a hook, the dup
-  baseline or ignore list, or a lint config file;
+  baseline or ignore list, or a lint config file (a workflow edit that only
+  moves SHA-pinned `uses:` lines, as a Dependabot bump does, is not one);
 - removes a test or an assertion from a source file, for a language whose
   unit tests live inside source files (the profile's inline-test pattern).
 
@@ -38,6 +39,9 @@ GATE_PATH_RE = re.compile(
     r"|^\.pre-commit-config\.ya?ml$|(^|/)eslint\.config\.[cm]?[jt]s$"
     r"|^\.golangci\.ya?ml$|^(\.)?(ruff|clippy|rustfmt)\.toml$"
 )
+# A Dependabot action bump changes only SHA-pinned `uses:` lines; that moves a
+# pin, it weakens no gate.
+PIN_LINE_RE = re.compile(r"^\s*(-\s+)?uses:\s*[^\s@]+@[0-9a-f]{40}(\s+#.*)?$")
 REASON_RE = re.compile(r"^\s*test-change:\s*\S", re.MULTILINE)
 NO_COMMIT = re.compile(r"^0+$")
 
@@ -58,12 +62,21 @@ def resolve_base() -> str | None:
     return None
 
 
-def removed_inline_tests(merge_base: str, path: str) -> bool:
+def changed_lines(merge_base: str, path: str, signs: str = "-") -> list[str]:
     diff = _git("diff", "-U0", f"{merge_base}..HEAD", "--", path)
-    removed = [
-        ln[1:] for ln in diff.splitlines() if ln.startswith("-") and not ln.startswith("---")
+    return [
+        ln[1:] for ln in diff.splitlines() if ln[:1] in signs and not ln.startswith(("---", "+++"))
     ]
+
+
+def removed_inline_tests(merge_base: str, path: str) -> bool:
+    removed = changed_lines(merge_base, path)
     return any(INLINE_TEST_RE.search(ln) for ln in removed) if INLINE_TEST_RE else False
+
+
+def pin_bump_only(merge_base: str, path: str) -> bool:
+    lines = changed_lines(merge_base, path, "+-")
+    return bool(lines) and all(PIN_LINE_RE.match(ln) for ln in lines)
 
 
 def touched_files(merge_base: str) -> list[tuple[str, list[str]]]:
@@ -83,6 +96,8 @@ def touched_files(merge_base: str) -> list[tuple[str, list[str]]]:
             touched.append((status, hits))
             continue
         gates = [p for p in paths if GATE_PATH_RE.search(p)]
+        if gates and kind == "M" and pin_bump_only(merge_base, paths[0]):
+            continue
         if gates:
             touched.append((f"{status} gate", gates))
         elif kind in ("M", "R") and removed_inline_tests(merge_base, paths[-1]):
