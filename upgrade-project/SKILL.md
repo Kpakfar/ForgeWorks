@@ -44,14 +44,14 @@ Read `.claude/.template-choices.json` first (written by the renderer from v5.3.0
 
 ```bash
 FW_TMP=$(mktemp -d) && echo "$FW_TMP"
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.2.0 "$FW_TMP/core"
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.2.0 "$FW_TMP/profile"
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.2.0 "$FW_TMP/skill"
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.3.0 "$FW_TMP/core"
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.3.0 "$FW_TMP/profile"
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.3.0 "$FW_TMP/skill"
 ```
 
 A fresh folder per run, so two upgrades never share or reuse a fetched copy. Use the printed path wherever this skill writes `$FW_TMP`, and delete it at the end of Phase 4.
 
-Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `$FW_TMP/skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.2.0`), not `main`.
+Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `$FW_TMP/skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.3.0`), not `main`.
 
 ## Phase 3: Reconcile
 

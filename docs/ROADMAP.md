@@ -31,10 +31,15 @@ is still future work. The history of each release is in the git log.
   A refused edge opens with a reason that is recorded on the entry. The
   script cannot tell who typed the reason: that stays a rule until the
   owner-gate hook below exists.
+- **A generated project starts green and safe (v5.3.0).** `render.py`
+  stages, checks, then installs, and never overwrites a file it did not put
+  there without `--allow-overwrite`. Root CI runs every fixture's own gates
+  (features, dup, resume, prune, tamper, both budgets). The generated CI
+  carries a pinned dependency `audit` job and a Dependabot config.
 
 ## Next
 
-- **Adopt an existing codebase (v5.3).** A separate `adopt-project` skill that
+- **Adopt an existing codebase (v5.4).** A separate `adopt-project` skill that
   derives the PRD, the stack, and the feature list from a repository
   ForgeWorks did not generate. Today `install.sh` stops in such a folder.
 - **Re-run the gate inside `land.sh`.** A rebase can break a green branch;
@@ -65,8 +70,9 @@ is still future work. The history of each release is in the git log.
 
 - **Supply chain.** Actions are SHA-pinned, dev-container images are
   digest-pinned, the `uv` installer is checksum-verified, `degit` and the
-  Context7 package are version-pinned. The npm runtime and degit's fetch
-  integrity are trusted; the `deps-guard` hook is a best-effort guard, not a
+  Context7 package are version-pinned, and `pin_check.sh` fails any doc that
+  runs `npx` or `uvx` without an exact version. The npm runtime and degit's
+  fetch integrity are trusted; the `deps-guard` hook is a best-effort guard, not a
   sandbox.
 - **Enforcement parity.** Other agents inherit the rules, docs, skills, and
   roster. Adapters that reproduce the Claude Code subagents and hooks

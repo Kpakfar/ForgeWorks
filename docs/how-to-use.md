@@ -8,7 +8,7 @@ Three equivalent options. All of them are pinned to one release tag.
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh)
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -19,7 +19,7 @@ A release tag pins the content, but it does not prove what the script does. Read
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh -o /tmp/forgeworks-install.sh
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh -o /tmp/forgeworks-install.sh
 less /tmp/forgeworks-install.sh   # it writes AGENTS.md, .claude/skills/, and a version stamp; nothing else
 bash /tmp/forgeworks-install.sh
 ```
@@ -28,10 +28,10 @@ bash /tmp/forgeworks-install.sh
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/AGENTS.md -o AGENTS.md
 mkdir -p .claude/skills
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.2.0 .claude/skills/init-project --force
-printf 'v5.2.0\n' > .claude/.template-version
+npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.3.0 .claude/skills/init-project --force
+printf 'v5.3.0\n' > .claude/.template-version
 ```
 
 Then open Claude Code and run `/init-project`.
@@ -57,7 +57,7 @@ Run the **same install command** inside an already-generated project. `install.s
 
 ```bash
 # In your existing project, commit your work first, then:
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh)
 ```
 
 Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
@@ -71,7 +71,7 @@ It is non-destructive and idempotent — safe to run more than once. Both skills
 
 ## Updating the template itself
 
-Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v5.2.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
+Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v5.3.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
 
 Backporting lessons from a real project: read that project's `docs/gotchas.md` (and reviewer notes) at the end, and for each *generic* lesson edit the corresponding file here and push. When a change alters the generated structure, bump `VERSION` and — if it adds tooling or placeholder-bearing files — extend `upgrade-project/SKILL.md` (see the repo `AGENTS.md` `<editing-the-upgrade-skill>`).
 

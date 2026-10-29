@@ -44,7 +44,7 @@ from render_schema import (
 
 # Stamped into .claude/.template-version when the bootstrap install did not
 # already write one. Bump on release (see the repo AGENTS.md <release-process>).
-TEMPLATE_VERSION = "v5.2.0"
+TEMPLATE_VERSION = "v5.3.0"
 
 AI_FENCE_START_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-START -->\s*$")
 AI_FENCE_END_RE = re.compile(r"^\s*<!-- AI-[A-Z]+-END -->\s*$")
