@@ -67,7 +67,7 @@ PROFILE_SCALARS = (
     "e2e_command", "e2e_browser_install", "test_runner", "test_command",
     "lint_tool", "lint_command", "format_tool", "format_command", "type_tool",
     "type_command", "precommit_install_command", "test_path_regex",
-    "source_suffixes",
+    "inline_test_regex", "source_suffixes",
 )
 PROFILE_LISTS = ("ci_setup_steps", "precommit_hooks", "library_docs_urls")
 # notes key in profile.json -> placeholder name (singular/plural is irregular).

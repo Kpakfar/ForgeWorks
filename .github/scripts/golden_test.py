@@ -34,7 +34,7 @@ TEMPLATES = os.path.join(ROOT, "init-project", "templates")
 
 SYNC_KEYS = ("language_version", "package_manager", "manifest_file",
              "install_command", "add_dep_command", "qa_command", "fix_command",
-             "e2e_command", "test_runner", "test_path_regex", "lint_tool",
+             "e2e_command", "test_runner", "test_path_regex", "inline_test_regex", "lint_tool",
              "format_tool", "type_tool")
 
 

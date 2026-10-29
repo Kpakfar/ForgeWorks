@@ -12,6 +12,7 @@
   "e2e_browser_install": "",
   "test_runner": "cargo test",
   "test_path_regex": "^tests/",
+  "inline_test_regex": "#\\[test\\]|#\\[cfg\\(test\\)\\]|\\bassert(_eq|_ne)?!",
   "test_command": "cargo test",
   "lint_tool": "clippy",
   "lint_command": "cargo clippy --all-targets -- -D warnings",

@@ -182,8 +182,9 @@ jobs:
       - name: Duplication gate
         run: python3 scripts/dup_check.py
 
-  # Test-tamper guard: flags weakened/deleted test assertions on this branch
-  # vs. origin/main (AGENTS.md <hard-rules>). Agent-neutral plain script.
+  # Test-tamper guard: a changed test or gate needs a `test-change:` reason
+  # (AGENTS.md <hard-rules>). A pull request compares with its base branch;
+  # a push, including a direct push to main, with the commit it started from.
   test-tamper:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -194,4 +195,6 @@ jobs:
           fetch-depth: 0
 
       - name: Test-tamper guard
+        env:
+          TAMPER_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
         run: python3 scripts/tamper_check.py

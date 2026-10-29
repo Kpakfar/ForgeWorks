@@ -90,6 +90,7 @@ golden-fixture CI cross-checks the load-bearing values).
 | `{{TYPE_COMMAND}}` | profile.type_command |
 | `{{PRECOMMIT_INSTALL_COMMAND}}` | profile.precommit_install_command |
 | `{{TEST_PATH_REGEX}}` | profile.test_path_regex -- the pattern `scripts/tamper_check.py` uses to recognize a test-file path for the tamper guard |
+| `{{INLINE_TEST_REGEX}}` | profile.inline_test_regex -- for a language whose unit tests live inside source files (Rust), the pattern `scripts/tamper_check.py` looks for in a source file's removed lines; empty when tests live only in test files |
 | `{{SOURCE_SUFFIXES}}` | profile.source_suffixes -- the set literal of source extensions `scripts/dup_check.py` scans for the duplication gate |
 | `{{CI_SETUP_STEPS}}` | profile.ci_setup_steps (multi-line YAML block) |
 | `{{LANGUAGE_PRECOMMIT_HOOKS}}` | profile.precommit_hooks (multi-line YAML block) |

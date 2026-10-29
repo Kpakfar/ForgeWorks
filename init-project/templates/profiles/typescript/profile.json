@@ -12,6 +12,7 @@
   "e2e_browser_install": "npx playwright install --with-deps chromium",
   "test_runner": "vitest",
   "test_path_regex": "\\.(test|spec)\\.[jt]sx?$|^tests/",
+  "inline_test_regex": "",
   "test_command": "npx vitest run",
   "lint_tool": "eslint",
   "lint_command": "npx eslint .",

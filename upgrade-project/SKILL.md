@@ -55,7 +55,7 @@ Route by the from-version: below 3.0.0, install the `v3.0.0`-tagged upgrade skil
 
 **A. File ABSENT in the project (additive).** Apply roster and frontend gating first, exactly like `render.py`: `.claude/agents/`, `.claude/hooks/`, `.claude/settings.json`, and the `CLAUDE.md` symlink are not additive without `claude-code` in the roster; `docs/design/` and the tokens file are not additive without a frontend. Then:
 - No `{{...}}` placeholders: copy verbatim, `chmod +x` any `.sh`.
-- Only recoverable placeholders (`{{PROJECT_NAME}}`, `{{LANGUAGE}}`, `{{DATE}}`, `{{TEST_PATH_REGEX}}`, `{{QA_COMMAND}}`, `{{SOURCE_SUFFIXES}}`, `{{CODEX_REVIEW_STEP}}`): substitute from Phase 1 and the fetched `profile.json`, copy, then apply the fence rules below.
+- Only recoverable placeholders (`{{PROJECT_NAME}}`, `{{LANGUAGE}}`, `{{DATE}}`, `{{TEST_PATH_REGEX}}`, `{{INLINE_TEST_REGEX}}`, `{{QA_COMMAND}}`, `{{SOURCE_SUFFIXES}}`, `{{CODEX_REVIEW_STEP}}`): substitute from Phase 1 and the fetched `profile.json`, copy, then apply the fence rules below.
 - Unresolvable placeholders: never half-write one. Report "add manually" with the template path.
 - Interview-sourced placeholders (mostly `docs/PRD.md`): queue for the Phase 3-E mini-interview.
 

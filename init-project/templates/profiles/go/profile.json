@@ -12,6 +12,7 @@
   "e2e_browser_install": "",
   "test_runner": "go test",
   "test_path_regex": "_test\\.go$",
+  "inline_test_regex": "",
   "test_command": "go test -race ./...",
   "lint_tool": "golangci-lint",
   "lint_command": "golangci-lint run",
