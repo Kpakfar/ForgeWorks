@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Feedgate -- An internal HTTP service that validates and normalizes partner RSS feeds before ingestion.
-Primary user: A data engineer who babysits broken partner feeds every Monday.. Stack: Go; frontend: no; AI features: none; dev container: yes.
+Primary user: A data engineer who babysits broken partner feeds every Monday. Stack: Go; frontend: no; AI features: none; dev container: yes.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

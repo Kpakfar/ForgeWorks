@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Briefly -- A web app that turns a team's weekly activity into a two-paragraph stakeholder brief.
-Primary user: An engineering manager who writes the same status update every Friday.. Stack: TypeScript; frontend: yes-spa; AI features: agents, evals; dev container: no.
+Primary user: An engineering manager who writes the same status update every Friday. Stack: TypeScript; frontend: yes-spa; AI features: agents, evals; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

@@ -53,7 +53,6 @@ OPT_IN_KEYS = ("explanations", "seed_gotchas", "mem0", "codex_reviewer")
 FEATURE_KEYS = ("id", "title", "intent", "serves", "acceptance", "tests",
                 "status", "tier", "surface")
 FEATURE_OPTIONAL_KEYS = ("mockup", "depends_on")
-FEATURE_STATUSES = ("todo", "in-progress", "done", "dropped")
 FEATURE_TIERS = ("chore", "feature")
 FEATURE_ID_RE = re.compile(r"^F\d{3}$")
 DESIGN_KEYS = ("references", "tone", "anti_reference")
@@ -94,7 +93,7 @@ def _check_text(errors: list[str], where: str, value: object) -> None:
         errors.append(f"{where}: must be a non-empty string")
         return
     cleaned = value.replace("\r\n", "\n").replace("\r", "\n")
-    if any(ord(c) < 32 and c not in "\n\t" for c in cleaned):
+    if any((ord(c) < 32 and c not in "\n\t") or ord(c) == 127 for c in cleaned):
         errors.append(f"{where}: contains control characters")
     if "<!--" in cleaned or "-->" in cleaned:
         errors.append(f"{where}: must not contain HTML comment markers "
@@ -156,8 +155,11 @@ def _check_features(errors: list[str], value: object) -> None:
         for key in ("title", "intent", "serves"):
             if key in ft:
                 _check_text(errors, f"{where}.{key}", ft[key])
-        if "status" in ft and ft["status"] not in FEATURE_STATUSES:
-            errors.append(f"{where}.status: must be one of {FEATURE_STATUSES}")
+        if "status" in ft and ft["status"] != "todo":
+            # A bootstrap starts no work: phase, next, and tests come later,
+            # through scripts/feature.py, which owns the loop's edges.
+            errors.append(f"{where}.status: must be \"todo\" at bootstrap "
+                          f"(got {ft['status']!r})")
         if "tier" in ft and ft["tier"] not in FEATURE_TIERS:
             errors.append(f"{where}.tier: must be one of {FEATURE_TIERS}")
         if "surface" in ft:

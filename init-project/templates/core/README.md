@@ -22,7 +22,10 @@ is green from the first run. Replace them with your first feature.
 
 ## How this project works
 
-- `AGENTS.md` is the constitution -- read it first. `CLAUDE.md` symlinks to it.
+- `AGENTS.md` is the constitution -- read it first.
+<!-- CC-README-START -->
+  `CLAUDE.md` symlinks to it.
+<!-- CC-README-END -->
 - `docs/PRD.md` states the product; `docs/features.json` is the
   machine-checked feature list and the loop's state (`scripts/feature.py`
   reads or updates one entry), rendered into `docs/BACKLOG.md`.

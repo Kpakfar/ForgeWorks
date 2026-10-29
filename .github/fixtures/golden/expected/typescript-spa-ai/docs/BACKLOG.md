@@ -3,4 +3,8 @@
 Generated from `docs/features.json` by `scripts/backlog.py` -- do not edit by hand.
 Order is priority order. `[x]` done, `[~]` in progress, `[ ]` todo, `[-]` dropped.
 
-(Empty until the first feature is added -- run `python3 scripts/backlog.py`.)
+- [ ] **F001** Import a week's export
+- [ ] **F002** Edit and approve a brief
+- [ ] **F003** Flag unsupported claims
+
+0/3 done.

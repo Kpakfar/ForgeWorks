@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Linkcheck -- A CLI that finds dead links in a Markdown docs folder before they ship.
-Primary user: A docs maintainer who keeps finding broken links after release.. Stack: TypeScript; frontend: no; AI features: none; dev container: no.
+Primary user: A docs maintainer who keeps finding broken links after release. Stack: TypeScript; frontend: no; AI features: none; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

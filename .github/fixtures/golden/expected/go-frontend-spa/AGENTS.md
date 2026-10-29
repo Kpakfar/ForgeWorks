@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Pillarwatch -- A self-hosted status page that shows the up/down history of a small team's own services, no third-party dependency.
-Primary user: An on-call engineer at a small team who wants an honest status page without paying for or trusting a SaaS status vendor.. Stack: Go; frontend: yes-minimal; AI features: none; dev container: no.
+Primary user: An on-call engineer at a small team who wants an honest status page without paying for or trusting a SaaS status vendor. Stack: Go; frontend: yes-minimal; AI features: none; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

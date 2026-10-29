@@ -8,7 +8,7 @@
 
 A web app that turns a freelancer's raw bank CSV export into a categorized income/expense ledger.
 
-Primary user: A solo freelancer who dreads sorting a quarter's transactions before filing taxes.. Problem: Bank CSV exports are flat and uncategorized; freelancers currently hand-sort hundreds of rows in a spreadsheet before every filing.
+Primary user: A solo freelancer who dreads sorting a quarter's transactions before filing taxes. Problem: Bank CSV exports are flat and uncategorized; freelancers currently hand-sort hundreds of rows in a spreadsheet before every filing.
 Today's alternative: hand-sorting rows in a spreadsheet. Why this wins: low-confidence rows are flagged instead of silently miscategorized
 
 ## The journey (end to end)

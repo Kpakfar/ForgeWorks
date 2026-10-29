@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Ledgerline -- A web app that turns a freelancer's raw bank CSV export into a categorized income/expense ledger.
-Primary user: A solo freelancer who dreads sorting a quarter's transactions before filing taxes.. Stack: TypeScript; frontend: yes-spa; AI features: none; dev container: no.
+Primary user: A solo freelancer who dreads sorting a quarter's transactions before filing taxes. Stack: TypeScript; frontend: yes-spa; AI features: none; dev container: no.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

@@ -33,6 +33,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -150,7 +151,8 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
 
     mapping = {
         "PROJECT_NAME": p["name"], "PROJECT_GOAL": p["goal"],
-        "PROJECT_SLUG": p["slug"], "PRIMARY_USER": p["primary_user"],
+        # Both PRIMARY_USER sites end the sentence themselves: drop the answer's own period.
+        "PROJECT_SLUG": p["slug"], "PRIMARY_USER": p["primary_user"].rstrip().rstrip("."),
         "CORE_PROBLEM": p["core_problem"], "CORE_JOURNEY": p["core_journey"],
         "SUCCESS_MEASURE": p["success_measure"],
         "SUCCESS_METRICS": p["success_metrics"],
@@ -216,7 +218,8 @@ def build_mapping(ans: dict, prof: dict, cond_dir: str) -> dict[str, str]:
 def toml_escape(value: str) -> str:
     out = value.replace("\\", "\\\\").replace('"', '\\"')
     out = out.replace("\n", "\\n").replace("\t", "\\t")
-    return "".join(c if ord(c) >= 32 else f"\\u{ord(c):04X}" for c in out)
+    # TOML forbids raw control characters in a basic string, DEL included.
+    return "".join(c if 32 <= ord(c) != 127 else f"\\u{ord(c):04X}" for c in out)
 
 
 def json_escape(value: str) -> str:
@@ -458,6 +461,11 @@ def post_steps(out_dir: str, ans: dict) -> None:
     with open(features_json, "w", encoding="utf-8", newline="") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
         f.write("\n")
+    # docs/BACKLOG.md from the same generator every later merge runs.
+    r = subprocess.run([sys.executable, os.path.join("scripts", "backlog.py")],
+                       cwd=out_dir, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RenderError(f"scripts/backlog.py failed on the rendered tree: {r.stdout}{r.stderr}")
     # The generation choices, without the PRD prose: /upgrade-project reads them
     # to gate files exactly as this render did, so an opt-out stays out.
     choices = {"schema": 1, "language": ans["stack"]["language"],

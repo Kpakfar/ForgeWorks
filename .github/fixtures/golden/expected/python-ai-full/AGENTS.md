@@ -1,7 +1,7 @@
 <!-- FW-BLOCK: project v5.2.0 -->
 <project>
 Recipe Radar -- Turn a photo of a fridge into three cookable dinner suggestions for busy home cooks.
-Primary user: A busy home cook who stares at a full fridge with no dinner idea.. Stack: Python; frontend: yes-minimal; AI features: rag, agents, evals, streaming; dev container: yes.
+Primary user: A busy home cook who stares at a full fridge with no dinner idea. Stack: Python; frontend: yes-minimal; AI features: rag, agents, evals, streaming; dev container: yes.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

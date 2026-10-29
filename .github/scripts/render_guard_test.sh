@@ -48,6 +48,23 @@ out=$(python3 init-project/render.py --answers "$tmp/wide.json" --core init-proj
   --profile init-project/templates/profiles/python --out "$d" 2>&1 || true)
 echo "$out" | grep -q "bytes; hard cap" || fail "a multi-byte AGENTS.md over the byte cap rendered: $out"
 
+# Answers the renderer must refuse: a DEL control character (invalid in TOML)
+# and a feature that claims to be in progress at bootstrap.
+for case in del in-progress; do
+  python3 - "$tmp/answers.json" "$tmp/$case.json" "$case" <<'PY'
+import json, sys
+a = json.load(open(sys.argv[1]))
+if sys.argv[3] == "del":
+    a["project"]["goal"] += "\x7f"
+else:
+    a["features"][0]["status"] = "in-progress"
+json.dump(a, open(sys.argv[2], "w"))
+PY
+  out=$(python3 init-project/render.py --answers "$tmp/$case.json" --core init-project/templates/core \
+    --profile init-project/templates/profiles/python --out "$tmp/out-$case" 2>&1 || true)
+  echo "$out" | grep -qE "control characters|must be \"todo\"" || fail "answers with $case rendered: $out"
+done
+
 # A failed render (bad answers) writes nothing.
 d="$tmp/bad"; mkdir "$d"
 python3 - "$tmp/answers.json" <<'PY'

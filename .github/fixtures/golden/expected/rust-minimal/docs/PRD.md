@@ -8,7 +8,7 @@
 
 A Rust library that splits large text files into stable, overlap-aware chunks for indexing pipelines.
 
-Primary user: A backend developer building document indexing who needs deterministic chunk boundaries.. Problem: Ad-hoc chunkers produce different boundaries across runs and platforms, which invalidates cached embeddings and makes diffs noisy.
+Primary user: A backend developer building document indexing who needs deterministic chunk boundaries. Problem: Ad-hoc chunkers produce different boundaries across runs and platforms, which invalidates cached embeddings and makes diffs noisy.
 Today's alternative: hand-rolled splitters that drift between runs. Why this wins: determinism is the contract, verified by cross-platform tests
 
 ## The journey (end to end)

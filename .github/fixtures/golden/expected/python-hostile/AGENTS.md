@@ -2,7 +2,7 @@
 <project>
 Hostile "Fixture" & <Sons>, Ltd. `v0` -- A "goal" with 'single quotes',
 an escaped newline, {{lowercase braces}}, `backticks`, & ampersands — plus a trailing backslash \ and a $dollar.
-Primary user: A user who types "quotes" & <angle brackets> into every form field they meet.. Stack: Python; frontend: yes-minimal; AI features: none; dev container: yes.
+Primary user: A user who types "quotes" & <angle brackets> into every form field they meet. Stack: Python; frontend: yes-minimal; AI features: none; dev container: yes.
 What `ls` does not tell you:
 - `docs/features.json` is the spec AND the loop's state: one entry per feature with `acceptance`, `tests`, `status`, and, while in progress, `phase` and `next`. Read one entry with `python3 scripts/feature.py <id>`; never the whole file. `docs/BACKLOG.md` is its generated view. `docs/PRD.md` is what every entry's `serves:` points at.
 - `docs/plans/<id>.md` holds the decisions for the feature being built and is deleted at merge; a decision that binds later work moves to the entry's `decisions`.

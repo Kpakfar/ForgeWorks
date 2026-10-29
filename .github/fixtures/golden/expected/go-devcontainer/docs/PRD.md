@@ -8,7 +8,7 @@
 
 An internal HTTP service that validates and normalizes partner RSS feeds before ingestion.
 
-Primary user: A data engineer who babysits broken partner feeds every Monday.. Problem: Partner feeds break silently (bad encodings, missing fields, wrong dates) and corrupt the downstream pipeline; validation happens too late, after ingestion.
+Primary user: A data engineer who babysits broken partner feeds every Monday. Problem: Partner feeds break silently (bad encodings, missing fields, wrong dates) and corrupt the downstream pipeline; validation happens too late, after ingestion.
 Today's alternative: letting feeds into the pipeline and cleaning up after incidents. Why this wins: validates and quarantines at the front door instead of repairing downstream
 
 ## The journey (end to end)

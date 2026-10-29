@@ -8,7 +8,7 @@
 
 Turn a photo of a fridge into three cookable dinner suggestions for busy home cooks.
 
-Primary user: A busy home cook who stares at a full fridge with no dinner idea.. Problem: Recipe sites answer 'what can I cook in general', not 'what can I cook right now with what I have'; the gap between inventory and inspiration stays manual.
+Primary user: A busy home cook who stares at a full fridge with no dinner idea. Problem: Recipe sites answer 'what can I cook in general', not 'what can I cook right now with what I have'; the gap between inventory and inspiration stays manual.
 Today's alternative: scrolling recipe sites and guessing what matches the fridge. Why this wins: start from a photo of the actual fridge, not from a search box
 
 ## The journey (end to end)
