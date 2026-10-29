@@ -91,8 +91,8 @@ they exist:
    symlink) is not generated; `.claude/skills/` still ships as plain
    procedures.
 
-Everything else takes the documented default: devcontainer yes,
-explanations no, gotchas seed yes, mem0 no, codex reviewer only when codex
+Everything else takes the documented default: devcontainer yes only when
+`command -v docker` succeeds (no otherwise), explanations no, gotchas seed yes, mem0 no, codex reviewer only when codex
 is in the roster. Say which defaults applied.
 
 Derive and confirm: project name/slug, goal, primary user, core problem,
