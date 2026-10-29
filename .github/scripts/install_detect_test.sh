@@ -44,4 +44,15 @@ d="$tmp/own-agents"; mkdir -p "$d/.claude/agents"
 expect "foreign .claude/agents stops" "$(run "$d")" "Nothing was written"
 expect "FORCE_BOOTSTRAP overrides" "$(run "$d" FORCE_BOOTSTRAP=1)" "Bootstrap kit installed"
 
+d="$tmp/own-claude"; mkdir "$d"; printf '# rules\n' > "$d/CLAUDE.md"
+expect "foreign CLAUDE.md stops" "$(run "$d")" "Nothing was written"
+
+d="$tmp/code"; mkdir -p "$d/src"; printf 'x\n' > "$d/src/app.py"; printf 'y\n' > "$d/pyproject.toml"
+expect "an existing codebase stops" "$(run "$d")" "not an empty folder"
+[ ! -e "$d/AGENTS.md" ] || { echo "install-detect: FAIL -- a stopped run wrote AGENTS.md"; exit 1; }
+expect "FORCE_BOOTSTRAP overrides a non-empty folder" "$(run "$d" FORCE_BOOTSTRAP=1)" "Bootstrap kit installed"
+
+d="$tmp/gh-clone"; mkdir -p "$d/.git"; printf '# x\n' > "$d/README.md"; : > "$d/LICENSE"; : > "$d/.gitignore"
+expect "a fresh gh repo clone bootstraps" "$(run "$d")" "Bootstrap kit installed"
+
 echo "install-detect: OK"

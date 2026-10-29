@@ -15,6 +15,12 @@ conventions. Fails closed: invalid answers, an unknown placeholder, a missing
 insertion anchor, or a leftover {{...}} in the output all abort with a clear
 message and a non-zero exit.
 
+The tree is rendered into a staging directory first and copied into --out only
+when every check passed, so a failed render writes nothing. A file that
+already exists in --out with different content is a collision: the render
+stops and lists it, unless --allow-overwrite is given. The bootstrap kit's own
+files (a Bootstrap Mode AGENTS.md, the stamp) are expected and never collide.
+
 The rules implemented here are documented (as a summary table) in
 init-project/reference/renderer-rules.md; the conditional block texts live in
 templates/conditional/ next to the core templates.
@@ -28,6 +34,7 @@ import os
 import re
 import shutil
 import sys
+import tempfile
 
 from render_schema import (
     PLACEHOLDER_RE, PROFILE_NOTES, PROFILE_SCALARS, SECURITY_KEYS,
@@ -388,8 +395,6 @@ def post_steps(out_dir: str, ans: dict) -> None:
     # CLAUDE.md -> AGENTS.md pointer only makes sense for a Claude Code roster.
     claude_md = os.path.join(out_dir, "CLAUDE.md")
     if claude_selected(ans):
-        if os.path.lexists(claude_md):
-            os.remove(claude_md)
         try:
             os.symlink("AGENTS.md", claude_md)
         except (OSError, NotImplementedError):
@@ -401,11 +406,9 @@ def post_steps(out_dir: str, ans: dict) -> None:
     # skill twice.
     agents_skills = os.path.join(out_dir, ".agents", "skills")
     wants_link = any(a["name"] in ("codex", "antigravity") for a in ans["agents"])
-    # A real directory there holds skills the owner installed: leave it alone.
-    if wants_link and (os.path.islink(agents_skills) or not os.path.exists(agents_skills)):
+    # (A real directory already in --out is kept: see install_tree.)
+    if wants_link:
         os.makedirs(os.path.dirname(agents_skills), exist_ok=True)
-        if os.path.islink(agents_skills):
-            os.remove(agents_skills)
         try:
             os.symlink(os.path.join("..", ".claude", "skills"), agents_skills)
         except (OSError, NotImplementedError):
@@ -454,12 +457,12 @@ def post_steps(out_dir: str, ans: dict) -> None:
         json.dump(payload, f, indent=2, ensure_ascii=False)
         f.write("\n")
     # Template version stamp is ALWAYS written (upgrade-project depends on it),
-    # even when the roster has no claude-code (bootstrap normally writes it first).
+    # even when the roster has no claude-code. A stamp the bootstrap already
+    # wrote in --out wins: see install_tree.
     stamp = os.path.join(out_dir, ".claude", ".template-version")
-    if not os.path.exists(stamp):
-        os.makedirs(os.path.dirname(stamp), exist_ok=True)
-        with open(stamp, "w", encoding="utf-8") as f:
-            f.write(TEMPLATE_VERSION + "\n")
+    os.makedirs(os.path.dirname(stamp), exist_ok=True)
+    with open(stamp, "w", encoding="utf-8") as f:
+        f.write(TEMPLATE_VERSION + "\n")
 
 
 def leftover_scan(out_dir: str) -> list[str]:
@@ -481,7 +484,85 @@ def leftover_scan(out_dir: str) -> list[str]:
     return found
 
 
-def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str) -> int:
+def _entries(root: str) -> list[str]:
+    """Every file and symlink under root, relative, sorted."""
+    out: list[str] = []
+    for dirpath, dirnames, names in os.walk(root):
+        dirnames.sort()
+        links = [d for d in dirnames if os.path.islink(os.path.join(dirpath, d))]
+        rel = os.path.relpath(dirpath, root)
+        out += [os.path.normpath(os.path.join(rel, n)) for n in sorted(names + links)]
+    return out
+
+
+def _same(src: str, dst: str) -> bool:
+    if os.path.islink(src) or os.path.islink(dst):
+        return (os.path.islink(src) and os.path.islink(dst)
+                and os.readlink(src) == os.readlink(dst))
+    if not os.path.isfile(dst):
+        return False
+    with open(src, "rb") as a, open(dst, "rb") as b:
+        return a.read() == b.read()
+
+
+def _expected(rel: str, dst: str) -> bool:
+    """An existing file the bootstrap kit put there: replaced, or kept, without a collision."""
+    if rel == "AGENTS.md" and os.path.isfile(dst) and not os.path.islink(dst):
+        with open(dst, encoding="utf-8", errors="replace") as f:
+            return "Bootstrap Mode" in f.read()
+    return False
+
+
+def install_tree(stage: str, out_dir: str, allow_overwrite: bool) -> None:
+    """Copy the staged tree into out_dir. Checks everything before writing anything."""
+    real_out = os.path.realpath(out_dir)
+    stamp = os.path.join(".claude", ".template-version")
+    agents_skills = os.path.join(".agents", "skills")
+    plan: list[str] = []
+    collisions: list[str] = []
+    for rel in _entries(stage):
+        dst = os.path.join(out_dir, rel)
+        parent = os.path.realpath(os.path.dirname(dst))
+        if parent != real_out and not parent.startswith(real_out + os.sep):
+            raise RenderError(f"{rel}: its folder resolves outside --out "
+                              f"({parent}); refusing to follow the symlink")
+        if not os.path.lexists(dst):
+            plan.append(rel)
+            continue
+        if rel == stamp:
+            continue  # the bootstrap stamp is the project's "from" version: keep it
+        if rel == agents_skills and os.path.isdir(dst) and not os.path.islink(dst):
+            continue  # a real directory holds skills the owner installed: keep it
+        if _same(os.path.join(stage, rel), dst):
+            continue
+        if os.path.isdir(dst) and not os.path.islink(dst):
+            collisions.append(f"{rel} (a directory is in the way)")
+        elif _expected(rel, dst) or allow_overwrite:
+            plan.append(rel)
+        else:
+            collisions.append(rel)
+    if collisions:
+        shown = collisions[:25]
+        more = f"\n  ... and {len(collisions) - 25} more" if len(collisions) > 25 else ""
+        raise RenderError(
+            f"{len(collisions)} file(s) in {out_dir} would be overwritten; nothing "
+            "was written:\n  - " + "\n  - ".join(shown) + more +
+            "\nShow the owner this list. Re-run with --allow-overwrite only after "
+            "their yes.")
+    for rel in plan:
+        src, dst = os.path.join(stage, rel), os.path.join(out_dir, rel)
+        os.makedirs(os.path.dirname(dst) or ".", exist_ok=True)
+        if os.path.lexists(dst):
+            os.remove(dst)
+        if os.path.islink(src):
+            os.symlink(os.readlink(src), dst)
+        else:
+            shutil.copyfile(src, dst)
+            shutil.copymode(src, dst)
+
+
+def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str,
+           allow_overwrite: bool = False) -> int:
     with open(answers_path, encoding="utf-8") as f:
         try:
             ans = json.load(f)
@@ -496,6 +577,22 @@ def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str) -> 
     cond_dir = os.path.normpath(os.path.join(core_dir, "..", "conditional"))
     mapping = build_mapping(ans, prof, cond_dir)
 
+    with tempfile.TemporaryDirectory(prefix="fw-render-") as stage:
+        written = _render_tree(ans, mapping, cond_dir, core_dir, profile_dir, stage)
+        install_tree(stage, out_dir, allow_overwrite)
+    roster = ",".join(f"{a['name']}({a['status'][0]})" for a in ans["agents"])
+    print(f"rendered {written} files -> {out_dir} "
+          f"[{ans['stack']['language']}; weight={ans['weight']}; "
+          f"ai={'on' if ans['stack']['ai_features'] else 'off'}; "
+          f"devcontainer={ans['stack']['uses_devcontainer']}; "
+          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}; "
+          f"agents={roster}]")
+    return 0
+
+
+def _render_tree(ans: dict, mapping: dict[str, str], cond_dir: str,
+                 core_dir: str, profile_dir: str, out_dir: str) -> int:
+    """Render into an empty out_dir (the staging directory) and validate it."""
     written = 0
     for source, root in (("core", core_dir), ("profile", profile_dir)):
         for relpath in iter_files(root):
@@ -517,14 +614,7 @@ def render(answers_path: str, core_dir: str, profile_dir: str, out_dir: str) -> 
     if leftovers:
         raise RenderError("unresolved placeholders survived the render "
                           "(fail closed):\n  - " + "\n  - ".join(leftovers))
-    roster = ",".join(f"{a['name']}({a['status'][0]})" for a in ans["agents"])
-    print(f"rendered {written} files -> {out_dir} "
-          f"[{ans['stack']['language']}; weight={ans['weight']}; "
-          f"ai={'on' if ans['stack']['ai_features'] else 'off'}; "
-          f"devcontainer={ans['stack']['uses_devcontainer']}; "
-          f"mem0={ans['opt_ins']['mem0']}; codex={ans['opt_ins']['codex_reviewer']}; "
-          f"agents={roster}]")
-    return 0
+    return written
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -534,6 +624,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--profile", required=True,
                         help="templates/profiles/<language> directory")
     parser.add_argument("--out", required=True, help="target project directory")
+    parser.add_argument("--allow-overwrite", action="store_true",
+                        help="replace existing files that differ (only after the owner's yes)")
     args = parser.parse_args(argv)
     for label, path in (("--answers", args.answers), ("--core", args.core),
                         ("--profile", args.profile)):
@@ -541,7 +633,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"render.py: {label} path does not exist: {path}", file=sys.stderr)
             return 2
     try:
-        return render(args.answers, args.core, args.profile, args.out)
+        return render(args.answers, args.core, args.profile, args.out, args.allow_overwrite)
     except RenderError as exc:
         print(f"render.py: {exc}", file=sys.stderr)
         return 1

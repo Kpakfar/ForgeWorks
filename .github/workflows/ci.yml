@@ -143,6 +143,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: install.sh bootstraps, upgrades, or stops on the right directories
         run: bash .github/scripts/install_detect_test.sh
+      - name: render.py writes nothing on failure and never overwrites an owner's file
+        run: bash .github/scripts/render_guard_test.sh
 
   line-cap:
     runs-on: ubuntu-latest

@@ -11,7 +11,7 @@
 # BRANCH=... (e.g. BRANCH=main to test the latest unreleased state).
 #
 # This script:
-#   1. Validates the environment (curl, git, npx).
+#   1. Validates the environment (curl, git, npx, python3).
 #   2. Drops the bootstrap AGENTS.md into the current directory.
 #   3. Installs the init-project skill (SKILL.md + templates/) into
 #      .claude/skills/init-project/ using `npx degit` (pinned version).
@@ -46,6 +46,7 @@ MISSING=()
 command -v curl >/dev/null 2>&1 || MISSING+=("curl")
 command -v npx >/dev/null 2>&1 || MISSING+=("npx (install Node.js: https://nodejs.org/)")
 command -v git >/dev/null 2>&1 || MISSING+=("git")
+command -v python3 >/dev/null 2>&1 || MISSING+=("python3 (the renderer needs it: https://www.python.org/downloads/)")
 
 if [[ ${#MISSING[@]} -gt 0 ]]; then
   echo "ERROR: Required generic tools are missing:" >&2
@@ -57,8 +58,8 @@ fi
 
 # Classify the directory. Three outcomes: bootstrap (empty, or a bootstrap that
 # did not finish), upgrade (a project ForgeWorks generated), or stop (a project
-# with its own agent files that ForgeWorks did not generate -- adopting one is
-# not built yet, and both other modes would damage it).
+# with its own agent files or code that ForgeWorks did not generate -- adopting
+# one is not built yet, and both other modes would damage it).
 INITIALIZED=0
 REASON=""
 FOREIGN=""
@@ -70,8 +71,17 @@ elif [[ -f "AGENTS.md" && -f ".claude/.template-version" ]]; then
   INITIALIZED=1; REASON=".claude/.template-version exists"
 elif [[ -f "AGENTS.md" ]]; then
   FOREIGN="an AGENTS.md that ForgeWorks did not write"
+elif [[ -e "CLAUDE.md" ]]; then
+  FOREIGN="a CLAUDE.md that ForgeWorks did not write"
 elif [[ -d ".claude/agents" ]]; then
   FOREIGN="a .claude/agents/ folder that ForgeWorks did not write"
+else
+  # Empty means nothing but what `git init` or `gh repo create` leaves behind.
+  # The renderer still refuses to overwrite those without the owner's yes.
+  OTHER=$(find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .DS_Store \
+    ! -name '.gitignore' ! -name '.gitattributes' ! -name 'README*' ! -name 'LICENSE*' \
+    ! -name .claude | head -3 | sed 's|^\./||' | tr '\n' ' ')
+  [[ -z "${OTHER}" ]] || FOREIGN="existing files (${OTHER% }) -- not an empty folder"
 fi
 if [[ "${FORCE_BOOTSTRAP:-0}" == "1" ]]; then
   INITIALIZED=0; FOREIGN=""

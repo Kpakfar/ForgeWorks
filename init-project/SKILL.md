@@ -326,6 +326,6 @@ checks. Without it a red build can still be merged by pushing directly.
 
 - **The user cannot decide on a language.** Default to Python.
 - **The user wants to skip the interview.** Minimum: name, one-sentence goal, the core flow, one acceptance criterion. Everything else takes the default or `TODO(interview-skipped)`.
-- **Non-empty directory.** Refuse unless the user confirms after seeing what would be overwritten.
+- **Non-empty directory.** `render.py` stops, lists every file it would overwrite, and writes nothing. Show the owner that list; re-run with `--allow-overwrite` only after their yes.
 - **Package manager missing.** Stop with the install link for `uv`, `npm`, `cargo`, or `go`.
 - **Context7 fails to start after bootstrap.** Check `npx`; if broken, note it in `docs/gotchas.md` and let the user fix npx or remove the entry from `.mcp.json`.
