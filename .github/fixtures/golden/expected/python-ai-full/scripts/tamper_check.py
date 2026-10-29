@@ -60,8 +60,9 @@ def resolve_base() -> str | None:
 
 def removed_inline_tests(merge_base: str, path: str) -> bool:
     diff = _git("diff", "-U0", f"{merge_base}..HEAD", "--", path)
-    removed = [ln[1:] for ln in diff.splitlines()
-               if ln.startswith("-") and not ln.startswith("---")]
+    removed = [
+        ln[1:] for ln in diff.splitlines() if ln.startswith("-") and not ln.startswith("---")
+    ]
     return any(INLINE_TEST_RE.search(ln) for ln in removed) if INLINE_TEST_RE else False
 
 

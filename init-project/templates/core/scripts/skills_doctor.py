@@ -130,14 +130,21 @@ def main(argv: list[str]) -> int:
         hooks = load_json(path / "hooks" / "hooks.json").get("hooks", {})
         if "SessionStart" not in hooks:
             continue
-        process = sorted(n for n, _ in skills_under(path / "skills")
-                         if any(n in names for names in FAMILIES.values()))
+        process = sorted(
+            n
+            for n, _ in skills_under(path / "skills")
+            if any(n in names for names in FAMILIES.values())
+        )
         if process:
-            fails.append(f"plugin {key} injects a SessionStart hook into every session "
-                         f"and ships process skills ({', '.join(process)})")
+            fails.append(
+                f"plugin {key} injects a SessionStart hook into every session "
+                f"and ships process skills ({', '.join(process)})"
+            )
         else:
-            warns.append(f"plugin {key} injects a SessionStart hook into every session "
-                         "(no process skills; check it only sets up the environment)")
+            warns.append(
+                f"plugin {key} injects a SessionStart hook into every session "
+                "(no process skills; check it only sets up the environment)"
+            )
     for label, settings in (
         ("user", home / ".claude" / "settings.json"),
         ("project", root / ".claude" / "settings.json"),
