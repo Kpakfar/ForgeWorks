@@ -1,0 +1,23 @@
+{
+  "agents": [
+    "claude-code",
+    "codex"
+  ],
+  "ai_features": [],
+  "has_frontend": "yes-minimal",
+  "language": "python",
+  "opt_ins": {
+    "codex_reviewer": "yes",
+    "explanations": "no",
+    "mem0": "no",
+    "seed_gotchas": "yes"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "no",
+    "holds_private_data": "yes",
+    "reads_untrusted": "yes"
+  },
+  "uses_devcontainer": "yes",
+  "weight": "full"
+}

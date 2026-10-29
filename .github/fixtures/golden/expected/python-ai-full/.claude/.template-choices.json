@@ -1,0 +1,29 @@
+{
+  "agents": [
+    "claude-code",
+    "codex",
+    "opencode"
+  ],
+  "ai_features": [
+    "rag",
+    "agents",
+    "evals",
+    "streaming"
+  ],
+  "has_frontend": "yes-minimal",
+  "language": "python",
+  "opt_ins": {
+    "codex_reviewer": "yes",
+    "explanations": "yes",
+    "mem0": "yes",
+    "seed_gotchas": "yes"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "yes",
+    "holds_private_data": "yes",
+    "reads_untrusted": "yes"
+  },
+  "uses_devcontainer": "yes",
+  "weight": "full"
+}

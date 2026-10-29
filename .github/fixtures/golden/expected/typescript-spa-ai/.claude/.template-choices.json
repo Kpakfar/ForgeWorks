@@ -1,0 +1,25 @@
+{
+  "agents": [
+    "claude-code"
+  ],
+  "ai_features": [
+    "agents",
+    "evals"
+  ],
+  "has_frontend": "yes-spa",
+  "language": "typescript",
+  "opt_ins": {
+    "codex_reviewer": "no",
+    "explanations": "yes",
+    "mem0": "yes",
+    "seed_gotchas": "no"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "no",
+    "holds_private_data": "yes",
+    "reads_untrusted": "yes"
+  },
+  "uses_devcontainer": "no",
+  "weight": "full"
+}

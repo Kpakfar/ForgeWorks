@@ -458,6 +458,20 @@ def post_steps(out_dir: str, ans: dict) -> None:
     with open(features_json, "w", encoding="utf-8", newline="") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
         f.write("\n")
+    # The generation choices, without the PRD prose: /upgrade-project reads them
+    # to gate files exactly as this render did, so an opt-out stays out.
+    choices = {"schema": 1, "language": ans["stack"]["language"],
+               "weight": ans["weight"],
+               "has_frontend": ans["stack"]["has_frontend"],
+               "ai_features": ans["stack"]["ai_features"],
+               "uses_devcontainer": ans["stack"]["uses_devcontainer"],
+               "agents": [a["name"] for a in ans["agents"]],
+               "opt_ins": ans["opt_ins"], "security": ans["security"]}
+    choices_json = os.path.join(out_dir, ".claude", ".template-choices.json")
+    os.makedirs(os.path.dirname(choices_json), exist_ok=True)
+    with open(choices_json, "w", encoding="utf-8", newline="") as f:
+        json.dump(choices, f, indent=2, sort_keys=True)
+        f.write("\n")
     # Template version stamp is ALWAYS written (upgrade-project depends on it),
     # even when the roster has no claude-code. A stamp the bootstrap already
     # wrote in --out wins: see install_tree.

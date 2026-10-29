@@ -255,6 +255,7 @@ Core files, every project:
 ```bash
 test -f AGENTS.md && test -f README.md && test -f .env.example && \
 test -f .mcp.json && test -f .claude/.template-version && \
+test -f .claude/.template-choices.json && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
 test -f .github/dependabot.yml && \
 test -f docs/PRD.md && test -f docs/features.json && test -f docs/BACKLOG.md && \
@@ -299,7 +300,7 @@ and test exist), and that no placeholder survived:
   --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=skills
 ```
 
-Delete the renderer input: `rm docs/_init-answers.json`. Then run the quality
+Delete the renderer input: `rm docs/_init-answers.json`. The choices `/upgrade-project` needs are already in `.claude/.template-choices.json`; the prose lives in `docs/PRD.md`. Then run the quality
 gate (`{{QA_COMMAND}}`, inside the dev container if one is used). Every
 profile ships a green-on-first-run scaffold; a project that starts red is a
 bug to fix before handing off.
