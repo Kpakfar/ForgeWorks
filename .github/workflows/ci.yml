@@ -11,6 +11,7 @@ name: CI
 #                      opt-ins/hostile values). Toolchains do NOT run here -- the
 #                      profile jobs own "green on first run".
 #   - deps-guard     : the supply-chain hook blocks/allows the expected commands.
+#   - generated-gates: each fixture passes its own language-free gates on day one.
 #   - <lang>-profile : each profile's real gate + e2e is GREEN on the merged tree.
 # It does NOT exercise the interview itself (the agent's questioning is judgment;
 # everything after the answers file is render.py and is tested here).
@@ -126,6 +127,14 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Loop state scripts on a rendered fixture
         run: bash .github/scripts/loop_scripts_test.sh
+
+  generated-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Every fixture passes its own features, dup, resume, prune, and tamper gates
+        run: bash .github/scripts/generated_gates_test.sh
 
   install-detect:
     runs-on: ubuntu-latest
