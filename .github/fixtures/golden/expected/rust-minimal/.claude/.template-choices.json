@@ -1,0 +1,22 @@
+{
+  "agents": [
+    "claude-code"
+  ],
+  "ai_features": [],
+  "has_frontend": "no",
+  "language": "rust",
+  "opt_ins": {
+    "codex_reviewer": "no",
+    "explanations": "yes",
+    "mem0": "no",
+    "seed_gotchas": "yes"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "no",
+    "holds_private_data": "no",
+    "reads_untrusted": "no"
+  },
+  "uses_devcontainer": "no",
+  "weight": "full"
+}

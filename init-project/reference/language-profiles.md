@@ -17,9 +17,11 @@ add_dep_command: "uv add"
 qa_command: "uv run qa"
 fix_command: "uv run fix"
 e2e_command: "bash scripts/e2e.sh"
+audit_command: "uv export --frozen --no-emit-project --format requirements-txt -q -o /tmp/audit-requirements.txt && uvx --from 'pip-audit==2.10.1' pip-audit --disable-pip --require-hashes -r /tmp/audit-requirements.txt"
 e2e_browser_install: "uv run playwright install --with-deps chromium"
 test_runner: "pytest"
 test_path_regex: '^tests/'
+inline_test_regex: ''
 test_command: "uv run pytest -m 'not e2e'"
 lint_tool: "ruff"
 lint_command: "uv run ruff check ."
@@ -115,9 +117,11 @@ add_dep_command: "npm install"
 qa_command: "npm run qa"
 fix_command: "npm run fix"
 e2e_command: "npm run e2e"
+audit_command: "npm audit --audit-level=high"
 e2e_browser_install: "npx playwright install --with-deps chromium"
 test_runner: "vitest"
 test_path_regex: '\.(test|spec)\.[jt]sx?$|^tests/'
+inline_test_regex: ''
 test_command: "npx vitest run"
 lint_tool: "eslint"
 lint_command: "npx eslint ."
@@ -179,9 +183,11 @@ add_dep_command: "go get"
 qa_command: "bash scripts/qa.sh"
 fix_command: "bash scripts/fix.sh"
 e2e_command: "bash scripts/e2e.sh"
+audit_command: "go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./..."
 e2e_browser_install: ""   # Go e2e is API/CLI-level by default (no browser)
 test_runner: "go test"
 test_path_regex: '_test\.go$'
+inline_test_regex: ''
 test_command: "go test -race ./..."
 lint_tool: "golangci-lint"
 lint_command: "golangci-lint run"
@@ -247,9 +253,11 @@ add_dep_command: "cargo add"
 qa_command: "bash scripts/qa.sh"
 fix_command: "bash scripts/fix.sh"
 e2e_command: "bash scripts/e2e.sh"
+audit_command: "cargo install cargo-audit --locked --version 0.22.2 && cargo audit"
 e2e_browser_install: ""   # Rust e2e is API/CLI-level by default (no browser)
 test_runner: "cargo test"
 test_path_regex: '^tests/'
+inline_test_regex: '#\[test\]|#\[cfg\(test\)\]|\bassert(_eq|_ne)?!'
 test_command: "cargo test"
 lint_tool: "clippy"
 lint_command: "cargo clippy --all-targets -- -D warnings"

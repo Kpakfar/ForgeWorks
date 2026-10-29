@@ -8,7 +8,7 @@
 
 A web app that turns a team's weekly activity into a two-paragraph stakeholder brief.
 
-Primary user: An engineering manager who writes the same status update every Friday.. Problem: Weekly stakeholder updates are assembled by hand from tickets, PRs, and chat; the writing is repetitive and the gathering is worse.
+Primary user: An engineering manager who writes the same status update every Friday. Problem: Weekly stakeholder updates are assembled by hand from tickets, PRs, and chat; the writing is repetitive and the gathering is worse.
 Today's alternative: hand-assembling updates from tickets, PRs, and chat. Why this wins: every claim carries a link to its evidence, and unsupported claims are flagged
 
 ## The journey (end to end)

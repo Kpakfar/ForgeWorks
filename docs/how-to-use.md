@@ -2,27 +2,46 @@
 
 ## Starting a new project
 
-Two equivalent options:
+Three equivalent options. All of them are pinned to one release tag.
 
 ### Option A: One-line install (recommended)
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh)
 ```
 
 Then open Claude Code and run `/init-project`.
 
-### Option B: manual (curl + degit, no `bash <(curl ...)`)
+### Option B: download, read, then run
+
+A release tag pins the content, but it does not prove what the script does. Read it before it runs:
 
 ```bash
 mkdir my-new-project && cd my-new-project && git init
-curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/AGENTS.md -o AGENTS.md
-mkdir -p .claude/skills
-npx degit Kpakfar/ForgeWorks/init-project#v5.2.0 .claude/skills/init-project --force
+curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh -o /tmp/forgeworks-install.sh
+less /tmp/forgeworks-install.sh   # it writes AGENTS.md, .claude/skills/, and a version stamp; nothing else
+bash /tmp/forgeworks-install.sh
+```
+
+### Option C: manual (curl + tar, no installer)
+
+```bash
+mkdir my-new-project && cd my-new-project && git init
+mkdir -p /tmp/forgeworks .claude/skills
+curl -fsSL https://github.com/Kpakfar/ForgeWorks/archive/v5.3.0.tar.gz | tar -xz -C /tmp/forgeworks --strip-components=1
+cp /tmp/forgeworks/bootstrap/AGENTS.md AGENTS.md
+cp -R /tmp/forgeworks/init-project .claude/skills/init-project
+printf 'v5.3.0\n' > .claude/.template-version
 ```
 
 Then open Claude Code and run `/init-project`.
+
+### What runs on your machine
+
+- The installer runs `curl` and `tar` to fetch one release archive. It needs no Node and never runs a package manager.
+- `/init-project` runs `python3` (the renderer, stdlib only) and then your language's package manager to install the scaffold's locked dependencies (`uv sync`, `npm install`, `go mod download`, or `cargo fetch`). It may offer `npx skills@1.7.2 add mattpocock/skills`; that runs only on your yes.
+- Nothing starts locally for Context7: `.mcp.json` points Claude Code at its hosted HTTP server, so library-doc lookups leave your machine as queries to Context7. Delete the entry if that is not acceptable.
 
 ## What happens during bootstrap
 
@@ -39,7 +58,7 @@ Run the **same install command** inside an already-generated project. `install.s
 
 ```bash
 # In your existing project, commit your work first, then:
-bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh)
 ```
 
 Open Claude Code and run `/upgrade-project`. It reconciles the project against the current template:
@@ -53,7 +72,7 @@ It is non-destructive and idempotent — safe to run more than once. Both skills
 
 ## Updating the template itself
 
-Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v5.2.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
+Edit files in this repo. Your edits are picked up only by a bootstrap that targets the branch you edited (`BRANCH=main`, per the repo `AGENTS.md` `<testing-changes>`); the published, pinned one-liner stays at the released tag (`v5.3.0`) until a new release is cut, so it keeps producing the released template. Existing projects can pull merged changes via `/upgrade-project` above.
 
 Backporting lessons from a real project: read that project's `docs/gotchas.md` (and reviewer notes) at the end, and for each *generic* lesson edit the corresponding file here and push. When a change alters the generated structure, bump `VERSION` and — if it adds tooling or placeholder-bearing files — extend `upgrade-project/SKILL.md` (see the repo `AGENTS.md` `<editing-the-upgrade-skill>`).
 
@@ -72,7 +91,7 @@ The shared `init-project/templates/core/` serves every language; each language i
 ## Troubleshooting
 
 **`/init-project` slash command doesn't appear.**
-The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If `npx degit` put it elsewhere, move it.
+The skill needs to be in `.claude/skills/init-project/SKILL.md` (note: the directory name matters). If it landed elsewhere, move it.
 
 **Symlink fails on Windows.**
 Use Option A above on WSL, or skip the symlink and use a one-line `CLAUDE.md` pointing to `AGENTS.md` instead: `# See @AGENTS.md for project conventions.`

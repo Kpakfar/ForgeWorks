@@ -1,0 +1,24 @@
+{
+  "agents": [
+    "codex",
+    "antigravity",
+    "opencode"
+  ],
+  "ai_features": [],
+  "has_frontend": "no",
+  "language": "typescript",
+  "opt_ins": {
+    "codex_reviewer": "no",
+    "explanations": "no",
+    "mem0": "no",
+    "seed_gotchas": "no"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "no",
+    "holds_private_data": "no",
+    "reads_untrusted": "no"
+  },
+  "uses_devcontainer": "no",
+  "weight": "full"
+}

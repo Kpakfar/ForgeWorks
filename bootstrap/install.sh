@@ -2,19 +2,20 @@
 # install.sh - Bootstrap a new project from this template.
 #
 # Usage (pinned to a versioned release tag -- recommended):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.2.0/bootstrap/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Kpakfar/ForgeWorks/v5.3.0/bootstrap/install.sh)
 #
 # The template files this script fetches are pinned to one ref (default: the
 # release tag below), so they do not change under you when `main` moves. (Runtime
-# inputs -- skills@latest, the MCP package -- are not fully reproducible
+# inputs -- the package managers and the hosted Context7 server -- are not fully reproducible
 # yet; see docs/ROADMAP.md.) Override the ref for development with REF=... or
 # BRANCH=... (e.g. BRANCH=main to test the latest unreleased state).
 #
 # This script:
-#   1. Validates the environment (curl, git, npx).
-#   2. Drops the bootstrap AGENTS.md into the current directory.
-#   3. Installs the init-project skill (SKILL.md + templates/) into
-#      .claude/skills/init-project/ using `npx degit` (pinned version).
+#   1. Validates the environment (curl, tar, git, python3). No Node, no
+#      package manager: the template is stack-free, and so is its installer.
+#   2. Downloads the release archive of that ref once (curl, then tar).
+#   3. Drops the bootstrap AGENTS.md into the current directory and the
+#      init-project skill (SKILL.md + templates/) into .claude/skills/init-project/.
 #   4. Prints next steps.
 #
 # The whole body runs inside main(), called on the last line, so a truncated
@@ -30,22 +31,36 @@ main() {
 
 REPO="${REPO:-Kpakfar/ForgeWorks}"
 # Pinned, versioned release ref. Overridable for development (BRANCH=main, etc.).
-REF="${REF:-${BRANCH:-v5.2.0}}"
-RAW="https://raw.githubusercontent.com/${REPO}/${REF}"
-# The tool that fetches the skill folders. Pinned so the installer's own supply
-# chain does not float on npm's `latest`.
-DEGIT="degit@2.8.4"
+REF="${REF:-${BRANCH:-v5.3.0}}"
+ARCHIVE="https://github.com/${REPO}/archive/${REF}.tar.gz"
+
+# fetch_kit <folder in the repo> <destination>: one folder of the release
+# archive, replacing what is at the destination. The archive's top folder name
+# varies by ref, so it is stripped.
+KIT=""
+fetch_kit() {
+  if [[ -z "${KIT}" ]]; then
+    KIT=$(mktemp -d)
+    curl -fsSL "${ARCHIVE}" | tar -xz -C "${KIT}" --strip-components=1
+  fi
+  [[ -e "${KIT}/$1" ]] || { echo "ERROR: ${REPO}@${REF} has no $1" >&2; exit 1; }
+  rm -rf "$2"
+  mkdir -p "$(dirname "$2")"
+  cp -R "${KIT}/$1" "$2"
+}
 
 echo "==> Bootstrapping AI project from ${REPO} (ref: ${REF})"
 echo
 
+trap '[[ -n "${KIT}" ]] && rm -rf "${KIT}"' EXIT
 trap 'echo "ERROR: install did not complete -- this directory may be half-bootstrapped. Re-run after fixing the cause." >&2' ERR
 
 # Required generic tools (both bootstrap and upgrade use these).
 MISSING=()
 command -v curl >/dev/null 2>&1 || MISSING+=("curl")
-command -v npx >/dev/null 2>&1 || MISSING+=("npx (install Node.js: https://nodejs.org/)")
+command -v tar >/dev/null 2>&1 || MISSING+=("tar")
 command -v git >/dev/null 2>&1 || MISSING+=("git")
+command -v python3 >/dev/null 2>&1 || MISSING+=("python3 (the renderer needs it: https://www.python.org/downloads/)")
 
 if [[ ${#MISSING[@]} -gt 0 ]]; then
   echo "ERROR: Required generic tools are missing:" >&2
@@ -57,8 +72,8 @@ fi
 
 # Classify the directory. Three outcomes: bootstrap (empty, or a bootstrap that
 # did not finish), upgrade (a project ForgeWorks generated), or stop (a project
-# with its own agent files that ForgeWorks did not generate -- adopting one is
-# not built yet, and both other modes would damage it).
+# with its own agent files or code that ForgeWorks did not generate -- adopting
+# one is not built yet, and both other modes would damage it).
 INITIALIZED=0
 REASON=""
 FOREIGN=""
@@ -70,8 +85,18 @@ elif [[ -f "AGENTS.md" && -f ".claude/.template-version" ]]; then
   INITIALIZED=1; REASON=".claude/.template-version exists"
 elif [[ -f "AGENTS.md" ]]; then
   FOREIGN="an AGENTS.md that ForgeWorks did not write"
+elif [[ -e "CLAUDE.md" ]]; then
+  FOREIGN="a CLAUDE.md that ForgeWorks did not write"
 elif [[ -d ".claude/agents" ]]; then
   FOREIGN="a .claude/agents/ folder that ForgeWorks did not write"
+else
+  # Empty means nothing but what `git init`, `gh repo create`, or an editor
+  # opening the folder (.idea/, .vscode/) leaves behind.
+  # The renderer still refuses to overwrite those without the owner's yes.
+  OTHER=$(find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .DS_Store \
+    ! -name '.gitignore' ! -name '.gitattributes' ! -name 'README*' ! -name 'LICENSE*' \
+    ! -name .claude ! -name .idea ! -name .vscode | head -3 | sed 's|^\./||' | tr '\n' ' ')
+  [[ -z "${OTHER}" ]] || FOREIGN="existing files (${OTHER% }) -- not an empty folder"
 fi
 if [[ "${FORCE_BOOTSTRAP:-0}" == "1" ]]; then
   INITIALIZED=0; FOREIGN=""
@@ -94,8 +119,7 @@ if [[ "${INITIALIZED}" -eq 1 ]]; then
   echo "==> Existing generated project detected (${REASON}). Installing the upgrade skill."
   echo "    (Wrong guess? Re-run with FORCE_BOOTSTRAP=1 to bootstrap anyway.)"
   echo "    (Nothing here is overwritten; /upgrade-project reconciles non-destructively.)"
-  mkdir -p .claude/skills
-  npx --yes "${DEGIT}" "${REPO}/upgrade-project#${REF}" .claude/skills/upgrade-project --force
+  fetch_kit upgrade-project .claude/skills/upgrade-project
   # Do NOT stamp the version here: the existing `.claude/.template-version` is the
   # project's "from" version. /upgrade-project reads it, then writes the new
   # version only AFTER a successful upgrade. Stamping on kit install would destroy
@@ -127,12 +151,11 @@ fi
 
 # 1. Drop the bootstrap AGENTS.md.
 echo "==> Installing bootstrap AGENTS.md"
-curl -fsSL "${RAW}/bootstrap/AGENTS.md" -o AGENTS.md
+fetch_kit bootstrap/AGENTS.md AGENTS.md
 
 # 2. Install the init-project skill (SKILL.md + templates/).
 echo "==> Installing init-project skill into .claude/skills/init-project/"
-mkdir -p .claude/skills
-npx --yes "${DEGIT}" "${REPO}/init-project#${REF}" .claude/skills/init-project --force
+fetch_kit init-project .claude/skills/init-project
 # Stamp the source ref so a future /upgrade-project knows where this project started.
 printf '%s\n' "${REF}" > .claude/.template-version
 
@@ -153,7 +176,7 @@ Next steps:
 /init-project interviews you about scope and stack, then generates the full
 project for your chosen language (Python, TypeScript, Go, or Rust): AGENTS.md, a .mcp.json
 with Context7, CI, a PR template, and a green-on-first-run scaffold. It checks the
-language's package manager (uv / npm / go) after you pick.
+language's package manager (uv / npm / go / cargo) after you pick.
 
 EOF
 

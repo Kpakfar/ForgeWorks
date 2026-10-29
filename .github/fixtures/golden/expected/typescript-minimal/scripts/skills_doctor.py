@@ -8,7 +8,10 @@ inventory and fails on the two things a field project paid for:
   FAIL  one skill name installed from more than one source (routing races; the
         generic copy wins and generic output ships) -- the one-copy rule.
   FAIL  an enabled plugin that injects a SessionStart hook into EVERY session
-        (it preempts the project's own skills and breaks the checkpoint).
+        AND ships a process skill (tdd / grilling / debugging / review): it
+        preempts the project's own loop and breaks the checkpoint.
+  WARN  any other plugin with a SessionStart hook -- environment setup is a
+        legitimate use; check it does not steer the process.
   WARN  several skills from one process family (tdd / grilling / debugging /
         review) -- legal, but AGENTS.md names one owner per family.
 Exit 1 on any FAIL. Read-only; it never edits settings. Stdlib only.
@@ -125,8 +128,23 @@ def main(argv: list[str]) -> int:
     print("== session-start hooks ==")
     for key, path in plugins:
         hooks = load_json(path / "hooks" / "hooks.json").get("hooks", {})
-        if "SessionStart" in hooks:
-            fails.append(f"plugin {key} injects a SessionStart hook into every session")
+        if "SessionStart" not in hooks:
+            continue
+        process = sorted(
+            n
+            for n, _ in skills_under(path / "skills")
+            if any(n in names for names in FAMILIES.values())
+        )
+        if process:
+            fails.append(
+                f"plugin {key} injects a SessionStart hook into every session "
+                f"and ships process skills ({', '.join(process)})"
+            )
+        else:
+            warns.append(
+                f"plugin {key} injects a SessionStart hook into every session "
+                "(no process skills; check it only sets up the environment)"
+            )
     for label, settings in (
         ("user", home / ".claude" / "settings.json"),
         ("project", root / ".claude" / "settings.json"),
@@ -169,7 +187,7 @@ def main(argv: list[str]) -> int:
         print(
             "Fix: keep ONE source per skill name and disable the rest (Claude Code: "
             "`/plugin`, or `enabledPlugins` in ~/.claude/settings.json). Never a "
-            "plugin that runs on every SessionStart next to this harness."
+            "process plugin that runs on every SessionStart next to this harness."
         )
     return 1 if fails else 0
 

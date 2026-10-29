@@ -2,7 +2,7 @@
 # release_check.sh -- the published one-liner must point at something that exists.
 #
 # Fails if:
-#   1. any pinned release ref (the raw URLs and degit calls in README/docs, the
+#   1. any pinned release ref (the raw and archive URLs in README/docs, the
 #      REF default in bootstrap/install.sh, the reconcile ref in
 #      upgrade-project/SKILL.md, TEMPLATE_VERSION in init-project/render.py)
 #      is not v<VERSION>, or
@@ -27,6 +27,7 @@ rc=0
 echo "==> pinned release refs must be ${VERSION}"
 pins=$(git grep -noE \
   -e 'ForgeWorks/v[0-9]+\.[0-9]+\.[0-9]+' \
+  -e 'ForgeWorks/archive/v[0-9]+\.[0-9]+\.[0-9]+' \
   -e 'ForgeWorks[^[:space:]]*#v[0-9]+\.[0-9]+\.[0-9]+' \
   -e 'BRANCH:-v[0-9]+\.[0-9]+\.[0-9]+' \
   -e 'TEMPLATE_VERSION = "v[0-9]+\.[0-9]+\.[0-9]+' \

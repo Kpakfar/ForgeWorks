@@ -29,12 +29,13 @@ the upgrade cannot overwrite. It reconciles.
 
 ## Phase 1: Recover context
 
-Recover from the project, ask only for what you cannot detect (2-3 questions at most):
+Read `.claude/.template-choices.json` first (written by the renderer from v5.3.0): it holds the language, weight, frontend, AI features, dev container, roster, opt-ins, and security answers as generated. Every value in it is settled; do not ask again. An older project has no such file: recover the values below, ask only for what you cannot detect (2-3 questions at most), and write the file in Phase 4 in the same shape (`init-project/render.py` `post_steps` shows it).
 
 - **Project name and language** from the manifest (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`).
 - **AI features?** A `prompts/` dir, an LLM SDK in the manifest, or an `<ai-discipline>` block. Confirm yes/no.
 - **Agent roster** from `docs/agents.json`; absent means Claude-only. Governs the CC-fence rule and roster gating.
-- **mem0?** `docs/memory.md`, a `<memory>` block, or `mem0ai` in the manifest. Absent: ask once (default no).
+- **mem0?** A `<memory>` block in `AGENTS.md` or `mem0ai` in the manifest. A lone `docs/memory.md` is not evidence. Absent: ask once (default no).
+- **Explanations?** `docs/explanations/` present means yes; absent means no. Never ask.
 - **Quality-gate command** from `docs/language-standards.md` or the manifest scripts.
 - **Codex?** An existing "Second opinion (Codex)" section in `reviewer.md`, or a Codex roster note, means opted in: keep it, never remove it on a "no". No trace: ask once.
 - **From-version** from `.claude/.template-version`. Rewritten only in Phase 4 after success.
@@ -42,20 +43,24 @@ Recover from the project, ask only for what you cannot detect (2-3 questions at 
 ## Phase 2: Fetch the current template
 
 ```bash
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/core#v5.2.0 /tmp/upgrade-core --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project/templates/profiles/<lang>#v5.2.0 /tmp/upgrade-profile --force
-npx --yes degit@2.8.4 Kpakfar/ForgeWorks/init-project#v5.2.0 /tmp/upgrade-skill --force
+FW_TMP=$(mktemp -d) && echo "$FW_TMP"
+curl -fsSL https://github.com/Kpakfar/ForgeWorks/archive/v5.3.0.tar.gz | tar -xz -C "$FW_TMP" --strip-components=1
+ln -s init-project/templates/core "$FW_TMP/core"
+ln -s init-project/templates/profiles/<lang> "$FW_TMP/profile"
+ln -s init-project "$FW_TMP/skill"
 ```
 
-Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `/tmp/upgrade-skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.2.0`), not `main`.
+A fresh folder per run, so two upgrades never share or reuse a fetched copy. Use the printed path wherever this skill writes `$FW_TMP`, and delete it at the end of Phase 4.
+
+Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `$FW_TMP/skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.3.0`), not `main`.
 
 ## Phase 3: Reconcile
 
 Route by the from-version: below 3.0.0, install the `v3.0.0`-tagged upgrade skill first. Below 4.0.0, run **Phase 3-D** instead of A-C, then the v5 delta in 3-C. On 4.x or later, run A-C-E-F below.
 
-**A. File ABSENT in the project (additive).** Apply roster and frontend gating first, exactly like `render.py`: `.claude/agents/`, `.claude/hooks/`, `.claude/settings.json`, and the `CLAUDE.md` symlink are not additive without `claude-code` in the roster; `docs/design/` and the tokens file are not additive without a frontend. Then:
+**A. File ABSENT in the project (additive).** Apply roster and frontend gating first, exactly like `render.py`: `.claude/agents/`, `.claude/hooks/`, `.claude/settings.json`, and the `CLAUDE.md` symlink are not additive without `claude-code` in the roster; `docs/design/` and the tokens file are not additive without a frontend; `docs/explanations/` is not additive when explanations is `no`; `docs/memory.md` is not additive when mem0 is `no`; `.devcontainer/` is not additive when the dev container is `no`. Then:
 - No `{{...}}` placeholders: copy verbatim, `chmod +x` any `.sh`.
-- Only recoverable placeholders (`{{PROJECT_NAME}}`, `{{LANGUAGE}}`, `{{DATE}}`, `{{TEST_PATH_REGEX}}`, `{{QA_COMMAND}}`, `{{SOURCE_SUFFIXES}}`, `{{CODEX_REVIEW_STEP}}`): substitute from Phase 1 and the fetched `profile.json`, copy, then apply the fence rules below.
+- Only recoverable placeholders (`{{PROJECT_NAME}}`, `{{LANGUAGE}}`, `{{DATE}}`, `{{TEST_PATH_REGEX}}`, `{{INLINE_TEST_REGEX}}`, `{{QA_COMMAND}}`, `{{AUDIT_COMMAND}}`, `{{CI_SETUP_STEPS}}`, `{{SOURCE_SUFFIXES}}`, `{{CODEX_REVIEW_STEP}}`): substitute from Phase 1 and the fetched `profile.json`, copy, then apply the fence rules below.
 - Unresolvable placeholders: never half-write one. Report "add manually" with the template path.
 - Interview-sourced placeholders (mostly `docs/PRD.md`): queue for the Phase 3-E mini-interview.
 
@@ -67,7 +72,7 @@ Special cases:
 - `docs/agents.md` + `docs/agents.json`: cannot be recovered. Ask the roster question and write both.
 
 **B. File PRESENT in both (merge target).** Insert what is new, preserve what the project filled in.
-- `AGENTS.md`: reconcile by `<!-- FW-BLOCK: <name> vX.Y.Z -->` markers, not judgment. Current block names: `project`, `commands`, `etiquette`, `hard-rules`, `tiers`, `communication`, `context`, `learning`, `roster`, plus the conditional `ai-discipline` and `memory`. Block absent: insert at its template position. Older marker version: show both versions side by side once in the Phase 4 report; the user chooses. Current version: skip. A block with no markers on a 4.x project: match by tag, wrap with markers at the from-version, then re-enter the rule. Conditional blocks take their text from `/tmp/upgrade-skill/templates/conditional/` and only when the project uses the feature. Flag the retired `risk-tiers` block for removal if still present.
+- `AGENTS.md`: reconcile by `<!-- FW-BLOCK: <name> vX.Y.Z -->` markers, not judgment. Current block names: `project`, `commands`, `etiquette`, `hard-rules`, `tiers`, `communication`, `context`, `learning`, `roster`, plus the conditional `ai-discipline` and `memory`. Block absent: insert at its template position. Older marker version: show both versions side by side once in the Phase 4 report; the user chooses. Current version: skip. A block with no markers on a 4.x project: match by tag, wrap with markers at the from-version, then re-enter the rule. Conditional blocks take their text from `$FW_TMP/skill/templates/conditional/` and only when the project uses the feature. Flag the retired `risk-tiers` block for removal if still present.
 - Subagents (`reviewer.md`, `utility.md`) and the three skills: template-owned procedure files. If the project's copy is byte-identical to an older release, queue the current version as a straight update; if hand-edited, show the diff and let the user choose. Never assume the template is ahead; the project may carry a fix (report it upstream).
 - Any other file in both (hooks, `.mcp.json`, workflows, doc templates): same rule.
 
@@ -89,9 +94,10 @@ Language-independent deltas, oldest first (each idempotent; skip what already la
   3. For each open feature's `docs/deviations.md` lines, append them to that feature's `notes` verbatim (`notes+=`). Delete `docs/deviations.md`.
   4. Delete `docs/archive/` after the same citation grep as 3-F.
   5. Replace the `docs-budget`, `checkpoint-budget`, and `resume-check` jobs in `qa.yml` with the fetched versions (this release changes the `AGENTS.md` cap from lines to characters and drops the retired files; show the diff).
-  6. Replace the `iteration` skill (now `SKILL.md` plus `reference/dispatch.md`), `reviewer.md`, `utility.md`, `security-review`, `tech-debt`, `docs/plans/README.md`, and the PR template with the fetched versions; graft every `AGENTS.md` block at v5.0.0 through 3-B (all nine blocks changed: shorter, and the conflicts with the harness's own system prompt removed). A hand-edited `AGENTS.md` must land under the new character cap; delete stale sentences rather than rewrite them.
+  6. Replace the `iteration` skill (now `SKILL.md` plus `reference/dispatch.md`), `reviewer.md`, `utility.md`, `security-review`, `tech-debt`, `docs/plans/README.md`, and the PR template with the fetched versions; graft every `AGENTS.md` block at v5.0.0 through 3-B (all nine blocks changed: shorter, and the conflicts with the harness's own system prompt removed). A hand-edited `AGENTS.md` must land under the new size cap; delete stale sentences rather than rewrite them.
 - *Since v5.1.0 (a tree per session)*: replace `.claude/hooks/tree-claim.sh` with the fetched version (claude-code rosters). The old hook read the claim from the checkout the session was launched from, so a session that moved into its own worktree stayed blocked. Copy `scripts/land.sh`, and `.worktreeinclude` for claude-code rosters. Replace `scripts/factory_doctor.sh` and the `iteration` skill. Graft the `etiquette` block at v5.1.0 through 3-B.
 - *Since v5.2.0 (the outer loop)*: replace `scripts/feature.py`, `scripts/features_check.py`, `scripts/resume.py`, `scripts/backlog.py`, and `scripts/factory_doctor.sh` with the fetched versions (diff first). Entries gain two optional keys, `decisions` and `depends_on`; existing entries need no edit. An in-progress entry now needs `next`: set it with `python3 scripts/feature.py <id> next="..."` before running the check. `feature.py` now owns the loop's edges (a start only after its dependencies are done, one phase forward at a time, a close only from REVIEW, a counted review cap in the new `reviews` key), and GREEN or REVIEW with no cited test fails the check: for an in-progress entry that trips either, add the missing `tests+=` or, with the owner's yes, repeat the command with `override="<their reason>"`. Replace the `iteration` skill (branch at GRILL, and the new REPLAN step, which closes the feature and re-aims the backlog on the branch before the merge) and `docs/plans/README.md`; graft the `project`, `hard-rules`, and `tiers` blocks at v5.2.0 through 3-B (`hard-rules` gains the owner gate on hard-to-reverse actions; the list is in the `iteration` skill). When the roster has `codex` or `antigravity`, create the link `.agents/skills` -> `../.claude/skills` (if `.agents/skills` is already a real directory, link each generated skill into it instead: `ln -s ../../.claude/skills/<name> .agents/skills/<name>`) and refresh `docs/agents.md`. TypeScript: raise `vitest` to the profile's version (the old range pulls a vulnerable `tinypool`).
+- *Since v5.3.0 (the general-tool audit)*: replace `scripts/dup_check.py` (import lines no longer count as duplication), `scripts/skills_doctor.py` (a SessionStart plugin fails only when it also ships process skills), and `scripts/tamper_check.py` (substitute `{{TEST_PATH_REGEX}}` and `{{INLINE_TEST_REGEX}}`; it now covers gate files and, for Rust, inline tests). Claude-code rosters: replace `.claude/hooks/quality-gate.sh` (substitute `{{QA_COMMAND}}`; it now gates the worktree under review, not the launch checkout). In `qa.yml`, replace the `test-tamper` job (it sets `TAMPER_BASE` per event, so a direct push to main is checked) and the `docs-budget` job, and add the `audit` job (substitute `{{CI_SETUP_STEPS}}` and `{{AUDIT_COMMAND}}` from the fetched `profile.json`). Copy the profile's `.github/dependabot.yml` when absent; when present, add any missing ecosystem entry. Replace the `iteration` skill (the Fix route, and one mockup for a change to an approved surface) and graft the `commands`, `hard-rules`, `tiers`, and `communication` blocks at v5.3.0 through 3-B. Without `claude-code` in the roster, delete the `CLAUDE.md` symlink sentence from `README.md`. Run `python3 scripts/backlog.py` so `docs/BACKLOG.md` lists the features. If `dup_check.py` now reports a block the old baseline covered (the hashes moved with the import-line change), re-baseline with `--baseline --force` and a `dup-change:` line in the commit body. In `.mcp.json`, replace the `npx` Context7 entry with the fetched one (the hosted HTTP server, so the project no longer needs Node); a Python dev container may drop its Node feature. Phase 4 writes `.claude/.template-choices.json`.
 
 **E. Mini-interview.** Collect every queued interview-sourced placeholder, dedupe, ask only those questions in one message (using the Phase 2 wording from `init-project/SKILL.md`), substitute, write. The upgrade ends with zero `{{...}}` on disk. A declined question writes `TODO(interview-skipped)`.
 
@@ -114,14 +120,14 @@ Only for a project below 4.0.0, after the owner's accept, and idempotent (copy-i
 2. Apply everything; `chmod +x` new scripts and hooks.
 3. Ensure `docs/plans/`, `docs/probes/`, and (frontend) `docs/design/mockups/` exist with current READMEs.
 4. Run the language quality gate, `python3 scripts/features_check.py`, `python3 scripts/resume.py --check`, and `python3 scripts/prune.py --check`; fix any breakage the upgrade introduced.
-5. Only after all pass, write the new version to `.claude/.template-version`.
-6. `rm -rf .claude/skills/upgrade-project`. A stale copy is what the next upgrade must not reconcile against; the installer re-fetches the current one.
-7. Close with: "Upgraded <from> -> <to> in one run. Review the diff and commit on your branch. Nothing was overwritten without being shown first."
+5. Only after all pass, write the new version to `.claude/.template-version`, and write `.claude/.template-choices.json` if Phase 1 had to recover it.
+6. `rm -rf "$FW_TMP" .claude/skills/upgrade-project`. A stale copy is what the next upgrade must not reconcile against; the installer re-fetches the current one.
+7. Close with: "Upgraded <from> -> <to> in one run. Review the diff and commit on your branch with a `test-change: template upgrade to <to>` line in the body (the upgrade edits workflows, hooks, and gate scripts, which the tamper guard checks). Nothing was overwritten without being shown first."
 
 ## Failure modes
 
 - **Uninitialized directory.** Stop; run `/init-project`.
-- **`degit` fails.** Stop with the cause; the upgrade needs the current template.
+- **The download fails.** Stop with the cause; the upgrade needs the current template.
 - **`AGENTS.md` heavily rewritten.** Show the missing blocks and let the user place them.
 - **Re-run after a partial upgrade.** Safe; every step skips what already landed.
 

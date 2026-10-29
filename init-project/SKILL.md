@@ -26,9 +26,9 @@ A generated project is `templates/core/` (language-free) plus exactly one
 symlinked, for a Claude Code roster), `.claude/` (the `iteration`,
 `security-review`, and `tech-debt` skills; the `reviewer` and `utility`
 subagents; the quality-gate, deps-guard, and tree-claim hooks), `.mcp.json`
-(Context7), `.github/` (CI with the quality gate, e2e, feature-check,
-docs-budget, checkpoint-budget, resume-check, dup-check, and test-tamper
-jobs, plus a PR template), `docs/` (PRD, `features.json` and its
+(Context7), `.github/` (CI with the quality gate, audit, e2e,
+feature-check, docs-budget, checkpoint-budget, resume-check, dup-check, and
+test-tamper jobs, a PR template, and a Dependabot config), `docs/` (PRD, `features.json` and its
 `BACKLOG.md` view, SECURITY, language-standards, documentation, gotchas,
 writing, plans/, probes/, agents; `design/` for frontend projects),
 `scripts/` (`feature.py`, `resume.py`, `features_check.py`, `dup_check.py`,
@@ -49,7 +49,7 @@ scope and stack, then generate the structure. Continue?" Wait for a yes.
 
 The generated `iteration` skill holds the whole per-feature procedure, so
 nothing has to be installed. The upstream `tdd` and `grill-me` skills
-(`npx skills@latest add mattpocock/skills`) pair well with it; offer them
+(`npx skills@1.7.2 add mattpocock/skills`) pair well with it; offer them
 once and accept a no.
 
 **One copy per process skill.** Ask which packs are enabled (`/plugin`). Two
@@ -91,8 +91,8 @@ they exist:
    symlink) is not generated; `.claude/skills/` still ships as plain
    procedures.
 
-Everything else takes the documented default: devcontainer yes,
-explanations no, gotchas seed yes, mem0 no, codex reviewer only when codex
+Everything else takes the documented default: devcontainer yes only when
+`command -v docker` succeeds (no otherwise), explanations no, gotchas seed yes, mem0 no, codex reviewer only when codex
 is in the roster. Say which defaults applied.
 
 Derive and confirm: project name/slug, goal, primary user, core problem,
@@ -255,7 +255,9 @@ Core files, every project:
 ```bash
 test -f AGENTS.md && test -f README.md && test -f .env.example && \
 test -f .mcp.json && test -f .claude/.template-version && \
+test -f .claude/.template-choices.json && \
 test -f .github/workflows/qa.yml && test -f .github/pull_request_template.md && \
+test -f .github/dependabot.yml && \
 test -f docs/PRD.md && test -f docs/features.json && test -f docs/BACKLOG.md && \
 test -f docs/SECURITY.md && test -f docs/language-standards.md && \
 test -f docs/writing.md && test -f docs/plans/README.md && \
@@ -271,7 +273,8 @@ test -f .claude/skills/tech-debt/SKILL.md
 ```
 
 Run `python3 scripts/skills_doctor.py` and show its output. A `FAIL` line is
-a duplicated skill name or an always-on SessionStart plugin; the fix is the
+a duplicated skill name or an always-on SessionStart plugin that ships
+process skills; a SessionStart plugin without them is a `WARN`. The fix is the
 owner's (`/plugin`). The first line of the final report is that FAIL, before
 any "done".
 
@@ -298,7 +301,7 @@ and test exist), and that no placeholder survived:
   --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=skills
 ```
 
-Delete the renderer input: `rm docs/_init-answers.json`. Then run the quality
+Delete the renderer input: `rm docs/_init-answers.json`. The choices `/upgrade-project` needs are already in `.claude/.template-choices.json`; the prose lives in `docs/PRD.md`. Then run the quality
 gate (`{{QA_COMMAND}}`, inside the dev container if one is used). Every
 profile ships a green-on-first-run scaffold; a project that starts red is a
 bug to fix before handing off.
@@ -326,6 +329,6 @@ checks. Without it a red build can still be merged by pushing directly.
 
 - **The user cannot decide on a language.** Default to Python.
 - **The user wants to skip the interview.** Minimum: name, one-sentence goal, the core flow, one acceptance criterion. Everything else takes the default or `TODO(interview-skipped)`.
-- **Non-empty directory.** Refuse unless the user confirms after seeing what would be overwritten.
+- **Non-empty directory.** `render.py` stops, lists every file it would overwrite, and writes nothing. Show the owner that list; re-run with `--allow-overwrite` only after their yes.
 - **Package manager missing.** Stop with the install link for `uv`, `npm`, `cargo`, or `go`.
-- **Context7 fails to start after bootstrap.** Check `npx`; if broken, note it in `docs/gotchas.md` and let the user fix npx or remove the entry from `.mcp.json`.
+- **Context7 does not connect after bootstrap.** It is a hosted HTTP server: check the network, note it in `docs/gotchas.md`, and let the user fix it or remove the entry from `.mcp.json`.

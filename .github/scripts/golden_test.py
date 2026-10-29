@@ -5,7 +5,9 @@ For every answers file in .github/fixtures/golden/*.json, render the project
 tree with init-project/render.py and compare it byte-for-byte against the
 committed expected tree in .github/fixtures/golden/expected/<name>/ -- file
 set, file contents, symlink targets, and executable bits must all match.
-Any drift is a failure with a diff.
+Any drift is a failure with a diff. One exception: the dependency tables of a
+profile manifest (DEP_TABLES) must equal the profile's own instead of the
+frozen copy, so a Dependabot version bump passes without an --update commit.
 
     python3 .github/scripts/golden_test.py            # verify (CI)
     python3 .github/scripts/golden_test.py --update   # regenerate expected trees
@@ -34,7 +36,7 @@ TEMPLATES = os.path.join(ROOT, "init-project", "templates")
 
 SYNC_KEYS = ("language_version", "package_manager", "manifest_file",
              "install_command", "add_dep_command", "qa_command", "fix_command",
-             "e2e_command", "test_runner", "test_path_regex", "lint_tool",
+             "e2e_command", "audit_command", "test_runner", "test_path_regex", "inline_test_regex", "lint_tool",
              "format_tool", "type_tool")
 
 
@@ -69,7 +71,32 @@ def diff_text(rel: str, want: bytes, got: bytes) -> str:
         return f"binary file differs ({len(want)} vs {len(got)} bytes)"
 
 
-def compare(expected_dir: str, rendered_dir: str) -> list[str]:
+# Dependency versions in a profile manifest are profile content, not renderer
+# output: Dependabot bumps them in the profile, and the <lang>-profile CI job
+# proves the new versions are green on the merged tree. The golden check
+# compares the rest of the manifest and requires those tables to equal the
+# profile's own, byte for byte, so a Dependabot PR needs no --update commit.
+DEP_TABLES = {"package.json": ("dependencies", "devDependencies")}
+
+
+def deps_only_drift(rel: str, want: bytes, got: bytes, profile_dir: str) -> bool:
+    keys = DEP_TABLES.get(rel)
+    source = os.path.join(profile_dir, rel)
+    if not keys or not os.path.isfile(source):
+        return False
+    try:
+        w, g = json.loads(want), json.loads(got)
+        with open(source, encoding="utf-8") as f:
+            src = json.load(f)
+    except ValueError:
+        return False
+    if any(g.get(k) != src.get(k) for k in keys):
+        return False
+    strip = lambda d: {k: v for k, v in d.items() if k not in keys}  # noqa: E731
+    return strip(w) == strip(g) and list(w) == list(g)
+
+
+def compare(expected_dir: str, rendered_dir: str, profile_dir: str = "") -> list[str]:
     want, got = tree_entries(expected_dir), tree_entries(rendered_dir)
     problems: list[str] = []
     problems += [f"missing from render: {rel}" for rel in sorted(want.keys() - got.keys())]
@@ -84,7 +111,7 @@ def compare(expected_dir: str, rendered_dir: str) -> list[str]:
         else:
             wdata, wexec = wval  # type: ignore[misc]
             gdata, gexec = gval  # type: ignore[misc]
-            if wdata != gdata:
+            if wdata != gdata and not deps_only_drift(rel, wdata, gdata, profile_dir):
                 problems.append(f"{rel}: content drift\n{diff_text(rel, wdata, gdata)}")
             if wexec != gexec:
                 problems.append(f"{rel}: executable bit is {gexec}, expected {wexec}")
@@ -131,6 +158,7 @@ def profile_sync_check() -> list[str]:
 # race/sanitizer applies only where the language has one (Go: -race).
 PARITY_CONTRACT = {
     "python": [
+        (".github/dependabot.yml", 'package-ecosystem: uv'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),            # line cap
         ("scripts/qa.sh", "ruff format --check"),   # format check
         ("scripts/qa.sh", "ruff check"),             # lint as error
@@ -139,6 +167,7 @@ PARITY_CONTRACT = {
         ("scripts/e2e.sh", "pytest"),               # e2e runner
     ],
     "typescript": [
+        (".github/dependabot.yml", 'package-ecosystem: npm'),  # dependency updates
         ("eslint.config.js", "max-lines"),          # line cap (lint rule)
         ("package.json", "prettier --check"),       # format check
         ("package.json", "eslint ."),               # lint as error
@@ -147,6 +176,7 @@ PARITY_CONTRACT = {
         ("package.json", "playwright test"),        # e2e runner
     ],
     "go": [
+        (".github/dependabot.yml", 'package-ecosystem: gomod'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),
         ("scripts/qa.sh", "gofmt -l"),
         ("scripts/qa.sh", "golangci-lint run"),
@@ -155,6 +185,7 @@ PARITY_CONTRACT = {
         ("scripts/e2e.sh", "go test -race -tags e2e"),
     ],
     "rust": [
+        (".github/dependabot.yml", 'package-ecosystem: cargo'),  # dependency updates
         ("scripts/qa.sh", "linecap.sh"),
         ("scripts/qa.sh", "cargo fmt --check"),
         ("scripts/qa.sh", "-D warnings"),           # clippy, warnings are errors
@@ -228,7 +259,10 @@ def main() -> int:
                       "(run with --update and commit the result)")
                 rc = 1
                 continue
-            problems = compare(expected_dir, rendered)
+            with open(os.path.join(FIXTURES, fixture), encoding="utf-8") as f:
+                language = json.load(f)["stack"]["language"]
+            problems = compare(expected_dir, rendered,
+                               os.path.join(TEMPLATES, "profiles", language))
             if problems:
                 print(f"FAIL [{name}] {len(problems)} drift(s):")
                 for problem in problems:

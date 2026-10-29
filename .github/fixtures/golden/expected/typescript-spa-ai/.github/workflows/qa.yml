@@ -34,6 +34,28 @@ jobs:
       - name: Run quality gate (lint, format, types, unit + functional)
         run: npm run qa
 
+  # Known-vulnerability check on the lockfile (docs/SECURITY.md, supply
+  # chain). Its own job, so a new advisory names itself instead of hiding in
+  # the quality gate. .github/dependabot.yml keeps the lockfile moving.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Install deps
+        run: npm ci
+
+      - name: Dependency audit (known vulnerabilities)
+        run: |
+          npm audit --audit-level=high
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -87,7 +109,7 @@ jobs:
           check() { f="$1"; cap="$2"; [ -f "$f" ] || return 0
             size=$(wc -c < "$f")
             if [ "$size" -gt "$cap" ]; then
-              echo "::error::$f is ${size} chars (cap ${cap}) -- delete what is stale, do not shave to just under the cap"
+              echo "::error::$f is ${size} bytes (cap ${cap}) -- delete what is stale, do not shave to just under the cap"
               exit 1; fi }
           # The only always-loaded file. The renderer enforces the same number.
           check AGENTS.md 8000
@@ -183,8 +205,9 @@ jobs:
       - name: Duplication gate
         run: python3 scripts/dup_check.py
 
-  # Test-tamper guard: flags weakened/deleted test assertions on this branch
-  # vs. origin/main (AGENTS.md <hard-rules>). Agent-neutral plain script.
+  # Test-tamper guard: a changed test or gate needs a `test-change:` reason
+  # (AGENTS.md <hard-rules>). A pull request compares with its base branch;
+  # a push, including a direct push to main, with the commit it started from.
   test-tamper:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -195,4 +218,6 @@ jobs:
           fetch-depth: 0
 
       - name: Test-tamper guard
+        env:
+          TAMPER_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
         run: python3 scripts/tamper_check.py

@@ -8,7 +8,7 @@
 
 A CLI that finds dead links in a Markdown docs folder before they ship.
 
-Primary user: A docs maintainer who keeps finding broken links after release.. Problem: Dead links are only discovered by readers; existing checkers are heavyweight CI services when a fast local CLI would do.
+Primary user: A docs maintainer who keeps finding broken links after release. Problem: Dead links are only discovered by readers; existing checkers are heavyweight CI services when a fast local CLI would do.
 Today's alternative: clicking links by hand or a heavyweight CI service. Why this wins: one fast local command, no service to configure
 
 ## The journey (end to end)

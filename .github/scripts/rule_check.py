@@ -159,11 +159,15 @@ def check_repo() -> list[str]:
     # Each pattern is asserted SEPARATELY. A drift gate that silently stops
     # finding the thing it guards fails in the direction of passing, which is
     # the exact failure mode this file exists to prevent.
-    m = re.search(r'relpath == "AGENTS\.md" and len\(text\) > (\d+)', render)
+    # Same unit too: render.py counts UTF-8 bytes, the job counts with wc -c.
+    m = re.search(r'relpath == "AGENTS\.md" and len\(text\.encode\("utf-8"\)\) > (\d+)', render)
     g = re.search(r"^\s*check AGENTS\.md (\d+)", qa, re.M)
+    if not re.search(r'size=\$\(wc -c < "\$f"\)', qa):
+        problems.append(f"{qa_path}: docs-budget no longer counts with `wc -c`; "
+                        "render.py counts bytes, so the two units drifted.")
     if not m:
         problems.append(f"rotted: no AGENTS.md char cap found in {render_path} "
-                        f"(pattern: 'relpath == \"AGENTS.md\" and len(text) > N'). "
+                        f"(pattern: 'relpath == \"AGENTS.md\" and len(text.encode(\"utf-8\")) > N'). "
                         f"Fix the pattern -- do not delete the check.")
     if not g:
         problems.append(f"rotted: no AGENTS.md char cap found in {qa_path} "
@@ -171,7 +175,7 @@ def check_repo() -> list[str]:
                         f"Fix the pattern -- do not delete the check.")
     if m and g and m.group(1) != g.group(1):
         problems.append(
-            f"render.py fails AGENTS.md over {m.group(1)} chars but the shipped "
+            f"render.py fails AGENTS.md over {m.group(1)} bytes but the shipped "
             f"docs-budget job uses {g.group(1)}. A project would render fine and "
             f"then fail its own CI, or the reverse."
         )

@@ -53,6 +53,18 @@ echo "$out" | grep -q 'WARN  tdd family has 2 skills' || fail "missing tdd famil
 echo "$out" | grep -q 'WARN  grilling family has 2 skills' || fail "missing grilling family warning: $out"
 echo "$out" | grep -q 'off@m' && fail "a disabled plugin was counted as a source: $out"
 
+# --- 2b. a SessionStart plugin with no process skill is a warning, not a failure ---
+home=$(mktemp -d); proj=$(mktemp -d); mk_home "$home"; mk_project "$proj"
+envp="$home/.claude/plugins/cache/m/envsetup/1.0.0"
+mkdir -p "$envp/skills/node-version" "$envp/hooks" "$home/.claude/plugins"
+echo "# node" > "$envp/skills/node-version/SKILL.md"
+echo '{"hooks":{"SessionStart":[{"matcher":"startup","hooks":[]}]}}' > "$envp/hooks/hooks.json"
+printf '{"version":2,"plugins":{"envsetup@m":[{"scope":"user","installPath":"%s"}]}}\n' "$envp" \
+  > "$home/.claude/plugins/installed_plugins.json"
+out=$(HOME="$home" python3 "$DOCTOR" --root "$proj" 2>&1); code=$?
+[ "$code" -eq 0 ] || fail "an environment-setup SessionStart plugin should pass, got $code: $out"
+echo "$out" | grep -q 'WARN  plugin envsetup@m injects a SessionStart hook' || fail "missing SessionStart warning: $out"
+
 # --- 3. disabling the duplicates (what the field fix did) turns it green ---
 echo '{"enabledPlugins":{"off@m":false,"pack@m":false,"sp@m":false}}' > "$home/.claude/settings.json"
 out=$(HOME="$home" python3 "$DOCTOR" --root "$proj" 2>&1); code=$?

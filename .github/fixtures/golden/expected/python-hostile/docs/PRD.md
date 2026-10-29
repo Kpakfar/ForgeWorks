@@ -9,7 +9,7 @@
 A "goal" with 'single quotes',
 an escaped newline, {{lowercase braces}}, `backticks`, & ampersands — plus a trailing backslash \ and a $dollar.
 
-Primary user: A user who types "quotes" & <angle brackets> into every form field they meet.. Problem: Systems break when text contains {{curly}} braces, `ticks`, "quotes",
+Primary user: A user who types "quotes" & <angle brackets> into every form field they meet. Problem: Systems break when text contains {{curly}} braces, `ticks`, "quotes",
 or newlines; this fixture proves the renderer does not.
 Today's alternative: hoping users never type quotes. Why this wins: it is the test, not the product
 

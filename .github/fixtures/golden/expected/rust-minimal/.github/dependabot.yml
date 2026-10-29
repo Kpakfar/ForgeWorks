@@ -1,0 +1,15 @@
+# Dependabot: weekly version-update pull requests for this project's
+# dependencies and its pinned GitHub Actions. Security alerts and security
+# updates are a repository setting: Settings -> Code security -> Dependabot.
+# The qa.yml `audit` job checks the lockfile for known vulnerabilities on
+# every push; this keeps the lockfile moving.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

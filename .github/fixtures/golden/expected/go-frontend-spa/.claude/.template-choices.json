@@ -1,0 +1,22 @@
+{
+  "agents": [
+    "claude-code"
+  ],
+  "ai_features": [],
+  "has_frontend": "yes-minimal",
+  "language": "go",
+  "opt_ins": {
+    "codex_reviewer": "no",
+    "explanations": "no",
+    "mem0": "no",
+    "seed_gotchas": "no"
+  },
+  "schema": 1,
+  "security": {
+    "acts_outward": "yes",
+    "holds_private_data": "no",
+    "reads_untrusted": "no"
+  },
+  "uses_devcontainer": "no",
+  "weight": "full"
+}

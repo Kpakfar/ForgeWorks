@@ -22,6 +22,13 @@ With the owner's yes, repeat the command with `override="<their reason>"`.
 **Chore** (the diff fits in one sentence, no behavior change): make the
 change, run `{{QA_COMMAND}}`, commit. Nothing else.
 
+**Fix** (the code breaks a line in an entry's `acceptance`; the line itself
+stays): write the regression test and watch it fail, make it pass, run
+`{{QA_COMMAND}}`, commit with `fix:`, and record it on that entry with
+`tests+=` and one `notes+=` line. No plan and no new owner gate: the owner approved that line at
+its GRILL. A security-trigger match still gets the security lens before the
+merge. A fix that needs a changed acceptance line is a feature.
+
 Anything else is a **feature**. No entry yet? Add one: next free id,
 `status: todo`, `tier: feature`, `surface:` the screen it touches or
 `"none"`, `serves:` a `docs/PRD.md` section (cannot name one? question the
@@ -48,9 +55,11 @@ Branch `feat/<id>-<slug>`; `status=in-progress phase=grill`. Write
 
 Acceptance criteria live only in the entry's `acceptance` array, one EARS
 line each (`WHEN <condition> THE SYSTEM SHALL <behavior>`). Each becomes a
-named test in RED. A surface feature needs a mockup before RED: build 3-4
-genuinely different HTML options (layouts, not recolors; real content;
-values from the tokens file), the owner picks, commit the winner to
+named test in RED. A surface feature needs a mockup before RED. A new
+surface gets 3-4 genuinely different HTML options (layouts, not recolors;
+real content; values from the tokens file); a change to a surface that
+already has an approved mockup gets one, shown beside the old. The owner
+picks, commit the winner to
 `docs/design/mockups/<id>-<name>.html` and set `mockup=` on the entry.
 
 Then attack the plan: strongest objection, failure modes, a simpler

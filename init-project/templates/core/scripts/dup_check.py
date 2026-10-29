@@ -8,7 +8,9 @@ is copied code, copied markup, or -- most often in an agent-built project -- the
 same paragraph of justification restated in five docstrings.
 
 Normalization strips what varies without changing the shape: comments, blank
-lines, string literals, numbers, and runs of whitespace. So two functions that
+lines, import lines, string literals, numbers, and runs of whitespace. Import
+lines go because two files that need the same modules share a header no one
+can extract. So two functions that
 differ only in their strings still count as duplicates, which is the point.
 
     python3 scripts/dup_check.py             # check, exit 1 on a finding
@@ -66,6 +68,7 @@ SKIP_DIRS = {
     ".claude",
 }
 LINE_COMMENT = re.compile(r"^\s*(#|//|\*|/\*|--|<!--)")
+IMPORT = re.compile(r"^\s*(import\s|from\s+\S+\s+import\s|use\s|extern\s+crate\s|require\()")
 LITERAL = re.compile(r'"[^"]*"|\'[^\']*\'|`[^`]*`')
 NUMBER = re.compile(r"\b\d[\d_.]*\b")
 WHITESPACE = re.compile(r"\s+")
@@ -89,9 +92,8 @@ def sources(patterns: list[str]) -> list[str]:
     out = []
     for root, dirs, files in os.walk("."):
         # SKIP_DIRS is the whole rule -- do NOT also skip every dotted dir.
-        # Production source lives in one often enough (.hermes/plugins/ in a
-        # field project) and a gate that cannot see a directory is worse than
-        # no gate: it reports OK.
+        # Production source can live in one, and a gate that cannot see a
+        # directory is worse than no gate: it reports OK.
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for name in files:
             if not name.endswith(tuple(SUFFIXES)):
@@ -111,7 +113,7 @@ def normalize(path: str) -> list[tuple[str, int]]:
         return []
     kept = []
     for lineno, line in enumerate(raw, 1):
-        if not line.strip() or LINE_COMMENT.match(line):
+        if not line.strip() or LINE_COMMENT.match(line) or IMPORT.match(line):
             continue
         text = WHITESPACE.sub(" ", NUMBER.sub("N", LITERAL.sub("S", line))).strip()
         if len(text) < 8:  # braces, `end`, single tokens: shape, not substance

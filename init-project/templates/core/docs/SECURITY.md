@@ -36,7 +36,7 @@ One line per risk; the value is in the *where enforced* slot, not the lecture.
 
 1. **Broken access control (IDOR).** Derive the acting user from a verified session or signed token (verify, not decode) in one middleware layer; scope every query and path to that owner; sandbox any path or id from input. *Where enforced:* TODO.
 2. **Secrets exposure.** Secrets live only in env or a secret store; the ignore file excludes them; `.env.example` documents the variables with empty values. *Where enforced:* TODO.
-3. **Supply chain / slopsquatting.** Install from the lockfile only; vet every new package (real, established, right author, not brand new). Enforced by committed lockfiles, reviewed updates, CI scanning, and the `deps-guard` hook where Claude Code drives.
+3. **Supply chain / slopsquatting.** Install from the lockfile only; vet every new package (real, established, right author, not brand new). Enforced by committed lockfiles, reviewed updates (`.github/dependabot.yml`), the CI `audit` job, and the `deps-guard` hook where Claude Code drives.
 4. **Unbounded input.** Length-bound every input that enters a prompt, a log, or storage. *Where enforced:* TODO.
 5. **Blast radius.** Least privilege per session; isolate production; fail closed on any security-check error. *Where enforced:* TODO.
 
