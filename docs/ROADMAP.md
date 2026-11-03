@@ -36,10 +36,15 @@ is still future work. The history of each release is in the git log.
   there without `--allow-overwrite`. Root CI runs every fixture's own gates
   (features, dup, resume, prune, tamper, both budgets). The generated CI
   carries a pinned dependency `audit` job and a Dependabot config.
+- **Secrets stay out of the agent's file reads (v5.4.0).** The generated
+  `.claude/settings.json` denies the Read tool on `.env` and `.env.*` at any
+  depth (`.env.example` stays readable). A shell command can still read the
+  file, so it is a guardrail, not a sandbox. `@reviewer` runs at high
+  reasoning effort while the main loop keeps the session default.
 
 ## Next
 
-- **Adopt an existing codebase (v5.4).** A separate `adopt-project` skill that
+- **Adopt an existing codebase.** A separate `adopt-project` skill that
   derives the PRD, the stack, and the feature list from a repository
   ForgeWorks did not generate. Today `install.sh` stops in such a folder.
 - **Re-run the gate inside `land.sh`.** A rebase can break a green branch;
@@ -81,5 +86,4 @@ is still future work. The history of each release is in the git log.
 - **No unattended shipping.** Scheduled or overnight loops need scope,
   authority, budget, and restart rules that do not exist yet. The loop is
   built for an owner who approves the plan and reads the merge report.
-- **The loop diagram** (`docs/forgeworks-loop.svg`) predates REPLAN.
 - **A 5-minute worked example** is deferred.
