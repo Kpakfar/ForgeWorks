@@ -5,6 +5,7 @@ description: >-
   re-review continues this conversation; never dispatch a second reviewer
   for the same feature.
 model: inherit
+effort: high
 hooks:
   Stop:
     - hooks:
