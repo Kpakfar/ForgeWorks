@@ -44,7 +44,7 @@ Read `.claude/.template-choices.json` first (written by the renderer from v5.3.0
 
 ```bash
 FW_TMP=$(mktemp -d) && echo "$FW_TMP"
-curl -fsSL https://github.com/Kpakfar/ForgeWorks/archive/v5.3.0.tar.gz | tar -xz -C "$FW_TMP" --strip-components=1
+curl -fsSL https://github.com/Kpakfar/ForgeWorks/archive/v5.4.0.tar.gz | tar -xz -C "$FW_TMP" --strip-components=1
 ln -s init-project/templates/core "$FW_TMP/core"
 ln -s init-project/templates/profiles/<lang> "$FW_TMP/profile"
 ln -s init-project "$FW_TMP/skill"
@@ -52,7 +52,7 @@ ln -s init-project "$FW_TMP/skill"
 
 A fresh folder per run, so two upgrades never share or reuse a fetched copy. Use the printed path wherever this skill writes `$FW_TMP`, and delete it at the end of Phase 4.
 
-Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `$FW_TMP/skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.3.0`), not `main`.
+Never pull another language's profile. A language with no profile folder reconciles `core/` only; the toolchain stays the user's. Conditional block texts live in `$FW_TMP/skill/templates/conditional/`. Reconcile against this skill's released tag (`v5.4.0`), not `main`.
 
 ## Phase 3: Reconcile
 
@@ -65,7 +65,7 @@ Route by the from-version: below 3.0.0, install the `v3.0.0`-tagged upgrade skil
 - Interview-sourced placeholders (mostly `docs/PRD.md`): queue for the Phase 3-E mini-interview.
 
 Special cases:
-- `.claude/settings.json`: merge every `PreToolUse` hook the template ships into the existing `hooks` object; never replace the file.
+- `.claude/settings.json`: merge every `PreToolUse` hook the template ships into the existing `hooks` object, and every `permissions.deny` rule into the existing deny list; never replace the file.
 - **AI fences** (`<!-- AI-*-START/END -->` in `docs/SECURITY.md` and `reviewer.md`): AI on, drop only the markers; AI off, drop the block. **CC fences** (`<!-- CC-*-START/END -->`, keyed on `claude-code` in the roster): same mechanic.
 - Python manifest: `pyproject.toml.example` is the merge source for the existing `pyproject.toml`, never a new file.
 - `.devcontainer/`: respect the original opt-out; note availability once.
@@ -98,6 +98,7 @@ Language-independent deltas, oldest first (each idempotent; skip what already la
 - *Since v5.1.0 (a tree per session)*: replace `.claude/hooks/tree-claim.sh` with the fetched version (claude-code rosters). The old hook read the claim from the checkout the session was launched from, so a session that moved into its own worktree stayed blocked. Copy `scripts/land.sh`, and `.worktreeinclude` for claude-code rosters. Replace `scripts/factory_doctor.sh` and the `iteration` skill. Graft the `etiquette` block at v5.1.0 through 3-B.
 - *Since v5.2.0 (the outer loop)*: replace `scripts/feature.py`, `scripts/features_check.py`, `scripts/resume.py`, `scripts/backlog.py`, and `scripts/factory_doctor.sh` with the fetched versions (diff first). Entries gain two optional keys, `decisions` and `depends_on`; existing entries need no edit. An in-progress entry now needs `next`: set it with `python3 scripts/feature.py <id> next="..."` before running the check. `feature.py` now owns the loop's edges (a start only after its dependencies are done, one phase forward at a time, a close only from REVIEW, a counted review cap in the new `reviews` key), and GREEN or REVIEW with no cited test fails the check: for an in-progress entry that trips either, add the missing `tests+=` or, with the owner's yes, repeat the command with `override="<their reason>"`. Replace the `iteration` skill (branch at GRILL, and the new REPLAN step, which closes the feature and re-aims the backlog on the branch before the merge) and `docs/plans/README.md`; graft the `project`, `hard-rules`, and `tiers` blocks at v5.2.0 through 3-B (`hard-rules` gains the owner gate on hard-to-reverse actions; the list is in the `iteration` skill). When the roster has `codex` or `antigravity`, create the link `.agents/skills` -> `../.claude/skills` (if `.agents/skills` is already a real directory, link each generated skill into it instead: `ln -s ../../.claude/skills/<name> .agents/skills/<name>`) and refresh `docs/agents.md`. TypeScript: raise `vitest` to the profile's version (the old range pulls a vulnerable `tinypool`).
 - *Since v5.3.0 (the general-tool audit)*: replace `scripts/dup_check.py` (import lines no longer count as duplication), `scripts/skills_doctor.py` (a SessionStart plugin fails only when it also ships process skills), and `scripts/tamper_check.py` (substitute `{{TEST_PATH_REGEX}}` and `{{INLINE_TEST_REGEX}}`; it now covers gate files and, for Rust, inline tests). Claude-code rosters: replace `.claude/hooks/quality-gate.sh` (substitute `{{QA_COMMAND}}`; it now gates the worktree under review, not the launch checkout). In `qa.yml`, replace the `test-tamper` job (it sets `TAMPER_BASE` per event, so a direct push to main is checked) and the `docs-budget` job, and add the `audit` job (substitute `{{CI_SETUP_STEPS}}` and `{{AUDIT_COMMAND}}` from the fetched `profile.json`). Copy the profile's `.github/dependabot.yml` when absent; when present, add any missing ecosystem entry. Replace the `iteration` skill (the Fix route, and one mockup for a change to an approved surface) and graft the `commands`, `hard-rules`, `tiers`, and `communication` blocks at v5.3.0 through 3-B. Without `claude-code` in the roster, delete the `CLAUDE.md` symlink sentence from `README.md`. Run `python3 scripts/backlog.py` so `docs/BACKLOG.md` lists the features. If `dup_check.py` now reports a block the old baseline covered (the hashes moved with the import-line change), re-baseline with `--baseline --force` and a `dup-change:` line in the commit body. In `.mcp.json`, replace the `npx` Context7 entry with the fetched one (the hosted HTTP server, so the project no longer needs Node); a Python dev container may drop its Node feature. Phase 4 writes `.claude/.template-choices.json`.
+- *Since v5.4.0*: claude-code rosters: merge the template's `permissions.deny` rules (`Read(.env)`, `Read(.env.*)`, then the `Read(!.env.example)` carve-out, in that order) into `.claude/settings.json`, and replace `reviewer.md` (it now sets `effort: high`; diff first).
 
 **E. Mini-interview.** Collect every queued interview-sourced placeholder, dedupe, ask only those questions in one message (using the Phase 2 wording from `init-project/SKILL.md`), substitute, write. The upgrade ends with zero `{{...}}` on disk. A declined question writes `TODO(interview-skipped)`.
 

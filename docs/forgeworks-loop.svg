@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1268" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
-  <rect width="1240" height="1268" fill="#FBF7EA"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1414" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect width="1240" height="1414" fill="#FBF7EA"/>
 
   <!-- header -->
   <text x="90" y="86" font-size="40" font-weight="800" fill="#1a1a1a">ForgeWorks <tspan font-weight="400" fill="#8a8574">&#183;</tspan> the bounded iteration loop</text>
@@ -74,25 +74,37 @@
     <text x="112" y="808" font-size="20" font-weight="700" fill="#1a1a1a">REVIEW <tspan font-size="14" font-weight="400" fill="#8a8574">fresh context grades the work</tspan></text>
     <text x="112" y="834" font-size="13.5" fill="#4a4639">@reviewer, one pass, four lenses: plan conformance &#183; correctness &#183;</text>
     <text x="112" y="854" font-size="13.5" fill="#4a4639">design fidelity (mockup diff) &#183; security (on its trigger) + optional Codex</text>
-    <text x="112" y="874" font-size="13.5" fill="#4a4639">second opinion &#183; hard caps: 2 fix passes, 1 re-review, then stop and ask</text>
+    <text x="112" y="874" font-size="13.5" fill="#4a4639">second opinion &#183; hard cap: 1 review + 1 re-review, counted by feature.py</text>
   </g>
   <line x1="380" y1="888" x2="380" y2="916" stroke="#C9C2AA" stroke-width="2"/>
 
-  <!-- 5 MERGE -->
+  <!-- 5 REPLAN -->
   <g>
     <rect x="90" y="920" width="580" height="114" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
-    <rect x="90" y="920" width="7" height="114" rx="3" fill="#8B7A1E"/>
-    <circle cx="64" cy="956" r="17" fill="#8B7A1E"/><text x="64" y="962" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">5</text>
-    <text x="112" y="954" font-size="20" font-weight="700" fill="#1a1a1a">MERGE <tspan font-size="14" font-weight="400" fill="#8a8574">and the paperwork dies with it</tspan></text>
-    <text x="112" y="980" font-size="13.5" fill="#4a4639">gate + e2e + feature-list check green &#8594; merge &#183; prune.py mechanically</text>
-    <text x="112" y="1000" font-size="13.5" fill="#4a4639">deletes the feature's ledger lines, plan, losing mockups, uncited probes</text>
-    <text x="112" y="1020" font-size="13.5" fill="#4a4639">(the commit is the record) &#183; 3-line report to the owner</text>
+    <rect x="90" y="920" width="7" height="114" rx="3" fill="#7A4E9E"/>
+    <circle cx="64" cy="956" r="17" fill="#7A4E9E"/><text x="64" y="962" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">5</text>
+    <text x="112" y="954" font-size="20" font-weight="700" fill="#1a1a1a">REPLAN <tspan font-size="14" font-weight="400" fill="#8a8574">close the feature, then re-aim</tspan></text>
+    <text x="112" y="980" font-size="13.5" fill="#4a4639">on the branch: gate + e2e + feature-list check green &#183; status=done</text>
+    <text x="112" y="1000" font-size="13.5" fill="#4a4639">does the PRD still hold? is the next entry still right? what must it obey?</text>
+    <text x="112" y="1020" font-size="13.5" fill="#4a4639">prune.py deletes the plan, losing mockups, uncited probes (git keeps them)</text>
+  </g>
+  <line x1="380" y1="1034" x2="380" y2="1062" stroke="#C9C2AA" stroke-width="2"/>
+
+  <!-- 5 MERGE -->
+  <g>
+    <rect x="90" y="1066" width="580" height="114" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
+    <rect x="90" y="1066" width="7" height="114" rx="3" fill="#8B7A1E"/>
+    <circle cx="64" cy="1102" r="17" fill="#8B7A1E"/><text x="64" y="1108" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">6</text>
+    <text x="112" y="1100" font-size="20" font-weight="700" fill="#1a1a1a">MERGE <tspan font-size="14" font-weight="400" fill="#8a8574">land it, report it</tspan></text>
+    <text x="112" y="1126" font-size="13.5" fill="#4a4639">merge to main (from a worktree: land.sh rebases, then fast-forwards)</text>
+    <text x="112" y="1146" font-size="13.5" fill="#4a4639">delete the branch &#183; factory_doctor.sh finds no tree left behind</text>
+    <text x="112" y="1166" font-size="13.5" fill="#4a4639">3-line report: shipped, evidence, next up (the entry REPLAN chose)</text>
   </g>
 
   <!-- loop-back arrow -->
-  <path d="M 40 977 C 8 977 8 402 40 402" fill="none" stroke="#7A8A2E" stroke-width="3"/>
+  <path d="M 40 1123 C 8 1123 8 402 40 402" fill="none" stroke="#7A8A2E" stroke-width="3"/>
   <path d="M 40 402 l -9 -6 l 2 12 z" fill="#7A8A2E" transform="rotate(10 40 402)"/>
-  <text x="20" y="700" font-size="15" font-weight="700" fill="#7A8A2E" transform="rotate(-90 20 700)" text-anchor="middle">next feature</text>
+  <text x="20" y="770" font-size="15" font-weight="700" fill="#7A8A2E" stroke="#FBF7EA" stroke-width="8" paint-order="stroke" transform="rotate(-90 20 770)" text-anchor="middle">next feature</text>
 
   <!-- right column -->
   <g>
@@ -105,7 +117,7 @@
   </g>
 
   <g>
-    <rect x="720" y="510" width="430" height="168" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
+    <rect x="720" y="510" width="430" height="182" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
     <text x="742" y="544" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">DISPATCH IS PRICED</text>
     <text x="742" y="570" font-size="13.5" fill="#4a4639">work leaves main context only on a job card:</text>
     <text x="742" y="590" font-size="13.5" fill="#4a4639">deliverable &#183; exact inputs &#183; tier &#183; done-check</text>
@@ -116,12 +128,12 @@
   </g>
 
   <g>
-    <rect x="720" y="702" width="430" height="150" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
-    <text x="742" y="736" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">SIZED TO THE PROJECT</text>
-    <text x="742" y="762" font-size="13.5" fill="#4a4639"><tspan font-weight="700">weight: lite</tspan> (a one-person project) &#8594; e2e at release</text>
-    <text x="742" y="782" font-size="13.5" fill="#4a4639">tags, advisory duplication gate, strictly solo + reviewer</text>
-    <text x="742" y="808" font-size="13.5" fill="#4a4639"><tspan font-weight="700">weight: full</tspan> &#8594; batch mode: up to 2 disjoint features</text>
-    <text x="742" y="828" font-size="13.5" fill="#4a4639">in parallel worktrees, one writer each, merge queue</text>
+    <rect x="720" y="712" width="430" height="140" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
+    <text x="742" y="744" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">SIZED TO THE PROJECT</text>
+    <text x="742" y="768" font-size="13.5" fill="#4a4639"><tspan font-weight="700">weight: lite</tspan> (a one-person project) &#8594; e2e at release</text>
+    <text x="742" y="788" font-size="13.5" fill="#4a4639">tags, advisory duplication gate</text>
+    <text x="742" y="812" font-size="13.5" fill="#4a4639"><tspan font-weight="700">weight: full</tspan> &#8594; e2e on every push, blocking gate</text>
+    <text x="742" y="832" font-size="13.5" fill="#4a4639">a tree per session: tree-claim hook + land.sh</text>
   </g>
 
   <g>
@@ -129,22 +141,22 @@
     <text x="742" y="910" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">DETERMINISTIC GATES, NOT PROMISES</text>
     <text x="742" y="936" font-size="13" fill="#4a4639" font-family="ui-monospace, Menlo, monospace">qa &#183; e2e &#183; features-check &#183; dup-check</text>
     <text x="742" y="956" font-size="13" fill="#4a4639" font-family="ui-monospace, Menlo, monospace">docs-budget + prune --check &#183; test-tamper</text>
-    <text x="742" y="976" font-size="13" fill="#4a4639" font-family="ui-monospace, Menlo, monospace">checkpoint-budget &#183; resume-check &#183; deps-guard</text>
-    <text x="742" y="1002" font-size="13" fill="#6b6657">docs die mechanically: essay entries fail CI at the line</text>
-    <text x="742" y="1020" font-size="13" fill="#6b6657">they were written; a merge deletes its own paperwork</text>
+    <text x="742" y="976" font-size="13" fill="#4a4639" font-family="ui-monospace, Menlo, monospace">checkpoint-budget &#183; resume-check &#183; audit</text>
+    <text x="742" y="1002" font-size="13" fill="#6b6657">hooks: deps-guard &#183; tree-claim &#183; reviewer Stop gate</text>
+    <text x="742" y="1020" font-size="13" fill="#6b6657">feature.py refuses a skipped phase or a 3rd review</text>
   </g>
 
   <!-- resume strip -->
   <g>
-    <rect x="90" y="1074" width="1060" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
-    <text x="112" y="1108" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">SESSIONS ARE CHEAP TO RESTART</text>
-    <text x="112" y="1134" font-size="13.5" fill="#4a4639">one feature per session &#183; <tspan font-family="ui-monospace, Menlo, monospace">go</tspan> derives the resume brief from the files that own each fact and REFUSES to print when they disagree &#183;</text>
-    <text x="112" y="1154" font-size="13.5" fill="#4a4639">a fresh session reads this constitution + one skill + one feature entry + one plan, and CI caps what that costs</text>
+    <rect x="90" y="1220" width="1060" height="96" rx="10" fill="#FFFFFF" stroke="#DDD6C0"/>
+    <text x="112" y="1254" font-size="16" font-weight="700" fill="#6b6657" letter-spacing="1">SESSIONS ARE CHEAP TO RESTART</text>
+    <text x="112" y="1280" font-size="13.5" fill="#4a4639">one feature per session &#183; <tspan font-family="ui-monospace, Menlo, monospace">go</tspan> derives the resume brief from the files that own each fact and REFUSES to print when they disagree &#183;</text>
+    <text x="112" y="1300" font-size="13.5" fill="#4a4639">a fresh session reads this constitution + one skill + one feature entry + one plan, and CI caps what that costs</text>
   </g>
 
   <!-- footer -->
-  <text x="90" y="1230" font-size="15" fill="#4a4639"><tspan font-weight="700">next feature &#8594; same loop.</tspan>  Lessons flow back into the template: every project starts smarter than the last.</text>
+  <text x="90" y="1376" font-size="15" fill="#4a4639"><tspan font-weight="700">next feature &#8594; same loop.</tspan>  Lessons flow back into the template: every project starts smarter than the last.</text>
 
   <!-- version note -->
-  <text x="1150" y="1230" font-size="12" fill="#B6AF97" text-anchor="end">ForgeWorks v4.4</text>
+  <text x="1150" y="1376" font-size="12" fill="#B6AF97" text-anchor="end">ForgeWorks v5.4</text>
 </svg>

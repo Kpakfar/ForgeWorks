@@ -1,5 +1,12 @@
 {
-  "$comment": "Project hooks. Enforcement belongs in hooks, not prompts. The deps-guard PreToolUse hook enforces supply-chain checks deterministically; the tree-claim PreToolUse hook keeps a second session opened in the same directory from writing over the first, and sends it into its own worktree. The static+test quality gate is enforced by the reviewer subagent's Stop hook (see .claude/agents/reviewer.md) and by CI.",
+  "$comment": "Project hooks. Enforcement belongs in hooks, not prompts. The deps-guard PreToolUse hook enforces supply-chain checks deterministically; the tree-claim PreToolUse hook keeps a second session opened in the same directory from writing over the first, and sends it into its own worktree. The static+test quality gate is enforced by the reviewer subagent's Stop hook (see .claude/agents/reviewer.md) and by CI. The permissions deny list keeps the Read tool off .env files at any depth (.env.example stays readable); a shell command can still read them, so it is a guardrail, not a sandbox.",
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
